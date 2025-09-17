@@ -14,7 +14,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { createReview, getReviewByBorrowingId, Review } from '../../services/ReviewServices';
 import axios from 'axios';
 
-type MyBorrowingDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyBorrowingDetails'>;
+type MyBorrowingDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyBookingDetails'>;
 
 
 const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps) => {

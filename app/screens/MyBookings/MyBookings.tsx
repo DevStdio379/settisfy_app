@@ -10,9 +10,9 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useUser } from '../../context/UserContext';
 import { fetchBorrowingsByUser } from '../../services/BorrowingServices';
 
-type MyBorrowingsScreenProps = StackScreenProps<RootStackParamList, 'MyBorrowings'>;
+type MyBookingsScreenProps = StackScreenProps<RootStackParamList, 'MyBookings'>;
 
-const MyBorrowings = ({ navigation }: MyBorrowingsScreenProps) => {
+const MyBookings = ({ navigation }: MyBookingsScreenProps) => {
     const { user } = useUser();
     const [activeBorrowings, setActiveBorrowings] = useState<any[]>([]);
     const [inactiveBorrowings, setInactiveBorrowings] = useState<any[]>([]);
@@ -141,7 +141,7 @@ const MyBorrowings = ({ navigation }: MyBorrowingsScreenProps) => {
                                                     <View style={{ marginVertical: 5, height: 100 }} key={index}>
                                                         <TouchableOpacity
                                                             activeOpacity={0.8}
-                                                            onPress={() => navigation.navigate('MyBorrowingDetails', { borrowing: data })}
+                                                            onPress={() => navigation.navigate('MyBookingDetails', { borrowing: data })}
                                                             style={{
                                                                 borderRadius: 10,
                                                                 borderWidth: 1,
@@ -192,7 +192,7 @@ const MyBorrowings = ({ navigation }: MyBorrowingsScreenProps) => {
                                                     <View style={{ marginVertical: 5, height: 100 }} key={index}>
                                                         <TouchableOpacity
                                                             activeOpacity={0.8}
-                                                            onPress={() => navigation.navigate('MyBorrowingDetails', { borrowing: data })}
+                                                            onPress={() => navigation.navigate('MyBookingDetails', { borrowing: data })}
                                                             style={{
                                                                 borderRadius: 10,
                                                                 borderWidth: 1,
@@ -236,4 +236,4 @@ const MyBorrowings = ({ navigation }: MyBorrowingsScreenProps) => {
     )
 }
 
-export default MyBorrowings
+export default MyBookings

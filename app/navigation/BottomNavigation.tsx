@@ -2,7 +2,6 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BottomTabParamList } from './BottomTabParamList';
 import ChatListScreen from '../screens/Chat/ChatList';
-import ProfileScreen from '../screens/Profile/Profile';
 import BottomMenu from '../layout/BottomMenu';
 import { useUser } from '../context/UserContext';
 import ProviderDashboard from '../screens/ProviderPanel/ProviderDashboard';
@@ -10,9 +9,8 @@ import MyServicesScreen from '../screens/ProviderPanel/MyServices';
 import HomeStack from './HomeStack';
 import ProfileStack from './ProfileStack';
 import FavouriteStack from './FavouriteStack';
-import MyLendingsStack from './MyRequestsStack';
-import MyBorrowingsStack from './MyBorrowingStack';
 import MyRequestsStack from './MyRequestsStack';
+import MyBookingsStack from './MyBookingsStack';
 
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
@@ -43,8 +41,8 @@ const BottomNavigation = () => {
                     component={FavouriteStack}
                 />
                 <Tab.Screen
-                    name='MyBorrowingsStack'
-                    component={MyBorrowingsStack}
+                    name='MyBookingsStack'
+                    component={MyBookingsStack}
                 />
                 <Tab.Screen
                     name='ChatList'

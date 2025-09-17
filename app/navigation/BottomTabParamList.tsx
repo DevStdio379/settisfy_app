@@ -4,8 +4,9 @@ export type BottomTabParamList = {
 
     FavouriteStack: undefined;
     HomeStack: undefined;
-    MyBorrowingsStack: undefined;
-    MyBorrowingDetails: { borrowing: Borrowing };
+    MyBookingsStack: undefined;
+    MyBookings: undefined;
+    MyBookingDetails: { borrowing: Borrowing };
     ChatList: undefined;
     Category: undefined;
     ProfileStack: undefined;

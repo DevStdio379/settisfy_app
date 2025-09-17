@@ -18,11 +18,11 @@ import EditLocationPinPoint from '../screens/Profile/EditLocationPinPoint';
 import PaymentInformation from '../screens/Profile/PaymentInformation';
 import Products from '../screens/Products/Products';
 import ProductDetails from '../screens/Products/ProductDetails';
-import MyBorrowingDetails from '../screens/MyBorrowings/MyBorrowingDetails';
+import MyBorrowingDetails from '../screens/MyBookings/MyBookingDetails';
 import LendingDetails from '../screens/ProviderPanel/MyRequestDetails';
 import BorrowerAddReview from '../screens/Products/BorrowerAddReview';
 import LenderAddReview from '../screens/ProviderPanel/LenderAddReview';
-import MyBorrowings from '../screens/MyBorrowings/MyBorrowings';
+import MyBorrowings from '../screens/MyBookings/MyBookings';
 import Temp from '../screens/Temp';
 import Chat from '../screens/Chat/Chat';
 import ChatList from '../screens/Chat/ChatList';
@@ -33,6 +33,8 @@ import BottomNavigation from './BottomNavigation';
 import AccountVerification from '../screens/Auth/AccountVerification';
 import ProviderDashboard from '../screens/ProviderPanel/ProviderDashboard';
 import MyServices from '../screens/ProviderPanel/MyServices';
+import MyBookingDetails from '../screens/MyBookings/MyBookingDetails';
+import MyBookings from '../screens/MyBookings/MyBookings';
 
 
 const StackComponent = createStackNavigator<RootStackParamList>();
@@ -58,8 +60,8 @@ const StackNavigator = () => {
 				<StackComponent.Screen name="BottomNavigation" component={BottomNavigation} />
 				<StackComponent.Screen name="Products" component={Products} />
 				<StackComponent.Screen name="ProductDetails" component={ProductDetails} />
-				<StackComponent.Screen name="MyBorrowings" component={MyBorrowings} />
-				<StackComponent.Screen name="MyBorrowingDetails" component={MyBorrowingDetails} />
+				<StackComponent.Screen name="MyBookings" component={MyBookings} />
+				<StackComponent.Screen name="MyBookingDetails" component={MyBookingDetails} />
 				<StackComponent.Screen name="BorrowerAddReview" component={BorrowerAddReview} />
 				<StackComponent.Screen name="Profile" component={Profile} />
 				<StackComponent.Screen name="ChatList" component={ChatList} />
