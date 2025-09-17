@@ -1,0 +1,49 @@
+platform :ios, '15.1'
+
+# Use static frameworks (officially supported)
+use_frameworks! :linkage => :static
+
+# Firebase pods (no modular headers)
+pod 'Firebase'
+pod 'FirebaseCoreInternal'
+pod 'GoogleUtilities'
+pod 'FirebaseCore'
+
+# Generic function to require Node scripts
+def node_require(script)
+  require Pod::Executable.execute_command(
+    'node',
+    ['-p', "require.resolve('#{script}', {paths: [process.argv[1]]})", __dir__]
+  ).strip
+end
+
+# Require React Native scripts
+node_require('react-native/scripts/react_native_pods.rb')
+node_require('react-native-permissions/scripts/setup.rb')
+
+# Prepare React Native project
+prepare_react_native_project!
+
+# Setup permissions
+setup_permissions([
+  'LocationAccuracy',
+  'LocationAlways',
+  'LocationWhenInUse',
+])
+
+target 'tags_lending_app' do
+  config = use_native_modules!
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :app_path => "#{Pod::Config.instance.installation_root}/..",
+  )
+
+  post_install do |installer|
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false
+    )
+  end
+end

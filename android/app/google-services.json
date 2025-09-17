@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "662614141143",
+    "project_id": "tags-1489a",
+    "storage_bucket": "tags-1489a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:662614141143:android:0784a404398dbf0891a892",
+        "android_client_info": {
+          "package_name": "com.tags_cli"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "662614141143-qpndhhrrdja6tb0q757b04g43jhj0dka.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tags_cli",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "662614141143-0407imm5u299dn62boe2pn6pgn6ai7ir.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzI7fKDHOi2Qq6Vp9CX5flWQN4z5hXMNc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "662614141143-0407imm5u299dn62boe2pn6pgn6ai7ir.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
