@@ -122,8 +122,8 @@ export const Home = ({ navigation }: HomeScreenProps) => {
                             </View>
                         ) : (
                             <View>
-                                <Text style={{ fontSize: 30, fontWeight: 'bold', color: COLORS.title }}>BorrowUp</Text>
-                                <Text style={{ fontSize: 16, color: COLORS.title }}>Lend & borrow items around you.</Text>
+                                <Text style={{ fontSize: 30, fontWeight: 'bold', color: COLORS.title }}>Settisfy</Text>
+                                <Text style={{ fontSize: 16, color: COLORS.title }}>On-demand service platform.</Text>
                             </View>
                         )}
                         <TouchableOpacity
