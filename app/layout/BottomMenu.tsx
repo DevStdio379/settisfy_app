@@ -115,11 +115,11 @@ const BottomMenu = ({ state, navigation, descriptors }: Props) => {
                                                 case 'ProfileStack':
                                                     return 'menu';
                                                 // lender
-                                                case 'MyLendingsStack':
+                                                case 'MyRequestsStack':
                                                     return 'calendar';
-                                                case 'Listings':
+                                                case 'MyServices':
                                                     return 'clipboard';
-                                                case 'LenderDashboard':
+                                                case 'ProviderDashboard':
                                                     return 'grid';
                                                 default:
                                                     return 'home';
@@ -139,12 +139,12 @@ const BottomMenu = ({ state, navigation, descriptors }: Props) => {
                                                 case 'MyRental':
                                                     return 'My Rental';
                                                 case 'MyBorrowingsStack':
-                                                    return 'Borrowed';
-                                                case 'MyLendingsStack':
-                                                    return 'Lending';
-                                                case 'Listings':
-                                                    return 'Listing';
-                                                case 'LenderDashboard':
+                                                    return 'My Requests';
+                                                case 'MyServices':
+                                                    return 'Services';
+                                                case 'MyRequestsStack':
+                                                    return 'Requests';
+                                                case 'ProviderDashboard':
                                                     return 'Dashboard';
                                                 case 'ChatList':
                                                     return 'Chat';

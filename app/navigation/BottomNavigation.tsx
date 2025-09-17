@@ -5,13 +5,14 @@ import ChatListScreen from '../screens/Chat/ChatList';
 import ProfileScreen from '../screens/Profile/Profile';
 import BottomMenu from '../layout/BottomMenu';
 import { useUser } from '../context/UserContext';
-import LenderDashboard from '../screens/LenderPanel/LenderDashboard';
-import ListingsScreen from '../screens/LenderPanel/Listings';
+import ProviderDashboard from '../screens/ProviderPanel/ProviderDashboard';
+import MyServicesScreen from '../screens/ProviderPanel/MyServices';
 import HomeStack from './HomeStack';
 import ProfileStack from './ProfileStack';
 import FavouriteStack from './FavouriteStack';
-import MyLendingsStack from './MyLendingsStack';
+import MyLendingsStack from './MyRequestsStack';
 import MyBorrowingsStack from './MyBorrowingStack';
+import MyRequestsStack from './MyRequestsStack';
 
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
@@ -56,23 +57,23 @@ const BottomNavigation = () => {
             </Tab.Navigator>
         ) : user.accountType === 'lender' && (
             <Tab.Navigator
-                initialRouteName='LenderDashboard'
+                initialRouteName='ProviderDashboard'
                 screenOptions={{
                     headerShown: false
                 }}
                 tabBar={(props: any) => <BottomMenu {...props} />}
             >
                 <Tab.Screen
-                    name='LenderDashboard'
-                    component={LenderDashboard}
+                    name='ProviderDashboard'
+                    component={ProviderDashboard}
                 />
                 <Tab.Screen
-                    name='Listings'
-                    component={ListingsScreen}
+                    name='MyServices'
+                    component={MyServicesScreen}
                 />
                 <Tab.Screen
-                    name='MyLendingsStack'
-                    component={MyLendingsStack}
+                    name='MyRequestsStack'
+                    component={MyRequestsStack}
                 />
                 <Tab.Screen
                     name='ChatList'

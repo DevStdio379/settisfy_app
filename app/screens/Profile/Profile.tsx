@@ -327,7 +327,7 @@ const Profile = ({ navigation }: ProfileScreenProps) => {
                             onPress={() => handleSwitchAccountType()}
                         >
                             <Text style={{ fontSize: 18, color: COLORS.card, lineHeight: 21 }}>
-                                {user?.accountType === 'borrower' ? 'Switch to Owner Profile' : 'Switch to Borrower Profile'}
+                                {user?.accountType === 'borrower' ? 'Switch to Service Provider Profile' : 'Switch to Customer Profile'}
                             </Text>
                         </TouchableOpacity>
                         {/* {

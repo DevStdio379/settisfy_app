@@ -12,10 +12,10 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { createReview, getReviewByBorrowingId, Review } from '../../services/ReviewServices';
 import axios from 'axios';
 
-type LendingDetailsScreenProps = StackScreenProps<RootStackParamList, 'LendingDetails'>;
+type MyRequestDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyRequestDetails'>;
 
 
-const LendingDetails = ({ navigation, route }: LendingDetailsScreenProps) => {
+const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) => {
 
     const { user } = useUser();
     const mapRef = useRef<MapView | null>(null);
@@ -940,4 +940,4 @@ const LendingDetails = ({ navigation, route }: LendingDetailsScreenProps) => {
     )
 }
 
-export default LendingDetails
+export default MyRequestDetails

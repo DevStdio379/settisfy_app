@@ -15,9 +15,9 @@ import { fetchLendingsByUser } from '../../services/BorrowingServices';
 import { set } from 'date-fns';
 import { getOrCreateChat } from '../../services/ChatServices';
 
-type LenderDashboardScreenProps = StackScreenProps<RootStackParamList, 'LenderDashboard'>;
+type ProviderDashboardScreenProps = StackScreenProps<RootStackParamList, 'ProviderDashboard'>;
 
-const LenderDashboard = ({ navigation }: LenderDashboardScreenProps) => {
+const ProviderDashboard = ({ navigation }: ProviderDashboardScreenProps) => {
 
     const tips =
         [
@@ -150,7 +150,7 @@ const LenderDashboard = ({ navigation }: LenderDashboardScreenProps) => {
                         <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.title }}>
                             Recent Lendings
                         </Text>
-                        <TouchableOpacity onPress={() => navigation.navigate('MyLendings')}>
+                        <TouchableOpacity onPress={() => navigation.navigate('MyRequests')}>
                             <Text style={{ fontSize: 14, color: COLORS.primary }}>
                                 View All
                             </Text>
@@ -158,7 +158,7 @@ const LenderDashboard = ({ navigation }: LenderDashboardScreenProps) => {
                     </View>
                     <ScrollView contentContainerStyle={{ justifyContent: 'center' }} showsHorizontalScrollIndicator={false}>
                         {lendings.slice(0, 2).map((lending, index) => (
-                            <View key={index} style={[styles.LenderDashboardcard, { flex: 1, padding: 5, borderWidth: 1, borderColor: '#EFEFEF', borderRadius: 10 }]}>
+                            <View key={index} style={[styles.ProviderDashboardcard, { flex: 1, padding: 5, borderWidth: 1, borderColor: '#EFEFEF', borderRadius: 10 }]}>
                                 <View style={styles.cardimg}>
                                     <Image
                                         source={{ uri: lending.product.imageUrls[0] || 'https://via.placeholder.com/150' }}
@@ -204,7 +204,7 @@ const LenderDashboard = ({ navigation }: LenderDashboardScreenProps) => {
                             <View
                                 key={index}
                                 style={[
-                                    styles.LenderDashboardcard,
+                                    styles.ProviderDashboardcard,
                                     { alignItems: 'center', borderWidth: 1, borderColor: '#EFEFEF', borderRadius: 10 },
                                 ]}
                             >
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: COLORS.title
     },
-    LenderDashboardcard: {
+    ProviderDashboardcard: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 15,
@@ -278,4 +278,4 @@ const styles = StyleSheet.create({
     },
 })
 
-export default LenderDashboard
+export default ProviderDashboard

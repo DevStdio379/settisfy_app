@@ -11,9 +11,9 @@ import { useUser } from '../../context/UserContext';
 import { fetchUserProductListings, Product } from '../../services/ProductServices';
 import { Borrowing, fetchLendingsByUser } from '../../services/BorrowingServices';
 
-type ListingsScreenProps = StackScreenProps<RootStackParamList, 'Listings'>;
+type MyServicesScreenProps = StackScreenProps<RootStackParamList, 'MyServices'>;
 
-const Listings = ({ navigation, route }: ListingsScreenProps) => {
+const MyServices = ({ navigation, route }: MyServicesScreenProps) => {
     const { user } = useUser();
     const [activeListings, setActiveListings] = useState<any[]>([]);
     const [inactiveListings, setinActiveListings] = useState<any[]>([]);
@@ -72,7 +72,7 @@ const Listings = ({ navigation, route }: ListingsScreenProps) => {
                         {/* left header element */}
                     </View>
                     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center', marginVertical: 10 }}>My Listing</Text>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center', marginVertical: 10 }}>My Services</Text>
                     </View>
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
                         <TouchableOpacity
@@ -251,4 +251,4 @@ const Listings = ({ navigation, route }: ListingsScreenProps) => {
     )
 }
 
-export default Listings
+export default MyServices

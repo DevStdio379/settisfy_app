@@ -10,10 +10,10 @@ export type BottomTabParamList = {
     Category: undefined;
     ProfileStack: undefined;
 
-    LenderDashboard: undefined;
-    MyLendingsStack: undefined;
-    LendingDetails: { lending: Borrowing };
-    Listings: undefined;
+    ProviderDashboard: undefined;
+    MyServices: undefined;
+    MyRequestsStack: undefined;
+    MyRequestDetails: { lending: Borrowing };
     // ChatList: undefined;
     // Profile: undefined;
 };

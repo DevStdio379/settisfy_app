@@ -35,12 +35,12 @@ export type RootStackParamList = {
     SearchResults: { query: string, allSearchResults: any };
 
     // Lender Profile
-    MyLendings: undefined;
-    LendingDetails: { lending: Borrowing };
+    MyRequests: undefined;
+    MyRequestDetails: { lending: Borrowing };
     LenderAddReview: { reviewId: string, lending: Borrowing };
-    Listings: undefined;
+    MyServices: undefined;
     AddListing: { listing: Product | null };
-    LenderDashboard: undefined;
+    ProviderDashboard: undefined;
     Messages: undefined;
 
     Temp: undefined;

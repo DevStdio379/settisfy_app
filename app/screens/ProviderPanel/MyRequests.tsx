@@ -8,9 +8,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchSelectedUser, User, useUser } from "../../context/UserContext";
 import { fetchLendingsByUser } from "../../services/BorrowingServices";
 
-type MyLendingsScreenProps = StackScreenProps<RootStackParamList, 'MyLendings'>;
+type MyRequestsScreenProps = StackScreenProps<RootStackParamList, 'MyRequests'>;
 
-const MyLendings = ({ navigation, route }: MyLendingsScreenProps) => {
+const MyRequests = ({ navigation, route }: MyRequestsScreenProps) => {
 
   const { user } = useUser();
   const [activeLendings, setActiveLendings] = useState<any[]>([]);
@@ -121,7 +121,7 @@ const MyLendings = ({ navigation, route }: MyLendingsScreenProps) => {
                           <View style={{ marginVertical: 5, height: 100 }} key={index}>
                             <TouchableOpacity
                               activeOpacity={0.8}
-                              onPress={() => navigation.navigate('LendingDetails', { lending: data })}
+                              onPress={() => navigation.navigate('MyRequestDetails', { lending: data })}
                               style={{
                                 borderRadius: 10,
                                 borderWidth: 1,
@@ -195,7 +195,7 @@ const MyLendings = ({ navigation, route }: MyLendingsScreenProps) => {
                           <View style={{ marginVertical: 5, height: 100 }} key={index}>
                             <TouchableOpacity
                               activeOpacity={0.8}
-                              onPress={() => navigation.navigate('LendingDetails', { lending: data })}
+                              onPress={() => navigation.navigate('MyRequestDetails', { lending: data })}
                               style={{
                                 borderRadius: 10,
                                 borderWidth: 1,
@@ -238,4 +238,4 @@ const MyLendings = ({ navigation, route }: MyLendingsScreenProps) => {
     </View>
   )
 };
-export default MyLendings;
+export default MyRequests;
