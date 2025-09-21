@@ -31,7 +31,7 @@ setup_permissions([
   'LocationWhenInUse',
 ])
 
-target 'tags_lending_app' do
+target 'settisfyapp' do
   config = use_native_modules!
 
   use_react_native!(

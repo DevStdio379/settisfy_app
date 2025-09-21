@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "tags_lending_app.app"
-               BlueprintName = "tags_lending_app"
-               ReferencedContainer = "container:tags_lending_app.xcodeproj">
+               BuildableName = "settisfyapp.app"
+               BlueprintName = "settisfyapp"
+               ReferencedContainer = "container:settisfyapp.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "tags_lending_appTests.xctest"
-               BlueprintName = "tags_lending_appTests"
-               ReferencedContainer = "container:tags_lending_app.xcodeproj">
+               BuildableName = "settisfyappTests.xctest"
+               BlueprintName = "settisfyappTests"
+               ReferencedContainer = "container:settisfyapp.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "tags_lending_app.app"
-            BlueprintName = "tags_lending_app"
-            ReferencedContainer = "container:tags_lending_app.xcodeproj">
+            BuildableName = "settisfyapp.app"
+            BlueprintName = "settisfyapp"
+            ReferencedContainer = "container:settisfyapp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "tags_lending_app.app"
-            BlueprintName = "tags_lending_app"
-            ReferencedContainer = "container:tags_lending_app.xcodeproj">
+            BuildableName = "settisfyapp.app"
+            BlueprintName = "settisfyapp"
+            ReferencedContainer = "container:settisfyapp.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
