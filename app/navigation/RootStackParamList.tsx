@@ -13,7 +13,7 @@ export type RootStackParamList = {
     Home: undefined;
     Products: undefined;
     ProductDetails: { product: Product };
-    PaymentSuccess: { borrowingId: string, collectionCode: string, latitude: number, longitude: number, addressName: string, address: string, postcode: string };
+    PaymentSuccess: { bookingId: string };
     MyBookings: undefined;
     MyBookingDetails: { borrowing: Borrowing };
     BorrowerAddReview: { reviewId: string, borrowing: Borrowing };
@@ -46,5 +46,8 @@ export type RootStackParamList = {
     Temp: undefined;
 
     FavouriteCollection: undefined;
+
+    // Services Quotatation Screens
+    QuoteCleaning: undefined;
 
 };

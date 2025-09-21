@@ -207,13 +207,13 @@ const AddListing = ({ navigation, route }: AddListingScreenProps) => {
         setSelectedImage(updatedImages.length > 0 ? updatedImages[0] : null);
     };
     const categories = [
-        { name: 'Electronic Gadgets', image: IMAGES.electronics },
-        { name: 'DIY & Hand Tools', image: IMAGES.handTools },
-        { name: 'Household Maintenance', image: IMAGES.houseHoldMaintenance },
-        { name: 'Sport Equipments', image: IMAGES.sportEquipments },
-        { name: 'Party & Celebrations', image: IMAGES.eventDecorations },
-        { name: 'Cooking', image: IMAGES.cookingEquipments },
-        { name: 'Outdoors', image: IMAGES.outdoorEquipments },
+        { name: 'Cleaning', image: IMAGES.cleaning },
+        { name: 'IT & Tech', image: IMAGES.electronics },
+        { name: 'Home Maintenance', image: IMAGES.houseHoldMaintenance },
+        { name: 'Wellness', image: IMAGES.healthcare },
+        { name: 'Events & Celebrations', image: IMAGES.eventDecorations },
+        { name: 'Delivery & Transport', image: IMAGES.delivery },
+        { name: 'Extra Hands', image: IMAGES.helpingHands },
         { name: 'Others', image: IMAGES.otherItem },
     ];
 
@@ -367,12 +367,12 @@ const AddListing = ({ navigation, route }: AddListingScreenProps) => {
                             <View style={{ alignItems: 'center' }}>
                                 <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center' }}>
                                     {[
-                                        'Add New Listing',
+                                        'Add New Service',
                                         'Select Photos',
-                                        'Add Item Details',
-                                        'Select Category',
-                                        'Set Borrowing Rate',
-                                        'Add Borrowing Conditions',
+                                        'Add Service Details',
+                                        'Select Service Category',
+                                        'Set Service Price & Availability',
+                                        'Add Service Conditions',
                                         'Add Pickup & Return Instructions',
                                         'Select Pickup Address',
                                         'Add Deposit Details',
@@ -399,54 +399,69 @@ const AddListing = ({ navigation, route }: AddListingScreenProps) => {
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, paddingBottom: 70, alignItems: 'flex-start' }}>
                     {index === 0 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black, paddingTop: 30, paddingBottom: 50 }}>Let's Share Your Idle Items</Text>
+                            <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black, paddingTop: 30, paddingBottom: 50 }}>
+                                Start Offering Your Services
+                            </Text>
+
+                            {/* Step 1 */}
                             <View style={{ flexDirection: 'row', width: '100%', paddingBottom: 20 }}>
                                 <View style={{ width: '10%', alignItems: 'center' }}>
-                                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>1.</Text>
+                                <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>1.</Text>
                                 </View>
                                 <View style={{ width: '90%', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                    <View style={{ width: '70%' }}>
-                                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Tell us about your item </Text>
-                                        <Text style={{ fontSize: 14, color: COLORS.blackLight }}>Share some info of your item such as the name, brand and your location for item pick up.</Text>
-                                    </View>
-                                    <View style={{ width: '30%', alignItems: 'center' }}>
-                                        <Image source={IMAGES.itemPlaceholder1} style={{ width: '100%', height: 100, resizeMode: 'contain' }} />
-                                    </View>
+                                <View style={{ width: '70%' }}>
+                                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Describe your service</Text>
+                                    <Text style={{ fontSize: 14, color: COLORS.blackLight }}>
+                                    Share key details like the service name, expertise, and location where you can provide it.
+                                    </Text>
+                                </View>
+                                <View style={{ width: '30%', alignItems: 'center' }}>
+                                    <Image source={IMAGES.itemPlaceholder1} style={{ width: '100%', height: 100, resizeMode: 'contain' }} />
+                                </View>
                                 </View>
                             </View>
+
+                            {/* Step 2 */}
                             <View style={{ flexDirection: 'row', width: '100%', paddingBottom: 20 }}>
                                 <View style={{ width: '10%', alignItems: 'center' }}>
-                                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>2.</Text>
+                                <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>2.</Text>
                                 </View>
                                 <View style={{ width: '90%', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                    <View style={{ width: '70%' }}>
-                                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Upload photos of your item </Text>
-                                        <Text style={{ fontSize: 14, color: COLORS.blackLight }}>Add 5 or more photos plus a description of your item (condition, how to use, etc.)</Text>
-                                    </View>
-                                    <View style={{ width: '30%', alignItems: 'center' }}>
-                                        <Image source={IMAGES.itemPlaceholder2} style={{ width: '100%', height: 100, resizeMode: 'contain' }} />
-                                    </View>
+                                <View style={{ width: '70%' }}>
+                                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Show your work</Text>
+                                    <Text style={{ fontSize: 14, color: COLORS.blackLight }}>
+                                    Add photos or examples of your work plus a description of your skills and experience.
+                                    </Text>
+                                </View>
+                                <View style={{ width: '30%', alignItems: 'center' }}>
+                                    <Image source={IMAGES.itemPlaceholder2} style={{ width: '100%', height: 100, resizeMode: 'contain' }} />
+                                </View>
                                 </View>
                             </View>
+
+                            {/* Step 3 */}
                             <View style={{ flexDirection: 'row', width: '100%', paddingBottom: 20 }}>
                                 <View style={{ width: '10%', alignItems: 'center' }}>
-                                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>3.</Text>
+                                <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>3.</Text>
                                 </View>
                                 <View style={{ width: '90%', flexDirection: 'row', justifyContent: 'space-between' }}>
-                                    <View style={{ width: '70%' }}>
-                                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Set a price and ready to publish!</Text>
-                                        <Text style={{ fontSize: 14, color: COLORS.blackLight }}>Put a price to your item, verify a few details and your item is ready to be listed!</Text>
-                                    </View>
-                                    <View style={{ width: '30%', alignItems: 'center' }}>
-                                        <Image source={IMAGES.itemPlaceholder3} style={{ width: '100%', height: 100, resizeMode: 'contain' }} />
-                                    </View>
+                                <View style={{ width: '70%' }}>
+                                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Set your rate & go live!</Text>
+                                    <Text style={{ fontSize: 14, color: COLORS.blackLight }}>
+                                    Choose your pricing, confirm a few details, and start getting bookings from clients.
+                                    </Text>
+                                </View>
+                                <View style={{ width: '30%', alignItems: 'center' }}>
+                                    <Image source={IMAGES.itemPlaceholder3} style={{ width: '100%', height: 100, resizeMode: 'contain' }} />
+                                </View>
                                 </View>
                             </View>
                         </View>
+
                     }
                     {index === 1 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 30, paddingBottom: 20 }}>Provide photos of your lendable item</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 30, paddingBottom: 20 }}>Add images that represent your service</Text>
                             <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                 {/* Large Preview Image */}
                                 {selectedImage ? (
@@ -546,7 +561,7 @@ const AddListing = ({ navigation, route }: AddListingScreenProps) => {
                     }
                     {index === 2 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 100 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 30, paddingBottom: 10 }}>Provide photos of your lendable item</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 30, paddingBottom: 10 }}>Tell us about your service</Text>
                             {/* <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 10 }}>Try our AI assisted data entries to fill those entries for you or manually enter yours.</Text> */}
                             {/* <View style={{ width: '100%', justifyContent: 'flex-end', alignItems: 'flex-end', paddingBottom: 10 }}>
                                 <TouchableOpacity
@@ -625,7 +640,7 @@ const AddListing = ({ navigation, route }: AddListingScreenProps) => {
                                 multiline={true}  // Enable multi-line input
                                 numberOfLines={4} // Suggest the input area size
                             />
-                            <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Included Items:</Text>
+                            <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Included Services:</Text>
                             <View>
                                 <FlatList
                                     scrollEnabled={false}
@@ -1160,9 +1175,9 @@ const AddListing = ({ navigation, route }: AddListingScreenProps) => {
                             >
                                 <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>{[
                                     'Start',
-                                    'Add Item Details',
+                                    'Add Service Details',
                                     'Select Category',
-                                    'Set Borrowing Rate',
+                                    'Set Service Price & Availability',
                                     'Add Borrowing Conditions',
                                     'Add Pickup & Return Instructions',
                                     'Select Pickup Address',
@@ -1174,7 +1189,7 @@ const AddListing = ({ navigation, route }: AddListingScreenProps) => {
                     )
                 }
             </View >
-            <BottomSheet
+            {/* <BottomSheet
                 ref={bottomSheetRef}
                 snapPoints={snapPoints}
                 enablePanDownToClose={true} // Allow swipe-down to close
@@ -1252,7 +1267,7 @@ const AddListing = ({ navigation, route }: AddListingScreenProps) => {
                         </TouchableOpacity>
                     </View>
                 </BottomSheetScrollView>
-            </BottomSheet>
+            </BottomSheet> */}
         </View >
     )
 }

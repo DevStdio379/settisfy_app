@@ -18,11 +18,11 @@ type Props = {
     id: string;
     title: string;
     btntitle?: string;
-    price: number;
+    price?: number;
     ownerID?: string;
     description?: string;
     location?: string;
-    deposit: number;
+    deposit?: number;
     imageUrl?: any;
     product?: any;
     MyOrder?: any;
@@ -74,7 +74,7 @@ const Cardstyle4 = ({ id, title, imageUrl, description, deposit, averageRating, 
                 >
                     <Image
                         style={{ height: undefined, width: '100%', aspectRatio: 1 / 1.2, }}
-                        source={{ uri: imageUrl }}
+                        source={ imageUrl }
                     />
                     <View
                         style={{
@@ -105,11 +105,8 @@ const Cardstyle4 = ({ id, title, imageUrl, description, deposit, averageRating, 
                 </View>
                 <View style={{ flex: 1, width: '100%' }}>
                     <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 16, color: COLORS.black }}>{title}</Text>
-                    <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 13, color: COLORS.black }}>{location?.split(',').slice(0, 2).join(',')}</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'flex-start', width: '100%' }}>
-                        <Text style={{ fontWeight: 'bold', fontSize: 14, color: colors.title }}>£{price}/day</Text>
-                        <Text style={{ fontWeight: 'bold', fontSize: 14, color: COLORS.placeholder }}> • </Text>
-                        <Text style={{ fontSize: 13, color: COLORS.blackLight2, textDecorationLine: 'underline' }}>£{Number(deposit) + Number(price)} total</Text>
+                        <Text style={{ fontWeight: 'bold', fontSize: 14, color: colors.title }}>From RM</Text>
                     </View>
                     {MyOrder ? completed ?
                         <TouchableOpacity

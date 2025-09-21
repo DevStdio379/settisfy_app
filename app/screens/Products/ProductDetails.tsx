@@ -84,7 +84,7 @@ const ProductDetails = ({ navigation, route }: ProductDetailsScreenProps) => {
     startLon: number,
     endLat: number,
     endLon: number
-  ): number => {
+  ): number => {{}
     const toRadians = (degree: number): number => degree * (Math.PI / 180);
 
     const R = 6371; // Earth's radius in kilometers
