@@ -17,7 +17,7 @@ export interface Booking {
   // products copy
   productId?: string;
   title: string;
-  imageUrl: string;
+  imageUrls: string[];
   description: string;
   includedServices: string[];
   category: string;
@@ -73,7 +73,7 @@ const mapBorrowingData = (doc: any): Booking => {
     // products copy
     productId: data.productId,
     title: data.title,
-    imageUrl: data.imageUrl,
+    imageUrls: data.imageUrls,
     description: data.description,
     includedServices: data.includedServices,
     category: data.category,
@@ -98,10 +98,10 @@ const mapBorrowingData = (doc: any): Booking => {
 };
 
 // Function to fetch products for a specific user from Firestore
-export const fetchBorrowingsByUser = async (userID: string): Promise<Booking[]> => {
+export const fetchBookingsByUser = async (userID: string): Promise<Booking[]> => {
   try {
     const userMyBorrowingsList: Booking[] = [];
-    const snapshot = await getDocs(collection(db, 'borrowings')); // Fetch products from 'products' collection
+    const snapshot = await getDocs(collection(db, 'bookings')); // Fetch products from 'products' collection
     snapshot.forEach(doc => {
       const borrowingData = doc.data();
       if (borrowingData.userId === userID) {  // Check if the product belongs to the user
@@ -115,19 +115,19 @@ export const fetchBorrowingsByUser = async (userID: string): Promise<Booking[]> 
   }
 };
 
-export const fetchSelectedBorrowing = async (borrowingId: string): Promise<Booking | null> => {
+export const fetchSelectedBooking = async (bookingId: string): Promise<Booking | null> => {
   try {
-    const borrowingRef = doc(db, 'borrowings', borrowingId);
-    const borrowingDoc = await getDoc(borrowingRef);
+    const bookingRef = doc(db, 'bookings', bookingId);
+    const bookingDoc = await getDoc(bookingRef);
 
-    if (borrowingDoc.exists() && borrowingDoc.data()) {
-      return mapBorrowingData(borrowingDoc);
+    if (bookingDoc.exists() && bookingDoc.data()) {
+      return mapBorrowingData(bookingDoc);
     } else {
-      console.log('No such selected borrowing exists.');
+      console.log('No such selected booking exists.');
       return null;
     }
   } catch (error) {
-    console.error('Error fetching selected borrowing: ', error);
+    console.error('Error fetching selected booking: ', error);
     throw error;  // Throwing the error to handle it at the call site
   }
 };
@@ -150,13 +150,13 @@ export const fetchLendingsByUser = async (userID: string): Promise<Booking[]> =>
   }
 };
 
-export const updateBorrowing = async (borrowingId: string, updatedData: Partial<Booking>) => {
+export const updateBooking = async (bookingId: string, updatedData: Partial<Booking>) => {
   try {
-    const borrowingRef = doc(db, 'borrowings', borrowingId);
+    const borrowingRef = doc(db, 'bookings', bookingId);
     await updateDoc(borrowingRef, updatedData);
-    console.log('Borrowing updated with ID: ', borrowingId);
+    console.log('Booking updated with ID: ', bookingId);
   } catch (error) {
-    console.error('Error updating borrowing: ', error);
+    console.error('Error updating booking: ', error);
     throw error;  // Throwing the error to handle it at the call site
   }
 };

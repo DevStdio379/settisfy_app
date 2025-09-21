@@ -181,7 +181,7 @@ const QuoteCleaning = ({ navigation }: QuoteCleaningScreenProps) => {
       // products copy
       productId: 'cleaningService01',
       title: "Cleaning Service",
-      imageUrl: images[0],
+      imageUrls: images,
       description: "Cleaning service booking",
       includedServices: includedItems,
       category: "Essentials",

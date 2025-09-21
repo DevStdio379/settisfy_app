@@ -13,6 +13,7 @@ import { fetchSelectedUser, User, useUser } from '../../context/UserContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { createReview, getReviewByBorrowingId, Review } from '../../services/ReviewServices';
 import axios from 'axios';
+import { Booking, fetchSelectedBooking, updateBooking } from '../../services/BookingServices';
 
 type MyBorrowingDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyBookingDetails'>;
 
@@ -21,14 +22,14 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
 
     const { user } = useUser();
     const mapRef = useRef<MapView | null>(null);
-    const [borrowing, setBorrowing] = useState<Borrowing>(route.params.borrowing);
+    const [booking, setBooking] = useState<Booking>(route.params.booking);
     const [accordionOpen, setAccordionOpen] = useState<{ [key: string]: boolean }>({});
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [owner, setOwner] = useState<User>();
     const [images, setImages] = useState<string[]>([]);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
-    const [status, setStatus] = useState<number>(borrowing.status);
+    const [status, setStatus] = useState<number>(booking.status);
 
     const scrollViewHome = useRef<any>(null);
     const buttons = ['Transaction Summary', 'Instructions'];
@@ -61,9 +62,9 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
     };
 
     const validatePin = async (enteredPin: string) => {
-        const correctPin = borrowing.returnCode; // Replace with actual validation logic
+        const correctPin = booking.serviceEndCode; // Replace with actual validation logic
         if (enteredPin === correctPin) {
-            await updateBorrowing(borrowing.id || 'undefined', { status: status! + 1 });
+            await updateBooking(booking.id || 'undefined', { status: status! + 1 });
             setStatus(status! + 1);
             setCollectionCode(Array(CODE_LENGTH).fill("")); // Reset input
             inputs.current[0]?.focus(); // Focus back to first input
@@ -82,21 +83,21 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
         }
     };
 
-    const fetchSelectedBorrowingData = async () => {
-        if (borrowing) {
+    const fetchSelectedBookingData = async () => {
+        if (booking) {
             // Alert.alert('1 Borrowing found');
             try {
-                const selectedBorrowing = await fetchSelectedBorrowing(borrowing.id || 'undefined');
-                if (selectedBorrowing) {
-                    setBorrowing(selectedBorrowing)
-                    setStatus(selectedBorrowing.status);
+                const selectedBooking = await fetchSelectedBooking(booking.id || 'undefined');
+                if (selectedBooking) {
+                    setBooking(selectedBooking)
+                    setStatus(selectedBooking.status);
 
-                    const fetchedOwner = await fetchSelectedUser(selectedBorrowing.product.ownerID);
-                    if (fetchedOwner) {
-                        setOwner(fetchedOwner);
-                    }
+                    // const fetchedOwner = await fetchSelectedUser(selectedBooking.settlerId || 'undefined');
+                    // if (fetchedOwner) {
+                    //     setOwner(fetchedOwner);
+                    // }
 
-                    const fetchedReview = await getReviewByBorrowingId(selectedBorrowing.product.id || 'undefined', selectedBorrowing.id || 'unefined');
+                    const fetchedReview = await getReviewByBorrowingId(selectedBooking.productId || 'undefined', selectedBooking.id || 'unefined');
                     if (fetchedReview) {
                         // Alert.alert('B Review found');
                         setReview(fetchedReview);
@@ -115,20 +116,20 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
 
     useEffect(() => {
         const fetchData = async () => {
-            if (borrowing) {
+            if (booking) {
                 // Alert.alert('2 Borrowing found');
-                setImages(borrowing.product.imageUrls);
-                setSelectedImage(borrowing.product.imageUrls[0]);
-                setBorrowing(borrowing);
+                setImages(booking.imageUrls);
+                setSelectedImage(booking.imageUrls[0]);
+                setBooking(booking);
 
-                const selectedBorrowing = await fetchSelectedBorrowing(borrowing.id || 'undefined');
-                if (selectedBorrowing) {
-                    const fetchedOwner = await fetchSelectedUser(selectedBorrowing.product.ownerID);
-                    if (fetchedOwner) {
-                        setOwner(fetchedOwner);
-                    }
+                const selectedBooking = await fetchSelectedBooking(booking.id || 'undefined');
+                if (selectedBooking) {
+                    // const fetchedOwner = await fetchSelectedUser(selectedBorrowing.product.ownerID);
+                    // if (fetchedOwner) {
+                    //     setOwner(fetchedOwner);
+                    // }
 
-                    const fetchedReview = await getReviewByBorrowingId(selectedBorrowing.product.id || 'undefined', selectedBorrowing.id || 'undefined');
+                    const fetchedReview = await getReviewByBorrowingId(selectedBooking.productId || 'undefined', selectedBooking.productId || 'undefined');
                     if (fetchedReview && fetchedReview.id) {
                         setReview(fetchedReview);
                     }
@@ -137,13 +138,13 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                 // Alert.alert('B Borrowing not found');
             }
         };
-        setStatus(borrowing.status);
+        setStatus(booking.status);
         fetchData();
-    }, [borrowing]);
+    }, [booking]);
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
-        fetchSelectedBorrowingData().then(() => setRefreshing(false));
+        fetchSelectedBookingData().then(() => setRefreshing(false));
     }, []);
 
     const formatDate = (dateString: string | undefined) => {
@@ -154,11 +155,11 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
     };
 
     const steps = [
-        { label: "Borrowing\nCreated", date: `${formatDate(borrowing?.startDate)}`, completed: (status ?? 0) >= 0 },
-        { label: "Pickup\n", date: "Show pickup\ncode", completed: (status ?? 0) > 2 },
-        { label: "Active\nBorrowing", date: "\n", completed: (status ?? 0) > 2 },
-        { label: "Return\n", date: "Enter return\ncode", completed: (status ?? 0) > 3 },
-        { label: "Borrowing\nCompleted", date: `${formatDate(borrowing?.endDate)}`, completed: (status ?? 0) > 5 },
+        { label: "Booking\nCreated", date: `${formatDate(booking.selectedDate)}`, completed: (status ?? 0) >= 0 },
+        { label: "Service\nInitiated", date: "Show start\ncode", completed: (status ?? 0) > 2 },
+        { label: "Active\nService", date: "\n", completed: (status ?? 0) > 2 },
+        { label: "Service\nCompletion", date: "Enter complete\ncode", completed: (status ?? 0) > 3 },
+        { label: "Booking\nCompleted", date: `${formatDate(booking?.selectedDate)}`, completed: (status ?? 0) > 5 },
     ];
 
     const actions = [
@@ -174,30 +175,33 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
     const [currency] = useState('GBP');
     const [connectedAccountId] = useState('acct_1RiaVN4gRYsyHwtX'); // Replace with real lender ID
 
+    // const handleReleasePayment = async () => {
+    //     try {
+    //         setLoading(true);
+    //         const response = await axios.post(
+    //             'https://us-central1-tags-1489a.cloudfunctions.net/api/release-to-lender',
+    //             {
+    //                 amount: (booking.total - booking.product.depositAmount) * 100,
+    //                 currency,
+    //                 connectedAccountId,
+    //                 borrowingId: booking.id,
+    //             }
+    //         );
+
+    //         Alert.alert('Success', 'Funds released to Lender!');
+    //         return { success: true, data: response.data }; // ✅ return success and data
+    //     } catch (error: any) {
+    //         console.error('[Release Transfer Error]', error.response?.data || error.message);
+    //         Alert.alert('Error', error.response?.data?.error || 'Transfer failed.');
+    //         return { success: false, error: error.response?.data?.error || error.message }; // ✅ return failure
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
     const handleReleasePayment = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.post(
-                'https://us-central1-tags-1489a.cloudfunctions.net/api/release-to-lender',
-                {
-                    amount: (borrowing.total - borrowing.product.depositAmount) * 100,
-                    currency,
-                    connectedAccountId,
-                    borrowingId: borrowing.id,
-                }
-            );
-
-            Alert.alert('Success', 'Funds released to Lender!');
-            return { success: true, data: response.data }; // ✅ return success and data
-        } catch (error: any) {
-            console.error('[Release Transfer Error]', error.response?.data || error.message);
-            Alert.alert('Error', error.response?.data?.error || 'Transfer failed.');
-            return { success: false, error: error.response?.data?.error || error.message }; // ✅ return failure
-        } finally {
-            setLoading(false);
-        }
-    };
-
+        return { success: true, data: {} };
+    }
 
     return (
         <View style={{ backgroundColor: COLORS.background, flex: 1 }}>
@@ -218,14 +222,14 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                         </TouchableOpacity>
                     </View>
                     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center', marginVertical: 10 }}>Borrowing Details</Text>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center', marginVertical: 10 }}>Booking Details</Text>
                     </View>
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
                         {/* right header element */}
                     </View>
                 </View>
             </View>
-            {borrowing ? (
+            {booking ? (
                 <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{ flexGrow: 1, paddingBottom: 70, alignItems: 'flex-start' }}
@@ -269,7 +273,7 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                         <View style={{ backgroundColor: "#f3f3f3", padding: 16, borderRadius: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, marginVertical: 20, marginHorizontal: 10 }}>
                             {status === 0 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>Awaiting for owner's confirmation</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>Broadcasting your service job</Text>
                                     <TouchableOpacity
                                         style={{
                                             backgroundColor: COLORS.primary,
@@ -280,23 +284,40 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                             alignItems: 'center',
                                         }}
                                         onPress={async () => {
-                                            console.log('LOG: ', borrowing.collectionCode);
-                                            // await updateBorrowing(borrowing.id || 'undefined', { status: status! + 1 });
-                                            // setStatus(status! + 1);
+                                            await updateBooking(booking.id || 'undefined', { status: status! + 1, serviceStartCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
+                                            setStatus(status! + 1);
+                                            onRefresh();
                                         }}
                                     >
-                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Message owner</Text>
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>[Demo] Manual Accept</Text>
                                     </TouchableOpacity>
-                                    <Text style={{ fontSize: 10, color: COLORS.black, textAlign: 'center' }}>The owner needs to confirm this borrowing.</Text>
+                                    <Text style={{ fontSize: 10, color: COLORS.black, textAlign: 'center' }}>This usually takes about 1-2 hours waiting</Text>
                                 </View>
                             ) : status === 1 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Your pickup code is</Text>
-                                    <Text style={{ fontSize: 24, fontWeight: "bold", color: "indigo" }}>{borrowing.collectionCode}</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Please provide this code to our settler</Text>
+                                    <Text style={{ fontSize: 24, fontWeight: "bold", color: "indigo" }}>{booking.serviceStartCode}</Text>
+                                    <TouchableOpacity
+                                        style={{
+                                            backgroundColor: COLORS.primary,
+                                            padding: 10,
+                                            borderRadius: 10,
+                                            marginVertical: 10,
+                                            width: '80%',
+                                            alignItems: 'center',
+                                        }}
+                                        onPress={async () => {
+                                            await updateBooking(booking.id || 'undefined', { status: status! + 1 });
+                                            setStatus(status! + 1);
+                                            onRefresh();
+                                        }}
+                                    >
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>[Demo] Settler Enter Given Code</Text>
+                                    </TouchableOpacity>
                                 </View>
                             ) : status === 2 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontWeight: 'bold' }}>Please confirm this pickup</Text>
+                                    <Text style={{ fontWeight: 'bold' }}>Please confirm the starting of this service</Text>
                                     <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                         <TouchableOpacity
                                             style={{
@@ -321,26 +342,28 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                                 alignItems: 'center',
                                             }}
                                             onPress={async () => {
-                                                const result = await handleReleasePayment();
+                                                // const result = await handleReleasePayment();
 
-                                                if (result.success) {
-                                                    console.log('Transfer ID:', result.data.transferId);
-                                                    await updateBorrowing(borrowing.id || 'undefined', { status: status! + 1 });
-                                                    setStatus(status! + 1);
-                                                } else {
-                                                    console.log('Release failed:', result.error);
-                                                }
+                                                // if (result.success) {
+                                                //     // console.log('Transfer ID:', result.data.transferId);
+                                                //     await updateBorrowing(booking.id || 'undefined', { status: status! + 1 });
+                                                //     setStatus(status! + 1);
+                                                // } else {
+                                                //     // console.log('Release failed:', result.error);
+                                                // }
+                                                await updateBooking(booking.id || 'undefined', { status: status! + 1 });
+                                                setStatus(status! + 1);
                                             }}
                                         >
-                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes {borrowing.total - borrowing.product.depositAmount}</Text>
+                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes {booking.total}</Text>
                                         </TouchableOpacity>
                                     </View>
                                 </View>
                             ) : status === 3 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text>Active Borrowing</Text>
+                                    <Text>The service is now in progress</Text>
                                     <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>
-                                        {borrowing?.endDate ? `${Math.ceil((new Date(borrowing.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left` : "N/A"}
+                                        {booking?.selectedDate ? `${Math.ceil((new Date(booking.selectedDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left` : "N/A"}
                                     </Text>
                                     <TouchableOpacity
                                         style={{
@@ -352,18 +375,18 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                             alignItems: 'center',
                                         }}
                                         onPress={async () => {
-                                            await updateBorrowing(borrowing.id || 'undefined', { status: status! + 1, returnCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
+                                            await updateBooking(booking.id || 'undefined', { status: status! + 1, serviceEndCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
                                             setStatus(status! + 1);
                                             onRefresh();
                                         }}
                                     >
-                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Return Borrowing</Text>
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>[Demo] End Task By Settler</Text>
                                     </TouchableOpacity>
                                 </View>
                             ) : status === 4 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: "500" }}>Enter Return Code</Text>
-                                    <Text style={{ fontSize: 13, marginBottom: 10, color: COLORS.blackLight2 }}>Kindly ask the owner for the return code</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: "500" }}>Enter Completion Code</Text>
+                                    <Text style={{ fontSize: 13, marginBottom: 10, color: COLORS.blackLight2 }}>Kindly ask our settler for the completion code</Text>
                                     <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                         {returnCode.map((digit, index) => (
                                             <TextInput
@@ -380,10 +403,11 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                         ))}
                                     </View>
                                     <Text style={{ fontSize: 12, marginBottom: 4, marginTop: 10, color: COLORS.danger }}>{validationMessage}</Text>
+                                    <Text style={{ fontSize: 13, marginBottom: 10, color: COLORS.blackLight2 }}>{booking.serviceEndCode}</Text>
                                 </View>
                             ) : status === 5 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>Awaiting for owner's return confirmation</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>Awaiting settler completion confirmation</Text>
                                     <TouchableOpacity
                                         style={{
                                             backgroundColor: COLORS.primary,
@@ -394,13 +418,13 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                             alignItems: 'center',
                                         }}
                                         onPress={async () => {
-                                            await updateBorrowing(borrowing.id || 'undefined', { status: status! + 1 });
+                                            await updateBorrowing(booking.id || 'undefined', { status: status! + 1 });
                                             setStatus(status! + 1);
                                         }}
                                     >
-                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Message owner</Text>
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Message settler</Text>
                                     </TouchableOpacity>
-                                    <Text style={{ fontSize: 10, color: COLORS.black, textAlign: 'center' }}>The owner needs to confirm this return.</Text>
+                                    <Text style={{ fontSize: 10, color: COLORS.black, textAlign: 'center' }}>The settler needs to confirm the completion.</Text>
                                 </View>
                             ) : (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
@@ -417,7 +441,7 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                                 }}
                                                 onPress={() => {
                                                     console.log('Review found');
-                                                    navigation.navigate('BorrowerAddReview', { reviewId: review.id || 'newReview', borrowing: borrowing });
+                                                    navigation.navigate('BookingAddReview', { reviewId: review.id || 'newReview', booking: booking });
                                                 }}
                                             >
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Edit Review</Text>
@@ -448,7 +472,7 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                                 }}
                                                 onPress={() => {
                                                     console.log('Review found');
-                                                    navigation.navigate('BorrowerAddReview', { reviewId: review.id || 'newReview', borrowing: borrowing });
+                                                    navigation.navigate('BookingAddReview', { reviewId: review.id || 'newReview', booking: booking });
                                                 }}
                                             >
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Review</Text>
@@ -466,10 +490,10 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                             }}
                                             onPress={async () => {
                                                 const newReview = await createReview({
-                                                    borrowingId: borrowing.id || '',
+                                                    borrowingId: booking.id || '',
                                                     borrowerReviewerId: user?.uid || '',
                                                     borrowerOverallRating: 0,
-                                                    productId: borrowing.product.id || '',
+                                                    productId: booking.productId || '',
 
                                                     borrowerCollectionRating: 0,
                                                     borrowerCollectionFeedback: [''],
@@ -492,9 +516,9 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                                     borrowerUpdatedAt: new Date(),
                                                     borrowerCreateAt: new Date(),
                                                     borrowerStatus: 0,
-                                                }, borrowing.product.id || 'undefined');
+                                                }, booking.productId || 'undefined');
                                                 console.log('Review not found');
-                                                navigation.navigate('BorrowerAddReview', { reviewId: newReview, borrowing: borrowing });
+                                                navigation.navigate('BookingAddReview', { reviewId: newReview, booking: booking });
                                             }}
                                         >
                                             <Text style={{ color: 'white', fontWeight: 'bold' }}>Review</Text>
@@ -505,49 +529,7 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                             }
                         </View>
                         {/* Borrowing Details */}
-                        <View style={{ width: '100%', paddingHorizontal: 15, borderRadius: 20, borderColor: COLORS.blackLight, borderWidth: 1, marginBottom: 20 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', marginVertical: 10 }}>
-                                <View style={{ flex: 1, alignItems: 'center' }}>
-                                    {
-                                        owner ? (
-                                            <Image
-                                                source={{ uri: owner.profileImageUrl }}
-                                                style={{
-                                                    width: 60,
-                                                    height: 60,
-                                                    borderRadius: 40,
-                                                }}
-                                            />
-                                        ) : (
-                                            <View
-                                                style={{
-                                                    width: 60,
-                                                    height: 60,
-                                                    borderRadius: 40,
-                                                    marginBottom: 10,
-                                                    backgroundColor: COLORS.card,
-                                                    justifyContent: 'center',
-                                                    alignItems: 'center',
-                                                }}
-                                            >
-                                                <Text style={{ color: COLORS.blackLight }}>No image selected</Text>
-                                            </View>
-                                        )
-                                    }
-                                </View>
-                                <View style={{ flex: 7, paddingLeft: 20 }}>
-                                    <TouchableOpacity onPress={() => navigation.navigate('ProductDetails', { product: borrowing.product })}>
-                                        <View style={{ width: SIZES.width * 0.63 }}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                <Text style={{ fontSize: 17, fontWeight: 'bold', color: COLORS.black, textDecorationLine: 'underline' }} numberOfLines={1} ellipsizeMode="tail">{borrowing.product.title}</Text>
-                                                <Ionicons name="link" size={20} color={COLORS.blackLight} style={{ marginLeft: 5 }} />
-                                            </View>
-                                        </View>
-                                    </TouchableOpacity>
-                                    <Text style={{ fontSize: 14, color: COLORS.blackLight }}>provided by {owner?.firstName} {owner?.lastName} </Text>
-                                </View>
-                            </View>
-                        </View>
+                        <View style={{ alignItems:"center"}}><Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.danger, textAlign:'center' }}>A proper handshake between settler & customer in the making. :) {'\n'}</Text></View>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                             {buttons.map((btn: any, i: number) => (
                                 <View
@@ -607,76 +589,69 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                                 showsVerticalScrollIndicator={false}
                                                 contentContainerStyle={{ flexGrow: 1, paddingBottom: 20, alignItems: 'flex-start' }}
                                             >
-                                                <View style={{ width: SIZES.width * 0.93, paddingTop: 20, paddingHorizontal: 15, gap: 10 }}>
+                                                <View style={{ width: '90%', paddingTop: 20, gap: 10 }}>
                                                     {/* Product Info */}
-                                                    <View style={{ flexDirection: 'row' }}>
-                                                        <Text style={{ fontSize: 14, fontWeight: "bold", color: COLORS.title }}>Borrowing ID: </Text>
-                                                        <Text style={{ fontSize: 14, color: COLORS.blackLight }}>{borrowing.id}</Text>
-                                                    </View>
                                                     <View style={{ flexDirection: "row", marginBottom: 20 }}>
                                                         <Image
-                                                            source={{ uri: borrowing.product.imageUrls[0] }}
+                                                            source={{ uri: images[0] }}
                                                             style={{ width: 100, height: 100, borderRadius: 8, marginRight: 16 }}
                                                         />
                                                         <View style={{ flex: 1, marginTop: 5 }}>
                                                             <Text style={{ fontSize: 16, marginBottom: 5 }}>
-                                                                <Text style={{ color: "#E63946", fontWeight: "bold" }}>£{Number(borrowing.product.lendingRate).toFixed(2)}</Text>/day{" "}
+                                                                <Text style={{ color: "#E63946", fontWeight: "bold" }}>£{booking.total}</Text> / Session {" "}
                                                                 {/* <Text style={styles.originalPrice}>£40.20</Text> */}
                                                             </Text>
-                                                            <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }} numberOfLines={1} ellipsizeMode="tail">{borrowing.product.title}</Text>
-                                                            <Text style={{ fontSize: 14, color: COLORS.blackLight }}>{borrowing.product.category}</Text>
+                                                            <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }}>Cleaning Service</Text>
+                                                            <Text style={{ fontSize: 14, color: COLORS.black }}>Payment Method: {booking.paymentMethod}</Text>
                                                         </View>
                                                     </View>
                                                     <View style={GlobalStyleSheet.line} />
                                                     {/* Borrowing Period and Delivery Method */}
                                                     <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
                                                         <View style={{ paddingVertical: 10 }}>
-                                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Borrowing Period</Text>
-                                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>Day Borrowing</Text>
+                                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Start at</Text>
+                                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>{new Date(booking.selectedDate).toLocaleDateString('en-GB')}</Text>
                                                             <Text style={{ fontSize: 14, fontWeight: "bold" }}>From:</Text>
-                                                            <Text style={{ fontSize: 14, color: COLORS.title }}>{new Date(borrowing.startDate).toLocaleDateString('en-GB')}</Text>
-                                                            <Text style={{ fontSize: 14, color: COLORS.title }}>09:00 AM</Text>
+                                                            <Text style={{ fontSize: 14, color: COLORS.title }}>09:00 AM OR Now</Text>
                                                         </View>
                                                         <View style={{ marginHorizontal: 40, paddingTop: 60 }}>
                                                             <Ionicons name="arrow-forward" size={30} color={COLORS.title} />
                                                         </View>
                                                         <View style={{ paddingVertical: 10 }}>
-                                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Delivery Method</Text>
-                                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>{borrowing.deliveryMethod}</Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>Until:</Text>
-                                                            <Text style={{ fontSize: 14, color: COLORS.title }}>{new Date(borrowing.endDate).toLocaleDateString('en-GB')}</Text>
-                                                            <Text style={{ fontSize: 14, color: COLORS.title }}>09:00 AM</Text>
+                                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Location</Text>
+                                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
+                                                                {booking.selectedAddress ? booking.selectedAddress.addressName : ''}
+                                                            </Text>
+                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>Estimated Duration:</Text>
+                                                            <Text style={{ fontSize: 14, color: COLORS.title }}>3 Hours</Text>
                                                         </View>
                                                     </View>
+                                                    <Text style={{ fontSize: 12, color: "#666", textAlign: "center", marginBottom: 5 }}>
+                                                        The service duration may vary based on the actual cleaning requirements.
+                                                    </Text>
                                                     <View style={GlobalStyleSheet.line} />
                                                     {/* Borrowing Rate Breakdown */}
-                                                    <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Borrowing Rate Breakdown</Text>
-                                                    <Text style={{ fontSize: 14, color: COLORS.blackLight, marginBottom: 10 }}>Cash on Pickup</Text>
+                                                    <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Service Pricing Breakdown</Text>
                                                     <View style={{ marginBottom: 20 }}>
                                                         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>Borrowing rate</Text>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>£{borrowing.product.lendingRate} x {(Number(borrowing.total) - Number(borrowing.product.depositAmount)) / Number(borrowing.product.lendingRate)} day</Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{borrowing.total - Number(borrowing.product.depositAmount)}</Text>
+                                                            <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
+                                                            <Text style={{ fontSize: 14, color: "#333" }}>1 x session</Text>
+                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.total.toFixed(2)}</Text>
                                                         </View>
                                                         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>Service Charge</Text>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>FREE</Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£0.00</Text>
+                                                            <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
+                                                            <Text style={{ fontSize: 14, color: "#333" }}></Text>
+                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£2.00</Text>
                                                         </View>
                                                         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                                                             <Text style={{ fontSize: 14, color: "#333" }}>Delivery Charge</Text>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>FREE (PICKUP)</Text>
+                                                            <Text style={{ fontSize: 14, color: "#333" }}> N/A</Text>
                                                             <Text style={{ fontSize: 14, fontWeight: "bold" }}>£0.00</Text>
-                                                        </View>
-                                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>Deposit</Text>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}></Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>{borrowing.product.depositAmount}</Text>
                                                         </View>
                                                         <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '90%', alignSelf: 'center' },]} />
                                                         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                                                             <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
-                                                            <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>£{borrowing.total}</Text>
+                                                            <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>£{booking.total}</Text>
                                                         </View>
                                                     </View>
                                                 </View>
@@ -684,133 +659,6 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                         )}
                                         {index === 1 && (
                                             <View style={{ paddingRight: 40 }}>
-                                                <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Meetup Location</Text>
-                                                <View style={{ marginTop: 10, borderRadius: 50, backgroundColor: '#8ABE12', }}>
-                                                    <View style={{ height: 200, borderRadius: 20, overflow: 'hidden', borderColor: COLORS.blackLight, borderWidth: 1 }}>
-                                                        <MapView
-                                                            ref={mapRef}
-                                                            style={{ ...StyleSheet.absoluteFillObject, }}
-                                                            initialRegion={{
-                                                                latitude: borrowing.product.latitude,
-                                                                longitude: borrowing.product.longitude,
-                                                                latitudeDelta: 0.0005,
-                                                                longitudeDelta: 0.0005,
-                                                            }}
-                                                            scrollEnabled={false}
-                                                            zoomEnabled={false}
-                                                            rotateEnabled={false}
-                                                            pitchEnabled={false}
-                                                            toolbarEnabled={false}
-                                                        >
-                                                            <Marker
-                                                                coordinate={{
-                                                                    latitude: borrowing.product.latitude,
-                                                                    longitude: borrowing.product.longitude,
-                                                                }}
-                                                                title="house"
-                                                            />
-
-                                                        </MapView>
-                                                    </View>
-                                                </View>
-                                                <Text style={{ fontSize: 14, color: COLORS.title, marginBottom: 0 }}><Text style={{ fontSize: 14, color: COLORS.title, fontWeight: 'bold' }}>{borrowing.product.addressName}, </Text>{borrowing.product.address}</Text>
-                                                <TouchableOpacity
-                                                    onPress={() => {
-                                                        const url = `https://www.google.com/maps?q=${borrowing.product.latitude},${borrowing.product.longitude}`;
-                                                        Linking.openURL(url);
-                                                    }}
-                                                >
-                                                    <Text
-                                                        style={{ fontSize: 14, color: COLORS.primary, textDecorationLine: 'underline', marginBottom: 10 }}
-                                                    >
-                                                        Open in Google Maps
-                                                    </Text>
-                                                </TouchableOpacity>
-                                                <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Borrowing Notes</Text>
-                                                <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20, paddingTop: 20 }}>{borrowing.product.borrowingNotes}</Text>
-                                                <View style={GlobalStyleSheet.line} />
-                                                <View style={{ paddingHorizontal: 10 }}>
-                                                    <TouchableOpacity
-                                                        onPress={() => setAccordionOpen((prev) => ({ ...prev, insurance: !prev.insurance }))}
-                                                        style={{
-                                                            flexDirection: 'row',
-                                                            justifyContent: 'space-between',
-                                                            alignItems: 'center',
-                                                            paddingVertical: 10,
-                                                        }}
-                                                    >
-                                                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>
-                                                            Your Pickup Instructions
-                                                        </Text>
-                                                        <Ionicons
-                                                            name={accordionOpen.insurance ? 'chevron-up-outline' : 'chevron-down-outline'}
-                                                            size={24}
-                                                            color={COLORS.blackLight}
-                                                        />
-                                                    </TouchableOpacity>
-                                                    {accordionOpen.insurance && (
-                                                        <View style={{ paddingLeft: 10 }}>
-                                                            <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
-                                                                {borrowing.product.pickupInstructions}
-                                                            </Text>
-                                                        </View>
-                                                    )}
-                                                </View>
-                                                <View style={{ paddingHorizontal: 10 }}>
-                                                    <TouchableOpacity
-                                                        onPress={() => setAccordionOpen((prev) => ({ ...prev, handover: !prev.handover }))}
-                                                        style={{
-                                                            flexDirection: 'row',
-                                                            justifyContent: 'space-between',
-                                                            alignItems: 'center',
-                                                            paddingVertical: 10,
-                                                        }}
-                                                    >
-                                                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>
-                                                            Your Return Instructions
-                                                        </Text>
-                                                        <Ionicons
-                                                            name={accordionOpen.handover ? 'chevron-up-outline' : 'chevron-down-outline'}
-                                                            size={24}
-                                                            color={COLORS.blackLight}
-                                                        />
-                                                    </TouchableOpacity>
-                                                    {accordionOpen.handover && (
-                                                        <View style={{ paddingLeft: 10 }}>
-                                                            <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
-                                                                {borrowing.product.returnInstructions}
-                                                            </Text>
-                                                        </View>
-                                                    )}
-                                                </View>
-
-                                                <View style={{ paddingHorizontal: 10 }}>
-                                                    <TouchableOpacity
-                                                        onPress={() => setAccordionOpen((prev) => ({ ...prev, faqs: !prev.faqs }))}
-                                                        style={{
-                                                            flexDirection: 'row',
-                                                            justifyContent: 'space-between',
-                                                            alignItems: 'center',
-                                                            paddingVertical: 10,
-                                                        }}
-                                                    >
-                                                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>
-                                                            Deposit Release
-                                                        </Text>
-                                                        <Ionicons
-                                                            name={accordionOpen.faqs ? 'chevron-up-outline' : 'chevron-down-outline'}
-                                                            size={24}
-                                                            color={COLORS.blackLight}
-                                                        />
-                                                    </TouchableOpacity>
-                                                    {accordionOpen.faqs && (
-                                                        <View style={{ paddingLeft: 10 }}>
-                                                            <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
-                                                                £{Number(borrowing.product.depositAmount).toFixed(2)} will be released within 3-5 working days after the product is returned and checked.
-                                                            </Text>
-                                                        </View>
-                                                    )}
-                                                </View>
                                             </View>
                                         )}
                                     </View>

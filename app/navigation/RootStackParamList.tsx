@@ -2,6 +2,7 @@ import { NavigatorScreenParams } from "@react-navigation/native";
 import { BottomTabParamList } from "./BottomTabParamList";
 import { Borrowing } from "../services/BorrowingServices";
 import { Product } from "../services/ProductServices";
+import { Booking } from "../services/BookingServices";
 
 export type RootStackParamList = {
     BottomNavigation: NavigatorScreenParams<BottomTabParamList>;
@@ -15,8 +16,8 @@ export type RootStackParamList = {
     ProductDetails: { product: Product };
     PaymentSuccess: { bookingId: string };
     MyBookings: undefined;
-    MyBookingDetails: { borrowing: Borrowing };
-    BorrowerAddReview: { reviewId: string, borrowing: Borrowing };
+    MyBookingDetails: { booking: Booking };
+    BookingAddReview: { reviewId: string, booking: Booking };
 
     ChatList: undefined;
     NewChat: undefined;

@@ -20,7 +20,7 @@ import Products from '../screens/Products/Products';
 import ProductDetails from '../screens/Products/ProductDetails';
 import MyBorrowingDetails from '../screens/MyBookings/MyBookingDetails';
 import LendingDetails from '../screens/ProviderPanel/MyRequestDetails';
-import BorrowerAddReview from '../screens/Products/BorrowerAddReview';
+import BorrowerAddReview from '../screens/Products/BookingAddReview';
 import LenderAddReview from '../screens/ProviderPanel/LenderAddReview';
 import MyBorrowings from '../screens/MyBookings/MyBookings';
 import Temp from '../screens/Temp';
@@ -36,6 +36,7 @@ import MyServices from '../screens/ProviderPanel/MyServices';
 import MyBookingDetails from '../screens/MyBookings/MyBookingDetails';
 import MyBookings from '../screens/MyBookings/MyBookings';
 import QuoteCleaning from '../screens/Products/QuoteCleaning';
+import BookingAddReview from '../screens/Products/BookingAddReview';
 
 
 const StackComponent = createStackNavigator<RootStackParamList>();
@@ -63,7 +64,7 @@ const StackNavigator = () => {
 				<StackComponent.Screen name="ProductDetails" component={ProductDetails} />
 				<StackComponent.Screen name="MyBookings" component={MyBookings} />
 				<StackComponent.Screen name="MyBookingDetails" component={MyBookingDetails} />
-				<StackComponent.Screen name="BorrowerAddReview" component={BorrowerAddReview} />
+				<StackComponent.Screen name="BookingAddReview" component={BookingAddReview} />
 				<StackComponent.Screen name="Profile" component={Profile} />
 				<StackComponent.Screen name="ChatList" component={ChatList} />
 				<StackComponent.Screen name="NewChat" component={NewChat} />

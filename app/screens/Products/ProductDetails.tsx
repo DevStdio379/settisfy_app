@@ -514,13 +514,7 @@ const ProductDetails = ({ navigation, route }: ProductDetailsScreenProps) => {
     if (borrowingId) {
       Alert.alert('Success', `Borrowings created successfully with ID: ${borrowingId}`);
       navigation.navigate('PaymentSuccess', {
-        borrowingId: borrowingId,
-        collectionCode: borrowingData.collectionCode,
-        latitude: product.latitude,
-        longitude: product.longitude,
-        addressName: product.addressName,
-        address: product.address,
-        postcode: product.postcode
+        bookingId: borrowingId,
       });
     }
   };

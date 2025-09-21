@@ -11,12 +11,12 @@ import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom
 import { createReview, getReviewAverageRatingByProductId, getReviewByBorrowingId, updateReview } from '../../services/ReviewServices';
 import { updateProduct } from '../../services/ProductServices';
 
-type BorrowerAddReviewScreenProps = StackScreenProps<RootStackParamList, 'BorrowerAddReview'>;
+type BookingAddReviewScreenProps = StackScreenProps<RootStackParamList, 'BookingAddReview'>;
 
-const BorrowerAddReview = ({ navigation, route }: BorrowerAddReviewScreenProps) => {
+const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) => {
 
     const { user } = useUser();
-    const { reviewId, borrowing } = route.params;
+    const { reviewId, booking } = route.params;
     const [index, setIndex] = useState(reviewId === 'newReview' ? 0 : 1);
 
     const [overallRating, setOverallRating] = useState<number>(0);
@@ -95,7 +95,7 @@ const BorrowerAddReview = ({ navigation, route }: BorrowerAddReviewScreenProps) 
     };
 
     const fetchOwner = async () => {
-        const fetchedOwner = await fetchSelectedUser(borrowing.product.ownerID);
+        const fetchedOwner = await fetchSelectedUser(booking.settlerId || '');
         if (fetchedOwner) {
             setOwner(fetchedOwner);
         }
@@ -110,8 +110,8 @@ const BorrowerAddReview = ({ navigation, route }: BorrowerAddReviewScreenProps) 
         if (reviewId !== 'newReview') {
             const fetchReview = async () => {
                 try {
-                    if (borrowing.product.id && borrowing.id) {
-                        const selectedProduct = await getReviewByBorrowingId(borrowing.product.id, borrowing.id);
+                    if (booking.productId && booking.id) {
+                        const selectedProduct = await getReviewByBorrowingId(booking.productId, booking.id);
                         if (selectedProduct) {
                             setOverallRating(selectedProduct.borrowerOverallRating ?? 0);
                             setCollectionRating(selectedProduct.borrowerCollectionRating ?? 0);
@@ -223,10 +223,10 @@ const BorrowerAddReview = ({ navigation, route }: BorrowerAddReviewScreenProps) 
             if (user?.uid) {
                 if (reviewId === 'newReview') {
                     await createReview({
-                        borrowingId: borrowing.id || '',
+                        borrowingId: booking.id || '',
                         borrowerReviewerId: user.uid,
                         borrowerOverallRating: overallRating || 0,
-                        productId: borrowing.product.id || '',
+                        productId: booking.productId || '',
 
                         borrowerCollectionRating: collectionRating || 0,
                         borrowerCollectionFeedback: collectionFeedback || [''],
@@ -249,11 +249,11 @@ const BorrowerAddReview = ({ navigation, route }: BorrowerAddReviewScreenProps) 
                         borrowerUpdatedAt: new Date(),
                         borrowerCreateAt: new Date(),
                         borrowerStatus: status,
-                    }, borrowing.product.id || 'undefined');
+                    }, booking.productId || 'undefined');
                     Alert.alert('Review created successfully.');
                 } else {
-                    await updateReview(borrowing.product.id || 'undefined', reviewId, {
-                        borrowingId: borrowing.id || '',
+                    await updateReview(booking.productId || 'undefined', reviewId, {
+                        borrowingId: booking.id || '',
                         borrowerReviewerId: user.uid,
                         borrowerOverallRating: overallRating || 0,
                         borrowerCollectionRating: collectionRating || 0,
@@ -278,8 +278,8 @@ const BorrowerAddReview = ({ navigation, route }: BorrowerAddReviewScreenProps) 
                         borrowerStatus: status,
                     });
                     Alert.alert(`Review updated successfully.`);
-                    const latestRating = await getReviewAverageRatingByProductId(borrowing.product.id || 'undefined');
-                    await updateProduct(borrowing.product.id || 'undefined', {averageRating: latestRating.averageRating, ratingCount: latestRating.ratingCount});
+                    const latestRating = await getReviewAverageRatingByProductId(booking.productId || 'undefined');
+                    await updateProduct(booking.productId || 'undefined', {averageRating: latestRating.averageRating, ratingCount: latestRating.ratingCount});
                 }
             } else {
                 Alert.alert('User ID is missing.');
@@ -894,4 +894,4 @@ const BorrowerAddReview = ({ navigation, route }: BorrowerAddReviewScreenProps) 
     )
 }
 
-export default BorrowerAddReview
+export default BookingAddReview

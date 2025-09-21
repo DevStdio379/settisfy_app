@@ -8,14 +8,14 @@ import { RootStackParamList } from '../../navigation/RootStackParamList';
 import Header from '../../layout/Header';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useUser } from '../../context/UserContext';
-import { fetchBorrowingsByUser } from '../../services/BorrowingServices';
+import { fetchBookingsByUser } from '../../services/BookingServices';
 
 type MyBookingsScreenProps = StackScreenProps<RootStackParamList, 'MyBookings'>;
 
 const MyBookings = ({ navigation }: MyBookingsScreenProps) => {
     const { user } = useUser();
-    const [activeBorrowings, setActiveBorrowings] = useState<any[]>([]);
-    const [inactiveBorrowings, setInactiveBorrowings] = useState<any[]>([]);
+    const [activeBookings, setActiveBorrowings] = useState<any[]>([]);
+    const [inactiveBookings, setInactiveBookings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
@@ -27,11 +27,11 @@ const MyBookings = ({ navigation }: MyBookingsScreenProps) => {
 
     const fetchData = async () => {
         if (user?.uid) {
-            const myBorrowingsData = await fetchBorrowingsByUser(user.uid);
-            const activeBorrowings = myBorrowingsData.filter(listing => listing.status <= 5);
-            const inactiveBorrowings = myBorrowingsData.filter(listing => listing.status > 5);
-            setActiveBorrowings(activeBorrowings);
-            setInactiveBorrowings(inactiveBorrowings);
+            const myBookingsData = await fetchBookingsByUser(user.uid);
+            const activeBookings = myBookingsData.filter(listing => listing.status <= 5);
+            const inactiveBookings = myBookingsData.filter(listing => listing.status > 5);
+            setActiveBorrowings(activeBookings);
+            setInactiveBookings(inactiveBookings);
         }
         setLoading(false);
     };
@@ -77,7 +77,7 @@ const MyBookings = ({ navigation }: MyBookingsScreenProps) => {
                         {/* left header element */}
                     </View>
                     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center', marginVertical: 10 }}>My Borrowing</Text>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center', marginVertical: 10 }}>My Bookings</Text>
                     </View>
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
                         {/* right header element */}
@@ -137,11 +137,11 @@ const MyBookings = ({ navigation }: MyBookingsScreenProps) => {
                                     <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40, paddingTop: 10 }]}>
                                         <View>
                                             {
-                                                activeBorrowings.map((data: any, index) => (
+                                                activeBookings.map((data: any, index) => (
                                                     <View style={{ marginVertical: 5, height: 100 }} key={index}>
                                                         <TouchableOpacity
                                                             activeOpacity={0.8}
-                                                            onPress={() => navigation.navigate('MyBookingDetails', { borrowing: data })}
+                                                            onPress={() => navigation.navigate('MyBookingDetails', { booking: data })}
                                                             style={{
                                                                 borderRadius: 10,
                                                                 borderWidth: 1,
@@ -149,11 +149,11 @@ const MyBookings = ({ navigation }: MyBookingsScreenProps) => {
                                                                 backgroundColor: COLORS.card,
                                                             }}>
                                                             <View style={[GlobalStyleSheet.flexcenter, { justifyContent: 'flex-start' }]}>
-                                                                {data.product.imageUrls && data.product.imageUrls.length > 0 ? (
+                                                                {data.imageUrls && data.imageUrls.length > 0 ? (
                                                                     <View style={{ width: '30%' }}>
                                                                         <Image
                                                                             style={{ height: '100%', width: '100%', resizeMode: 'cover', borderTopLeftRadius: 10, borderBottomLeftRadius: 10 }}
-                                                                            source={{ uri: data.product.imageUrls[0] }}
+                                                                            source={{ uri: data.imageUrls[0] }}
                                                                         />
                                                                     </View>
                                                                 ) : (
@@ -162,11 +162,9 @@ const MyBookings = ({ navigation }: MyBookingsScreenProps) => {
                                                                     </View>
                                                                 )}
                                                                 <View style={{ width: '70%', padding: 10 }}>
-                                                                    <Text numberOfLines={1} style={{ fontSize: 16, color: COLORS.black, fontWeight: 'bold' }}>{data.product.title}</Text>
+                                                                    <Text numberOfLines={1} style={{ fontSize: 16, color: COLORS.black, fontWeight: 'bold' }}>{data.title}</Text>
                                                                     <Text style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}>provided by {data.ownerFirstName} {data.ownerLastName}</Text>
-                                                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                                        <Text style={{ fontSize: 14 }}>{new Date(data.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.startDate).toLocaleDateString('en-GB', { weekday: 'short' })} to {new Date(data.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.endDate).toLocaleDateString('en-GB', { weekday: 'short' })}</Text>
-                                                                    </View>
+                                                                    <Text style={{ fontSize: 14 }}>{new Date(data.selectedDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.selectedDate).toLocaleDateString('en-GB', { weekday: 'long' })}</Text>
                                                                 </View>
                                                             </View>
                                                         </TouchableOpacity>
@@ -188,11 +186,11 @@ const MyBookings = ({ navigation }: MyBookingsScreenProps) => {
                                     <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40, paddingTop: 10 }]}>
                                         <View>
                                             {
-                                                inactiveBorrowings.map((data: any, index) => (
+                                                inactiveBookings.map((data: any, index) => (
                                                     <View style={{ marginVertical: 5, height: 100 }} key={index}>
                                                         <TouchableOpacity
                                                             activeOpacity={0.8}
-                                                            onPress={() => navigation.navigate('MyBookingDetails', { borrowing: data })}
+                                                            onPress={() => navigation.navigate('MyBookingDetails', { booking: data })}
                                                             style={{
                                                                 borderRadius: 10,
                                                                 borderWidth: 1,
@@ -200,11 +198,11 @@ const MyBookings = ({ navigation }: MyBookingsScreenProps) => {
                                                                 backgroundColor: COLORS.card,
                                                             }}>
                                                             <View style={[GlobalStyleSheet.flexcenter, { justifyContent: 'flex-start' }]}>
-                                                                {data.product.imageUrls && data.product.imageUrls.length > 0 ? (
+                                                                {data.imageUrls && data.imageUrls.length > 0 ? (
                                                                     <View style={{ width: '30%' }}>
                                                                         <Image
                                                                             style={{ height: '100%', width: '100%', resizeMode: 'cover', borderTopLeftRadius: 10, borderBottomLeftRadius: 10 }}
-                                                                            source={{ uri: data.product.imageUrls[0] }}
+                                                                            source={{ uri: data.imageUrls[0] }}
                                                                         />
                                                                     </View>
                                                                 ) : (
@@ -213,10 +211,10 @@ const MyBookings = ({ navigation }: MyBookingsScreenProps) => {
                                                                     </View>
                                                                 )}
                                                                 <View style={{ width: '70%', padding: 10 }}>
-                                                                    <Text numberOfLines={1} style={{ fontSize: 16, color: COLORS.black, fontWeight: 'bold' }}>{data.product.title}</Text>
+                                                                    <Text numberOfLines={1} style={{ fontSize: 16, color: COLORS.black, fontWeight: 'bold' }}>{data.title}</Text>
                                                                     <Text style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}>provided by {data.ownerFirstName} {data.ownerLastName}</Text>
                                                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                                        <Text style={{ fontSize: 14 }}>{new Date(data.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.startDate).toLocaleDateString('en-GB', { weekday: 'short' })} to {new Date(data.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.endDate).toLocaleDateString('en-GB', { weekday: 'short' })}</Text>
+                                                                        <Text style={{ fontSize: 14 }}>{new Date(data.selectedDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.selectedDate).toLocaleDateString('en-GB', { weekday: 'short' })} to {new Date(data.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.endDate).toLocaleDateString('en-GB', { weekday: 'short' })}</Text>
                                                                     </View>
                                                                 </View>
                                                             </View>
