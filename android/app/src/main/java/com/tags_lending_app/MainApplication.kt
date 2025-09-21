@@ -1,4 +1,4 @@
-package com.tags_lending_app
+package com.settisfy_app
 
 import android.app.Application
 import com.facebook.react.PackageList

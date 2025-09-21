@@ -1,4 +1,4 @@
-package com.tags_lending_app
+package com.settisfy_app
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
