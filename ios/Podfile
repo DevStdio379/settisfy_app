@@ -31,7 +31,7 @@ setup_permissions([
   'LocationWhenInUse',
 ])
 
-target 'settisfyapp' do
+target 'settisfy_app' do
   config = use_native_modules!
 
   use_react_native!(
