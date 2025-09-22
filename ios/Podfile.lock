@@ -3244,27 +3244,6 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNVectorIcons (10.3.0):
-    - DoubleConversion
-    - glog
-    - hermes-engine
-    - RCT-Folly (= 2024.11.18.00)
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - Yoga
   - RNWorklets (0.5.1):
     - DoubleConversion
     - glog
@@ -3506,7 +3485,6 @@ DEPENDENCIES:
   - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
-  - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
   - "stripe-react-native (from `../node_modules/@stripe/stripe-react-native`)"
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -3698,8 +3676,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
-  RNVectorIcons:
-    :path: "../node_modules/react-native-vector-icons"
   RNWorklets:
     :path: "../node_modules/react-native-worklets"
   stripe-react-native:
@@ -3804,7 +3780,6 @@ SPEC CHECKSUMS:
   RNPermissions: ae995ed019180bf1098894ad99cc4d0c4518a7c0
   RNReanimated: d98340b963742aa8f0fc505d634897ef65212237
   RNScreens: 77f93ec55b749c49549b447527ebf78e990125f3
-  RNVectorIcons: 656546fa945a04b69d54169c5f0173855bbe6a1d
   RNWorklets: 6e6132a6a2e78b6a874d090f2427a250cb4856fc
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   Stripe: ae1b368097280ad027c1ec4a817a0a78bb74a6ee
