@@ -25,7 +25,6 @@ type HomeScreenProps = StackScreenProps<RootStackParamList, 'Home'>
 export const Home = ({ navigation }: HomeScreenProps) => {
 
     const [loading, setLoading] = useState<boolean>(false);
-    const [refreshing, setRefreshing] = useState(false);
     const { user } = useUser();
     const userId = user?.uid || ''; // replace with actual auth user id
     const dispatch = useDispatch<AppDispatch>();
@@ -58,10 +57,6 @@ export const Home = ({ navigation }: HomeScreenProps) => {
             </View>
         );
     };
-
-    const onRefresh = useCallback(async () => {
-        setRefreshing(true);
-    }, []);
 
     const scrollViewHome = useRef<any>(null);
 
@@ -138,9 +133,6 @@ export const Home = ({ navigation }: HomeScreenProps) => {
                                     showsVerticalScrollIndicator={false}
                                     style={{ width: SIZES.width }}
                                     key={index}
-                                    refreshControl={
-                                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-                                    }
                                 >
                                     <View style={[GlobalStyleSheet.container, { paddingBottom: 20 }]}>
                                         <FlatList

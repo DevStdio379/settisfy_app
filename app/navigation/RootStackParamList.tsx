@@ -3,6 +3,7 @@ import { BottomTabParamList } from "./BottomTabParamList";
 import { Borrowing } from "../services/BorrowingServices";
 import { Product } from "../services/ProductServices";
 import { Booking } from "../services/BookingServices";
+import { SettlerService } from "../services/SettlerServiceServices";
 
 export type RootStackParamList = {
     BottomNavigation: NavigatorScreenParams<BottomTabParamList>;
@@ -40,7 +41,7 @@ export type RootStackParamList = {
     MyRequestDetails: { lending: Borrowing };
     LenderAddReview: { reviewId: string, lending: Borrowing };
     MyServices: undefined;
-    AddListing: { listing: Product | null };
+    SettlerAddService: {settlerService: SettlerService | null};
     ProviderDashboard: undefined;
     Messages: undefined;
 
