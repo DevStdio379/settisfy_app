@@ -15,7 +15,7 @@ export type RootStackParamList = {
 
     Home: undefined;
     Products: undefined;
-    ProductDetails: { product: Product };
+    ProductDetails: { product: Booking };
     PaymentSuccess: { bookingId: string };
     MyBookings: undefined;
     MyBookingDetails: { booking: Booking };
@@ -39,8 +39,8 @@ export type RootStackParamList = {
 
     // Lender Profile
     MyRequests: undefined;
-    MyRequestDetails: { lending: Borrowing };
-    LenderAddReview: { reviewId: string, lending: Borrowing };
+    MyRequestDetails: { booking: Booking };
+    LenderAddReview: { reviewId: string, booking: Booking };
     MyServices: undefined;
     SettlerAddService: {settlerService: SettlerService | null};
     ProviderDashboard: undefined;

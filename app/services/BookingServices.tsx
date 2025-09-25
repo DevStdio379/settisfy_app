@@ -1,6 +1,7 @@
 import { db } from './firebaseConfig';
 import { collection, addDoc, query, where, getDocs, doc, getDoc, updateDoc, CollectionReference, DocumentReference, setDoc, onSnapshot } from 'firebase/firestore';
 import { Address } from './AddressServices';
+import { Catalogue } from './CatalogueServices';
 
 export interface Booking {
   id?: string;
@@ -10,17 +11,11 @@ export interface Booking {
   selectedAddress: Address;
 
   // user copy
-  firstName: string,
-  lastName: string,
+  firstName: string;
+  lastName: string;
 
   // products copy
-  productId?: string;
-  title: string;
-  imageUrls: string[];
-  description: string;
-  includedServices: string[];
-  category: string;
-  servicePrice: number;
+  catalogueService: Catalogue;
 
   // booking details
   total: number;
@@ -39,7 +34,6 @@ export interface Booking {
   updatedAt: any;
 
   // for cleaning service
-  extras?: string[];
   notes?: string;
 }
 
@@ -69,13 +63,7 @@ const mapBorrowingData = (doc: any): Booking => {
     lastName: data.lastName,
 
     // products copy
-    productId: data.productId,
-    title: data.title,
-    imageUrls: data.imageUrls,
-    description: data.description,
-    includedServices: data.includedServices,
-    category: data.category,
-    servicePrice: data.servicePrice,
+    catalogueService: data.catalogueService,
 
     // booking details
     total: data.total,

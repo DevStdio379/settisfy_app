@@ -21,18 +21,6 @@ type QuoteCleaningScreenProps = StackScreenProps<RootStackParamList, "QuoteClean
 
 const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
   const [service, setService] = useState(route.params.service)
-  // Options
-  const areaOptions = [
-    { id: 1, label: "Small ( < 800 sq ft )", price: 50, time: 2 },
-    { id: 2, label: "Medium ( 800-1500 sq ft )", price: 80, time: 3 },
-    { id: 3, label: "Large ( > 1500 sq ft )", price: 120, time: 5 },
-  ];
-
-  const tidinessOptions = [
-    { id: 1, label: "Light", price: 0, time: 0 },
-    { id: 2, label: "Moderate", price: 20, time: 1 },
-    { id: 3, label: "Heavy", price: 40, time: 2 },
-  ];
 
   const extrasOptions = [
     { id: 1, label: "Fridge Cleaning", price: 15, time: 0.5 },
@@ -115,10 +103,6 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
   // changing state screen
   const screens = 6;
   const nextScreen = async () => {
-    if (index === 0 && (!selectedArea || !selectedTidiness)) {
-      Alert.alert('Please select both area size and tidiness level to proceed.');
-      return;
-    }
     if (index === 1 && !selectedDate) {
       Alert.alert('Please select a date to proceed.');
       return;
@@ -168,13 +152,7 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
       lastName: user?.lastName || '',
 
       // products copy
-      productId: 'cleaningService01',
-      title: "Cleaning Service",
-      imageUrls: service.imageUrls,
-      description: "Cleaning service booking",
-      includedServices: includedItems,
-      category: "Essentials",
-      servicePrice: totalPrice,
+      catalogueService: service,
 
       // booking details
       total: grandTotal || 0,
@@ -193,9 +171,6 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
       createAt: new Date(),
 
       // Required Booking fields
-      extras: selectedExtras
-        .map(id => extrasOptions.find(e => e.id === id)?.label)
-        .filter((label): label is string => typeof label === 'string'),
       notes: notesForSettler,
     };
 
@@ -213,29 +188,6 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
     let price = 0;
     let time = 0;
 
-    if (selectedArea) {
-      const area = areaOptions.find((a) => a.id === selectedArea);
-      if (area) {
-        price += area.price;
-        time += area.time;
-      }
-    }
-
-    if (selectedTidiness) {
-      const tidy = tidinessOptions.find((t) => t.id === selectedTidiness);
-      if (tidy) {
-        price += tidy.price;
-        time += tidy.time;
-      }
-    }
-
-    selectedExtras.forEach((extraId) => {
-      const extra = extrasOptions.find((e) => e.id === extraId);
-      if (extra) {
-        price += extra.price;
-        time += extra.time;
-      }
-    });
 
     return { totalPrice: price, totalTime: time };
   }, [selectedArea, selectedTidiness, selectedExtras]);
@@ -436,36 +388,6 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
                             />
                           </View>
                         ))}
-
-                        <Text style={styles.sectionTitle}>Tidiness Level</Text>
-                        <FlatList
-                          data={tidinessOptions}
-                          keyExtractor={(item) => item.id.toString()}
-                          horizontal
-                          renderItem={({ item }) => (
-                            <Card
-                              item={item}
-                              isSelected={selectedTidiness === item.id}
-                              onPress={() => setSelectedTidiness(item.id)}
-                            />
-                          )}
-                          showsHorizontalScrollIndicator={false}
-                        />
-
-                        <Text style={styles.sectionTitle}>Extras</Text>
-                        <FlatList
-                          data={extrasOptions}
-                          keyExtractor={(item) => item.id.toString()}
-                          horizontal
-                          renderItem={({ item }) => (
-                            <Card
-                              item={item}
-                              isSelected={selectedExtras.includes(item.id)}
-                              onPress={() => toggleExtra(item.id)}
-                            />
-                          )}
-                          showsHorizontalScrollIndicator={false}
-                        />
                       </View>
                     )}
                     {index === 1 && (

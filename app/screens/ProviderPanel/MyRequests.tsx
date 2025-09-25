@@ -23,7 +23,7 @@ const MyRequests = ({ navigation, route }: MyRequestsScreenProps) => {
   const [refreshing, setRefreshing] = useState(false);
 
   const scrollViewHome = useRef<any>(null);
-  const buttons = ['Active', 'History'];
+  const buttons = ['Active', 'Broadcast', 'History'];
   const scrollX = useRef(new Animated.Value(0)).current;
   const onCLick = (i: any) => scrollViewHome.current.scrollTo({ x: i * SIZES.width });
   const [activeIndex, setActiveIndex] = useState(0);
@@ -87,7 +87,7 @@ const MyRequests = ({ navigation, route }: MyRequestsScreenProps) => {
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {buttons.map((btn: any, i: number) => (
-            <View key={i} style={{ flexDirection: 'row', width: SIZES.width * 0.5, paddingHorizontal: 10, justifyContent: 'space-between', alignItems: 'center' }}>
+            <View key={i} style={{ flexDirection: 'row', width: SIZES.width * 0.33, paddingHorizontal: 10, justifyContent: 'space-between', alignItems: 'center' }}>
               <TouchableOpacity
                 style={{ width: '100%', justifyContent: 'center', alignItems: 'center', }}
                 onPress={() => {
@@ -134,43 +134,7 @@ const MyRequests = ({ navigation, route }: MyRequestsScreenProps) => {
                 >
                   <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40, paddingTop: 10 }]}>
                     <View>
-                      {
-                        // jobs.map((data: any, index) => (
-                        //   <View style={{ marginVertical: 5, height: 100 }} key={index}>
-                        //     <TouchableOpacity
-                        //       activeOpacity={0.8}
-                        //       onPress={() => navigation.navigate('MyRequestDetails', { lending: data })}
-                        //       style={{
-                        //         borderRadius: 10,
-                        //         borderWidth: 1,
-                        //         borderColor: COLORS.blackLight,
-                        //         backgroundColor: COLORS.card,
-                        //       }}>
-                        //       <View style={[GlobalStyleSheet.flexcenter, { justifyContent: 'flex-start' }]}>
-                        //         {data.product.imageUrls && data.product.imageUrls.length > 0 ? (
-                        //           <View style={{ width: '30%' }}>
-                        //             <Image
-                        //               style={{ height: '100%', width: '100%', resizeMode: 'cover', borderTopLeftRadius: 10, borderBottomLeftRadius: 10 }}
-                        //               source={{ uri: data.product.imageUrls[0] }}
-                        //             />
-                        //           </View>
-                        //         ) : (
-                        //           <View style={{ width: '30%', height: '100%', backgroundColor: COLORS.background, borderTopLeftRadius: 10, borderBottomLeftRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
-                        //             <Ionicons name={'image-outline'} size={30} color={COLORS.black} style={{ opacity: .5 }} />
-                        //           </View>
-                        //         )}
-                        //         <View style={{ width: '70%', padding: 10 }}>
-                        //           <Text numberOfLines={1} style={{ fontSize: 16, color: COLORS.black, fontWeight: 'bold' }}>{data.product.title}</Text>
-                        //           <Text style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}>borrowed by {data.firstName} {data.lastName}</Text>
-                        //           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        //             <Text style={{ fontSize: 14 }}>{new Date(data.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.startDate).toLocaleDateString('en-GB', { weekday: 'short' })} to {new Date(data.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.endDate).toLocaleDateString('en-GB', { weekday: 'short' })}</Text>
-                        //           </View>
-                        //         </View>
-                        //       </View>
-                        //     </TouchableOpacity>
-                        //   </View>
-                        // ))
-                      }
+                      
                     </View>
                   </View>
                 </ScrollView>
@@ -183,41 +147,41 @@ const MyRequests = ({ navigation, route }: MyRequestsScreenProps) => {
                   <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40, paddingTop: 10 }]}>
                     <View>
                       {
-                        // inactiveLendings.map((data: any, index) => (
-                        //   <View style={{ marginVertical: 5, height: 100 }} key={index}>
-                        //     <TouchableOpacity
-                        //       activeOpacity={0.8}
-                        //       onPress={() => navigation.navigate('MyRequestDetails', { lending: data })}
-                        //       style={{
-                        //         borderRadius: 10,
-                        //         borderWidth: 1,
-                        //         borderColor: COLORS.blackLight,
-                        //         backgroundColor: COLORS.card,
-                        //       }}>
-                        //       <View style={[GlobalStyleSheet.flexcenter, { justifyContent: 'flex-start' }]}>
-                        //         {data.product.imageUrls && data.product.imageUrls.length > 0 ? (
-                        //           <View style={{ width: '30%' }}>
-                        //             <Image
-                        //               style={{ height: '100%', width: '100%', resizeMode: 'cover', borderTopLeftRadius: 10, borderBottomLeftRadius: 10 }}
-                        //               source={{ uri: data.product.imageUrls[0] }}
-                        //             />
-                        //           </View>
-                        //         ) : (
-                        //           <View style={{ width: '30%', height: '100%', backgroundColor: COLORS.background, borderTopLeftRadius: 10, borderBottomLeftRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
-                        //             <Ionicons name={'image-outline'} size={30} color={COLORS.black} style={{ opacity: .5 }} />
-                        //           </View>
-                        //         )}
-                        //         <View style={{ width: '70%', padding: 10 }}>
-                        //           <Text numberOfLines={1} style={{ fontSize: 16, color: COLORS.black, fontWeight: 'bold' }}>{data.product.title}</Text>
-                        //           <Text style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}>borrowed by {data.firstName} {data.lastName}</Text>
-                        //           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        //             <Text style={{ fontSize: 14 }}>{new Date(data.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.startDate).toLocaleDateString('en-GB', { weekday: 'short' })} to {new Date(data.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.endDate).toLocaleDateString('en-GB', { weekday: 'short' })}</Text>
-                        //           </View>
-                        //         </View>
-                        //       </View>
-                        //     </TouchableOpacity>
-                        //   </View>
-                        // ))
+                        jobs.map((data: any, index) => (
+                          <View style={{ marginVertical: 5, height: 100 }} key={index}>
+                            <TouchableOpacity
+                              activeOpacity={0.8}
+                              onPress={() => navigation.navigate('MyRequestDetails', { booking: data })}
+                              style={{
+                                borderRadius: 10,
+                                borderWidth: 1,
+                                borderColor: COLORS.blackLight,
+                                backgroundColor: COLORS.card,
+                              }}>
+                              <View style={[GlobalStyleSheet.flexcenter, { justifyContent: 'flex-start' }]}>
+                                {data.catalogueService.imageUrls && data.catalogueService.imageUrls.length > 0 ? (
+                                  <View style={{ width: '30%' }}>
+                                    <Image
+                                      style={{ height: '100%', width: '100%', resizeMode: 'cover', borderTopLeftRadius: 10, borderBottomLeftRadius: 10 }}
+                                      source={{ uri: data.catalogueService.imageUrls[0] }}
+                                    />
+                                  </View>
+                                ) : (
+                                  <View style={{ width: '30%', height: '100%', backgroundColor: COLORS.background, borderTopLeftRadius: 10, borderBottomLeftRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
+                                    <Ionicons name={'image-outline'} size={30} color={COLORS.black} style={{ opacity: .5 }} />
+                                  </View>
+                                )}
+                                <View style={{ width: '70%', padding: 10 }}>
+                                  <Text numberOfLines={1} style={{ fontSize: 16, color: COLORS.black, fontWeight: 'bold' }}>{data.catalogueService.title}</Text>
+                                  <Text style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}>borrowed by {data.firstName} {data.lastName}</Text>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <Text style={{ fontSize: 14 }}>{new Date(data.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.startDate).toLocaleDateString('en-GB', { weekday: 'short' })} to {new Date(data.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.endDate).toLocaleDateString('en-GB', { weekday: 'short' })}</Text>
+                                  </View>
+                                </View>
+                              </View>
+                            </TouchableOpacity>
+                          </View>
+                        ))
                       }
                     </View>
                   </View>

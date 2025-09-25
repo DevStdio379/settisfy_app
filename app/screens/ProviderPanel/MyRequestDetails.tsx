@@ -11,6 +11,7 @@ import { fetchSelectedUser, User, useUser } from '../../context/UserContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { createReview, getReviewByBorrowingId, Review } from '../../services/ReviewServices';
 import axios from 'axios';
+import { Booking, fetchSelectedBooking, updateBooking } from '../../services/BookingServices';
 
 type MyRequestDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyRequestDetails'>;
 
@@ -28,12 +29,12 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     const onCLick = (i: any) => scrollViewHome.current.scrollTo({ x: i * SIZES.width });
     const [activeIndex, setActiveIndex] = useState(0);
 
-    const [lending, setLending] = useState<Borrowing>(route.params.lending);
+    const [booking, setBooking] = useState<Booking>(route.params.booking);
     const [accordionOpen, setAccordionOpen] = useState<{ [key: string]: boolean }>({});
     const [owner, setOwner] = useState<User>();
     const [images, setImages] = useState<string[]>([]);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
-    const [status, setStatus] = useState<number>(lending.status);
+    const [status, setStatus] = useState<number>(booking.status);
     const [review, setReview] = useState<Review>();
 
     const CODE_LENGTH = 7;
@@ -60,10 +61,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     };
 
     const validatePin = async (enteredPin: string) => {
-        const correctPin = lending?.collectionCode; // Replace with actual validation logic
+        const correctPin = booking?.serviceStartCode; // Replace with actual validation logic
         if (enteredPin === correctPin) {
-            if (lending.id) {
-                await updateBorrowing(lending.id, { status: status! + 1 });
+            if (booking.id) {
+                await updateBorrowing(booking.id, { status: status! + 1 });
             }
             setStatus(status! + 1);
             setCollectionCode(Array(CODE_LENGTH).fill("")); // Reset input
@@ -84,19 +85,19 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     };
 
     const fetchSelectedBorrowingData = async () => {
-        if (lending) {
+        if (booking) {
             try {
-                const selectedBorrowing = await fetchSelectedBorrowing(lending.id || 'undefined');
-                if (selectedBorrowing) {
-                    setLending(selectedBorrowing);
-                    setStatus(selectedBorrowing.status);
+                const selectedBooking = await fetchSelectedBooking(booking.id || 'undefined');
+                if (selectedBooking) {
+                    setBooking(selectedBooking);
+                    setStatus(selectedBooking.status);
 
-                    const fetchedOwner = await fetchSelectedUser(selectedBorrowing.userId);
+                    const fetchedOwner = await fetchSelectedUser(selectedBooking.userId);
                     if (fetchedOwner) {
                         setOwner(fetchedOwner);
                     }
 
-                    const fetchedReview = await getReviewByBorrowingId(selectedBorrowing.product.id || '', lending.id || '');
+                    const fetchedReview = await getReviewByBorrowingId(selectedBooking.catalogueService.id || '', booking.id || '');
                     if (fetchedReview) {
                         // Alert.alert('L Review found');
                         setReview(fetchedReview);
@@ -115,19 +116,19 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
 
     useEffect(() => {
         const fetchData = async () => {
-            if (lending) {
-                setImages(lending.product.imageUrls);
-                setSelectedImage(lending.product.imageUrls[0]);
-                setLending(lending);
+            if (booking) {
+                setImages(booking.catalogueService.imageUrls);
+                setSelectedImage(booking.catalogueService.imageUrls[0]);
+                setBooking(booking);
 
-                const selectedBorrowing = await fetchSelectedBorrowing(lending.id || 'undefined');
-                if (selectedBorrowing) {
-                    const fetchedOwner = await fetchSelectedUser(selectedBorrowing.userId);
+                const selectedBooking = await fetchSelectedBorrowing(booking.id || 'undefined');
+                if (selectedBooking) {
+                    const fetchedOwner = await fetchSelectedUser(selectedBooking.userId);
                     if (fetchedOwner) {
                         setOwner(fetchedOwner);
                     }
 
-                    const fetchedReview = await getReviewByBorrowingId(selectedBorrowing.product.id || 'undefined', selectedBorrowing.id || 'undefined');
+                    const fetchedReview = await getReviewByBorrowingId(selectedBooking.product.id || 'undefined', selectedBooking.id || 'undefined');
                     if (fetchedReview && fetchedReview.id) {
                         setReview(fetchedReview);
                     }
@@ -135,8 +136,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
             }
         }
         fetchData();
-        setStatus(lending.status);
-    }, [lending]);
+        setStatus(booking.status);
+    }, [booking]);
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
@@ -151,11 +152,11 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     };
 
     const steps = [
-        { label: "Borrowing\nCreated", date: `${formatDate(lending?.startDate)}`, completed: (status ?? 0) >= 0 },
-        { label: "Pickup\n", date: "Enter pickup\ncode", completed: (status ?? 0) > 2 },
-        { label: "Active\nBorrowing", date: "\n", completed: (status ?? 0) > 2 },
-        { label: "Return\n", date: "Show return\ncode", completed: (status ?? 0) > 3 },
-        { label: "Borrowing\nCompleted", date: `${formatDate(lending?.endDate)}`, completed: (status ?? 0) > 6 },
+        { label: "Booking\nCreated", date: `${formatDate(booking?.selectedDate)}`, completed: (status ?? 0) >= 0 },
+        { label: "Service\nStarted", date: "Enter start\ncode", completed: (status ?? 0) > 2 },
+        { label: "Service\nOn-Going", date: "\n", completed: (status ?? 0) > 2 },
+        { label: "Service\nEnded", date: "Show end\ncode", completed: (status ?? 0) > 3 },
+        { label: "Booking\nCompleted", date: `${formatDate(booking?.selectedDate)}`, completed: (status ?? 0) > 6 },
     ];
 
     const actions = [
@@ -168,38 +169,38 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
 
     // Stripe functions
 
-    const handleRefund = async () => {
-        const paymentIntentId = lending.paymentIntentId || '';
-        const refundAmount = lending.product.depositAmount?.toString() || '';
-        if (!paymentIntentId || !refundAmount) {
-            Alert.alert('Error', 'Please fill in all fields.');
-            return;
-        }
+    // const handleRefund = async () => {
+    //     const paymentIntentId = booking.paymentIntentId || '';
+    //     const refundAmount = lending.product.depositAmount?.toString() || '';
+    //     if (!paymentIntentId || !refundAmount) {
+    //         Alert.alert('Error', 'Please fill in all fields.');
+    //         return;
+    //     }
 
-        try {
-            const amountInPence = Math.round(parseFloat(refundAmount) * 100);
+    //     try {
+    //         const amountInPence = Math.round(parseFloat(refundAmount) * 100);
 
-            const response = await axios.post(
-                'https://us-central1-tags-1489a.cloudfunctions.net/api/refund-deposit',
-                {
-                    paymentIntentId,
-                    amountToRefundInPence: amountInPence,
-                }
-            );
+    //         const response = await axios.post(
+    //             'https://us-central1-tags-1489a.cloudfunctions.net/api/refund-deposit',
+    //             {
+    //                 paymentIntentId,
+    //                 amountToRefundInPence: amountInPence,
+    //             }
+    //         );
 
-            if (response.data.success) {
-                // Alert.alert('Success', `Refund of £${refundAmount} processed.`);
-                return { success: true, data: response.data }; // ✅ success
-            } else {
-                // Alert.alert('Failed', 'Could not process the refund.');
-                return { success: false, error: 'Refund failed' }; // ❌ failure
-            }
-        } catch (error: any) {
-            console.error('Refund error:', error);
-            // Alert.alert('Error', error.response?.data?.error || 'Something went wrong.');
-            return { success: false, error: error.message || 'Something went wrong.' }; // ❌ failure
-        }
-    };
+    //         if (response.data.success) {
+    //             // Alert.alert('Success', `Refund of £${refundAmount} processed.`);
+    //             return { success: true, data: response.data }; // ✅ success
+    //         } else {
+    //             // Alert.alert('Failed', 'Could not process the refund.');
+    //             return { success: false, error: 'Refund failed' }; // ❌ failure
+    //         }
+    //     } catch (error: any) {
+    //         console.error('Refund error:', error);
+    //         // Alert.alert('Error', error.response?.data?.error || 'Something went wrong.');
+    //         return { success: false, error: error.message || 'Something went wrong.' }; // ❌ failure
+    //     }
+    // };
 
     return (
         <View style={{ backgroundColor: COLORS.background, flex: 1 }}>
@@ -220,14 +221,14 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         </TouchableOpacity>
                     </View>
                     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center', marginVertical: 10 }}>Lending Details</Text>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center', marginVertical: 10 }}>Job Details</Text>
                     </View>
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
                         {/* right header element */}
                     </View>
                 </View>
             </View>
-            {lending ? (
+            {booking ? (
                 <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{ flexGrow: 1, paddingBottom: 70, alignItems: 'flex-start' }}
@@ -271,7 +272,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         <View style={{ backgroundColor: "#f3f3f3", padding: 16, borderRadius: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, marginVertical: 20, marginHorizontal: 10 }}>
                             {status === 0 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontWeight: 'bold' }}>Please confirm this borrowing</Text>
+                                    <Text style={{ fontWeight: 'bold' }}>Take this job?</Text>
                                     <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                         <TouchableOpacity
                                             style={{
@@ -296,8 +297,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 alignItems: 'center',
                                             }}
                                             onPress={async () => {
-                                                if (lending.id) {
-                                                    await updateBorrowing(lending.id, { status: status! + 1, collectionCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
+                                                if (booking.id) {
+                                                    await updateBooking(booking.id, { status: status! + 1, serviceStartCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
                                                     onRefresh();
                                                 }
                                                 setStatus(status! + 1);
@@ -341,8 +342,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             alignItems: 'center',
                                         }}
                                         onPress={async () => {
-                                            if (lending.id) {
-                                                await updateBorrowing(lending.id, { status: status! + 1 });
+                                            if (booking.id) {
+                                                await updateBorrowing(booking.id, { status: status! + 1 });
                                             }
                                             setStatus(status! + 1);
                                         }}
@@ -354,7 +355,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                     <Text>Active Borrowing</Text>
                                     <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>
-                                        {lending?.endDate ? `${Math.ceil((new Date(lending.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left` : "N/A"}
+                                        {booking?.selectedDate ? `${Math.ceil((new Date(booking.selectedDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left` : "N/A"}
                                     </Text>
                                     <TouchableOpacity
                                         style={{
@@ -366,8 +367,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             alignItems: 'center',
                                         }}
                                         onPress={async () => {
-                                            if (lending.id) {
-                                                await updateBorrowing(lending.id, { status: status! + 1, returnCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
+                                            if (booking.id) {
+                                                await updateBorrowing(booking.id, { status: status! + 1, returnCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
                                             }
                                             setStatus(status! + 1);
                                         }}
@@ -378,7 +379,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             ) : status === 4 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                     <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Your return code is</Text>
-                                    <Text style={{ fontSize: 24, fontWeight: "bold", color: "indigo" }}>{lending.returnCode}</Text>
+                                    <Text style={{ fontSize: 24, fontWeight: "bold", color: "indigo" }}>{booking.serviceEndCode}</Text>
                                 </View>
                             ) : status === 5 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
@@ -407,8 +408,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 alignItems: 'center',
                                             }}
                                             onPress={async () => {
-                                                if (lending.id) {
-                                                    await updateBorrowing(lending.id, { status: status! + 1 });
+                                                if (booking.id) {
+                                                    await updateBorrowing(booking.id, { status: status! + 1 });
                                                 }
                                                 setStatus(status! + 1);
                                             }}
@@ -444,17 +445,21 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 alignItems: 'center',
                                             }}
                                             onPress={async () => {
-                                                const result = await handleRefund();
+                                                // const result = await handleRefund();
 
-                                                if (result && result.success) {
-                                                    console.log('Refund processed:', result.data);
-                                                    if (lending.id) {
-                                                        await updateBorrowing(lending.id, { status: status! + 1 });
-                                                    }
-                                                    setStatus(status! + 1);
-                                                } else if (result) {
-                                                    console.error('Refund failed:', result.error);
+                                                // if (result && result.success) {
+                                                //     console.log('Refund processed:', result.data);
+                                                //     if (lending.id) {
+                                                //         await updateBorrowing(lending.id, { status: status! + 1 });
+                                                //     }
+                                                //     setStatus(status! + 1);
+                                                // } else if (result) {
+                                                //     console.error('Refund failed:', result.error);
+                                                // }
+                                                if (booking.id) {
+                                                    await updateBorrowing(booking.id, { status: status! + 1 });
                                                 }
+                                                setStatus(status! + 1);
                                             }}
                                         >
                                             <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
@@ -476,7 +481,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 }}
                                                 onPress={() => {
                                                     console.log('Review found');
-                                                    navigation.navigate('LenderAddReview', { reviewId: review.id || 'newReview', lending: lending });
+                                                    navigation.navigate('LenderAddReview', { reviewId: review.id || 'newReview', booking: booking });
                                                 }}
                                             >
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Edit Review</Text>
@@ -507,7 +512,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 }}
                                                 onPress={() => {
                                                     console.log('Review found');
-                                                    navigation.navigate('LenderAddReview', { reviewId: review.id || 'newReview', lending: lending });
+                                                    navigation.navigate('LenderAddReview', { reviewId: review.id || 'newReview', booking: booking });
                                                 }}
                                             >
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Review</Text>
@@ -525,10 +530,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             }}
                                             onPress={async () => {
                                                 const newReview = await createReview({
-                                                    borrowingId: lending.id || '',
+                                                    borrowingId: booking.id || '',
                                                     lenderReviewerId: user?.uid || '',
                                                     lenderOverallRating: 0,
-                                                    productId: lending.product.id || '',
+                                                    productId: booking.catalogueService.id || '',
 
                                                     lenderCollectionRating: 0,
                                                     lenderCollectionFeedback: [''],
@@ -550,9 +555,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     lenderUpdatedAt: new Date(),
                                                     lenderCreateAt: new Date(),
                                                     lenderStatus: 0,
-                                                }, lending.product.id || 'undefined');
+                                                }, booking.catalogueService.id || 'undefined');
                                                 console.log('Review not found');
-                                                navigation.navigate('LenderAddReview', { reviewId: newReview, lending: lending });
+                                                navigation.navigate('LenderAddReview', { reviewId: newReview, booking: booking });
                                             }}
                                         >
                                             <Text style={{ color: 'white', fontWeight: 'bold' }}>Review</Text>
@@ -620,10 +625,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                     }
                                 </View>
                                 <View style={{ flex: 7, paddingLeft: 20 }}>
-                                    <TouchableOpacity onPress={() => navigation.navigate('ProductDetails', { product: lending.product })}>
+                                    <TouchableOpacity onPress={() => navigation.navigate('QuoteCleaning', { service: booking.catalogueService })}>
                                         <View style={{ width: SIZES.width * 0.63 }}>
                                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                <Text style={{ fontSize: 17, fontWeight: 'bold', color: COLORS.black, textDecorationLine: 'underline' }} numberOfLines={1} ellipsizeMode="tail">{lending.product.title}</Text>
+                                                <Text style={{ fontSize: 17, fontWeight: 'bold', color: COLORS.black, textDecorationLine: 'underline' }} numberOfLines={1} ellipsizeMode="tail">{booking.catalogueService.title}</Text>
                                                 <Ionicons name="link" size={20} color={COLORS.blackLight} style={{ marginLeft: 5 }} />
                                             </View>
                                         </View>
@@ -676,76 +681,69 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 showsVerticalScrollIndicator={false}
                                                 contentContainerStyle={{ flexGrow: 1, paddingBottom: 20, alignItems: 'flex-start' }}
                                             >
-                                                <View style={{ width: SIZES.width * 0.93, paddingTop: 20, paddingHorizontal: 15, gap: 10 }}>
+                                                <View style={{ width: '93%', paddingTop: 20, paddingHorizontal: 15, gap: 10 }}>
                                                     {/* Product Info */}
-                                                    <View style={{ flexDirection: 'row' }}>
-                                                        <Text style={{ fontSize: 14, fontWeight: "bold", color: COLORS.title }}>Borrowing ID: </Text>
-                                                        <Text style={{ fontSize: 14, color: COLORS.blackLight }}>{lending.id}</Text>
-                                                    </View>
                                                     <View style={{ flexDirection: "row", marginBottom: 20 }}>
                                                         <Image
-                                                            source={{ uri: lending.product.imageUrls[0] }}
+                                                            source={{ uri: booking.catalogueService.imageUrls[0] }}
                                                             style={{ width: 100, height: 100, borderRadius: 8, marginRight: 16 }}
                                                         />
                                                         <View style={{ flex: 1, marginTop: 5 }}>
                                                             <Text style={{ fontSize: 16, marginBottom: 5 }}>
-                                                                <Text style={{ color: "#E63946", fontWeight: "bold" }}>£{Number(lending.product.lendingRate).toFixed(2)}</Text>/day{" "}
+                                                                <Text style={{ color: "#E63946", fontWeight: "bold" }}>£{booking.total}</Text> / Session {" "}
                                                                 {/* <Text style={styles.originalPrice}>£40.20</Text> */}
                                                             </Text>
-                                                            <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }} numberOfLines={1} ellipsizeMode="tail">{lending.product.title}</Text>
-                                                            <Text style={{ fontSize: 14, color: COLORS.blackLight }}>{lending.product.category}</Text>
+                                                            <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }}>Cleaning Service</Text>
+                                                            <Text style={{ fontSize: 14, color: COLORS.black }}>Payment Method: {booking.paymentMethod}</Text>
                                                         </View>
                                                     </View>
                                                     <View style={GlobalStyleSheet.line} />
                                                     {/* Borrowing Period and Delivery Method */}
                                                     <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
                                                         <View style={{ paddingVertical: 10 }}>
-                                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Borrowing Period</Text>
-                                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>Day Borrowing</Text>
+                                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Start at</Text>
+                                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>{new Date(booking.selectedDate).toLocaleDateString('en-GB')}</Text>
                                                             <Text style={{ fontSize: 14, fontWeight: "bold" }}>From:</Text>
-                                                            <Text style={{ fontSize: 14, color: COLORS.title }}>{new Date(lending.startDate).toLocaleDateString('en-GB')}</Text>
-                                                            <Text style={{ fontSize: 14, color: COLORS.title }}>09:00 AM</Text>
+                                                            <Text style={{ fontSize: 14, color: COLORS.title }}>09:00 AM OR Now</Text>
                                                         </View>
                                                         <View style={{ marginHorizontal: 40, paddingTop: 60 }}>
                                                             <Ionicons name="arrow-forward" size={30} color={COLORS.title} />
                                                         </View>
                                                         <View style={{ paddingVertical: 10 }}>
-                                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Delivery Method</Text>
-                                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>{lending.deliveryMethod}</Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>Until:</Text>
-                                                            <Text style={{ fontSize: 14, color: COLORS.title }}>{new Date(lending.endDate).toLocaleDateString('en-GB')}</Text>
-                                                            <Text style={{ fontSize: 14, color: COLORS.title }}>09:00 AM</Text>
+                                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Location</Text>
+                                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
+                                                                {booking.selectedAddress ? booking.selectedAddress.addressName : ''}
+                                                            </Text>
+                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>Estimated Duration:</Text>
+                                                            <Text style={{ fontSize: 14, color: COLORS.title }}>3 Hours</Text>
                                                         </View>
                                                     </View>
+                                                    <Text style={{ fontSize: 12, color: "#666", textAlign: "center", marginBottom: 5 }}>
+                                                        The service duration may vary based on the actual cleaning requirements.
+                                                    </Text>
                                                     <View style={GlobalStyleSheet.line} />
                                                     {/* Borrowing Rate Breakdown */}
-                                                    <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Borrowing Rate Breakdown</Text>
-                                                    <Text style={{ fontSize: 14, color: COLORS.blackLight, marginBottom: 10 }}>Cash on Pickup</Text>
+                                                    <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Service Pricing Breakdown</Text>
                                                     <View style={{ marginBottom: 20 }}>
                                                         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>Borrowing rate</Text>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>£{lending.product.lendingRate} x {(Number(lending.total) - Number(lending.product.depositAmount)) / Number(lending.product.lendingRate)} day</Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{lending.total - Number(lending.product.depositAmount)}</Text>
+                                                            <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
+                                                            <Text style={{ fontSize: 14, color: "#333" }}>1 x session</Text>
+                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.total.toFixed(2)}</Text>
                                                         </View>
                                                         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>Service Charge</Text>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>FREE</Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£0.00</Text>
+                                                            <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
+                                                            <Text style={{ fontSize: 14, color: "#333" }}></Text>
+                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£2.00</Text>
                                                         </View>
                                                         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                                                             <Text style={{ fontSize: 14, color: "#333" }}>Delivery Charge</Text>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>FREE (PICKUP)</Text>
+                                                            <Text style={{ fontSize: 14, color: "#333" }}> N/A</Text>
                                                             <Text style={{ fontSize: 14, fontWeight: "bold" }}>£0.00</Text>
-                                                        </View>
-                                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>Deposit</Text>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}></Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>{lending.product.depositAmount}</Text>
                                                         </View>
                                                         <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '90%', alignSelf: 'center' },]} />
                                                         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                                                             <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
-                                                            <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>£{lending.total}</Text>
+                                                            <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>£{booking.total}</Text>
                                                         </View>
                                                     </View>
                                                 </View>
@@ -760,8 +758,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                             ref={mapRef}
                                                             style={{ ...StyleSheet.absoluteFillObject, }}
                                                             initialRegion={{
-                                                                latitude: lending.product.latitude,
-                                                                longitude: lending.product.longitude,
+                                                                latitude: booking.selectedAddress.latitude,
+                                                                longitude: booking.selectedAddress.longitude,
                                                                 latitudeDelta: 0.0005,
                                                                 longitudeDelta: 0.0005,
                                                             }}
@@ -773,8 +771,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         >
                                                             <Marker
                                                                 coordinate={{
-                                                                    latitude: lending.product.latitude,
-                                                                    longitude: lending.product.longitude,
+                                                                    latitude: booking.selectedAddress.latitude,
+                                                                    longitude: booking.selectedAddress.longitude,
                                                                 }}
                                                                 title="house"
                                                             />
@@ -782,10 +780,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         </MapView>
                                                     </View>
                                                 </View>
-                                                <Text style={{ fontSize: 14, color: COLORS.title, marginBottom: 0 }}><Text style={{ fontSize: 14, color: COLORS.title, fontWeight: 'bold' }}>{lending.product.addressName}, </Text>{lending.product.address}</Text>
+                                                <Text style={{ fontSize: 14, color: COLORS.title, marginBottom: 0 }}><Text style={{ fontSize: 14, color: COLORS.title, fontWeight: 'bold' }}>{booking.selectedAddress.addressName}, </Text>{booking.selectedAddress.address}</Text>
                                                 <TouchableOpacity
                                                     onPress={() => {
-                                                        const url = `https://www.google.com/maps?q=${lending.product.latitude},${lending.product.longitude}`;
+                                                        const url = `https://www.google.com/maps?q=${booking.selectedAddress.latitude},${booking.selectedAddress.longitude}`;
                                                         Linking.openURL(url);
                                                     }}
                                                 >
@@ -796,7 +794,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     </Text>
                                                 </TouchableOpacity>
                                                 <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Borrowing Notes</Text>
-                                                <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>{lending.product.borrowingNotes}</Text>
+                                                <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>{booking.notes}</Text>
                                                 <View style={GlobalStyleSheet.line} />
                                                 <View style={{ paddingHorizontal: 10 }}>
                                                     <TouchableOpacity
@@ -820,7 +818,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     {accordionOpen.insurance && (
                                                         <View style={{ paddingLeft: 10 }}>
                                                             <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
-                                                                {lending.product.pickupInstructions}
+                                                                {booking.notes}
                                                             </Text>
                                                         </View>
                                                     )}
@@ -847,7 +845,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     {accordionOpen.handover && (
                                                         <View style={{ paddingLeft: 10 }}>
                                                             <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
-                                                                {lending.product.returnInstructions}
+                                                                {booking.notes}
                                                             </Text>
                                                         </View>
                                                     )}
@@ -875,7 +873,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     {accordionOpen.faqs && (
                                                         <View style={{ paddingLeft: 10 }}>
                                                             <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
-                                                                £{Number(lending.product.depositAmount).toFixed(2)} will be released within 3-5 working days after the product is returned and checked.
+                                                                £{Number(booking.total).toFixed(2)} will be released within 3-5 working days after the product is returned and checked.
                                                             </Text>
                                                         </View>
                                                     )}
