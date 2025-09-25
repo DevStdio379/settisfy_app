@@ -4,6 +4,7 @@ import { Borrowing } from "../services/BorrowingServices";
 import { Product } from "../services/ProductServices";
 import { Booking } from "../services/BookingServices";
 import { SettlerService } from "../services/SettlerServiceServices";
+import { Catalogue } from "../services/CatalogueServices";
 
 export type RootStackParamList = {
     BottomNavigation: NavigatorScreenParams<BottomTabParamList>;
@@ -51,6 +52,6 @@ export type RootStackParamList = {
     FavouriteCollection: undefined;
 
     // Services Quotatation Screens
-    QuoteCleaning: undefined;
+    QuoteCleaning: {service: Catalogue};
 
 };

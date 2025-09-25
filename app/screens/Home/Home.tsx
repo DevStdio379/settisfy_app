@@ -51,13 +51,13 @@ export const Home = ({ navigation }: HomeScreenProps) => {
                 <Cardstyle4
                     id={item.id}
                     imageUrl={item.imageUrls[0]}
-                    price={item.basePrice.toString()}
+                    price={item.basePrice}
                     ownerID={''}
                     description={item.description}
                     location={''}
                     deposit={0}
                     title={item.title}
-                    onPress={() => navigation.navigate('ProductDetails', { product: item })}
+                    onPress={() => navigation.navigate('QuoteCleaning', { service: item })}
                     product={true}
                     averageRating={item.averageRating}
                     ratingCount={item.ratingCount}

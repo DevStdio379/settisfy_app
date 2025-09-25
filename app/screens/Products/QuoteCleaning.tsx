@@ -19,14 +19,8 @@ import { createBooking } from "../../services/BookingServices";
 
 type QuoteCleaningScreenProps = StackScreenProps<RootStackParamList, "QuoteCleaning">;
 
-const QuoteCleaning = ({ navigation }: QuoteCleaningScreenProps) => {
-
-  // Sample images for the swiper
-  const images = [
-    "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=60",
-    "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=60",
-    "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=800&q=60",
-  ];
+const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
+  const [service, setService] = useState(route.params.service)
   // Options
   const areaOptions = [
     { id: 1, label: "Small ( < 800 sq ft )", price: 50, time: 2 },
@@ -176,7 +170,7 @@ const QuoteCleaning = ({ navigation }: QuoteCleaningScreenProps) => {
       // products copy
       productId: 'cleaningService01',
       title: "Cleaning Service",
-      imageUrls: images,
+      imageUrls: service.imageUrls,
       description: "Cleaning service booking",
       includedServices: includedItems,
       category: "Essentials",
@@ -374,7 +368,7 @@ const QuoteCleaning = ({ navigation }: QuoteCleaningScreenProps) => {
                 showsPagination={Platform.OS === "android" ? true : false}
                 loop={false}
               >
-                {images.map((data, index) => (
+                {service.imageUrls.map((data, index) => (
                   <View key={index}>
                     <Image
                       style={{
@@ -419,20 +413,29 @@ const QuoteCleaning = ({ navigation }: QuoteCleaningScreenProps) => {
                   <View style={{}}>
                     {index === 0 && (
                       <View>
-                        <Text style={styles.sectionTitle}>Area Size</Text>
-                        <FlatList
-                          data={areaOptions}
-                          keyExtractor={(item) => item.id.toString()}
-                          horizontal
-                          renderItem={({ item }) => (
-                            <Card
-                              item={item}
-                              isSelected={selectedArea === item.id}
-                              onPress={() => setSelectedArea(item.id)}
+                        {service.dynamicOptions.map((option, optionIndex) => (
+                          <View key={optionIndex}>
+                            <Text style={styles.sectionTitle}>{option.name}</Text>
+                            <FlatList
+                              data={option.subOptions.map((sub, i) => ({
+                                id: `${optionIndex}-${i}`, // unique id for FlatList key
+                                label: sub.label,
+                                price: sub.additionalPrice,
+                                notes: sub.notes || "",
+                              }))}
+                              keyExtractor={(item) => item.id.toString()}
+                              horizontal
+                              renderItem={({ item }) => (
+                                <Card
+                                  item={item}
+                                  isSelected={selectedArea === Number(item.id)}
+                                  onPress={() => setSelectedArea(Number(item.id))}
+                                />
+                              )}
+                              showsHorizontalScrollIndicator={false}
                             />
-                          )}
-                          showsHorizontalScrollIndicator={false}
-                        />
+                          </View>
+                        ))}
 
                         <Text style={styles.sectionTitle}>Tidiness Level</Text>
                         <FlatList
@@ -819,7 +822,7 @@ const QuoteCleaning = ({ navigation }: QuoteCleaningScreenProps) => {
             {/* Product Info */}
             <View style={{ flexDirection: "row", marginBottom: 20 }}>
               <Image
-                source={{ uri: images[0] }}
+                source={{ uri: service.imageUrls[0] }}
                 style={{ width: 100, height: 100, borderRadius: 8, marginRight: 16 }}
               />
               <View style={{ flex: 1, marginTop: 5 }}>
