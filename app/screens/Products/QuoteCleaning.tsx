@@ -163,11 +163,6 @@ const QuoteCleaning = ({ navigation }: QuoteCleaningScreenProps) => {
       return;
     }
 
-    // if (!productAddress) {
-    //   Alert.alert('Error', 'Product address not found.');
-    //   return;
-    // }
-
     const bookingData = {
       userId: user?.uid || '',
       status: 0,

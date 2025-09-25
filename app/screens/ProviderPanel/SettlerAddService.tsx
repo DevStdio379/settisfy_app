@@ -66,7 +66,7 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
     const [averageRating, setAverageRating] = useState<number>(0);
     const [createdAt, setCreatedAt] = useState<any>();
     const [updatedAt, setUpdatedAt] = useState<any>();
-    
+
 
 
     const [index, setIndex] = useState(settlerService === null ? 0 : 1);
@@ -316,7 +316,7 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
             if (user?.uid) {
                 if (settlerService === null) {
                     await createSettlerService({
-                        id: serviceId, 
+                        id: serviceId,
 
                         settlerId: settlerId,
                         settlerFirstName: settlerFirstName,
@@ -352,7 +352,7 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
                     Alert.alert('Listing created successfully.');
                 } else {
                     await updateSettlerService(settlerService.id || 'undefined', {
-                        id: serviceId, 
+                        id: serviceId,
 
                         settlerId: settlerId,
                         settlerFirstName: settlerFirstName,
@@ -399,10 +399,10 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
 
     return (
         <KeyboardAwareScrollView
-  contentContainerStyle={{ flexGrow: 1 }}
-  enableOnAndroid={true}
-  extraScrollHeight={40}
->
+            contentContainerStyle={{ flexGrow: 1 }}
+            enableOnAndroid={true}
+            extraScrollHeight={40}
+        >
             <View style={{ flex: 1 }}>
                 <View style={{ backgroundColor: COLORS.background, flex: 1 }}>
                     <View>
@@ -759,7 +759,7 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
                                             borderRadius: 10,
                                             borderWidth: 1,
                                             borderColor: isAvailableImmediately ? COLORS.primary : COLORS.black,
-                                            backgroundColor: isAvailableImmediately ?  COLORS.primaryLight : COLORS.background,
+                                            backgroundColor: isAvailableImmediately ? COLORS.primaryLight : COLORS.background,
                                         }}
                                         onPress={() => setIsAvailableImmediately(true)}
                                     >
@@ -774,7 +774,7 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
                                             borderRadius: 10,
                                             borderWidth: 1,
                                             borderColor: !isAvailableImmediately ? COLORS.primary : COLORS.black,
-                                            backgroundColor: !isAvailableImmediately ?  COLORS.primaryLight : COLORS.background,
+                                            backgroundColor: !isAvailableImmediately ? COLORS.primaryLight : COLORS.background,
                                         }}
                                         onPress={() => setIsAvailableImmediately(false)} // Set to free if "No" is selected
                                     >

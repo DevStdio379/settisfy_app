@@ -38,6 +38,7 @@ import MyBookings from '../screens/MyBookings/MyBookings';
 import QuoteCleaning from '../screens/Products/QuoteCleaning';
 import BookingAddReview from '../screens/Products/BookingAddReview';
 import SettlerAddService from '../screens/ProviderPanel/SettlerAddService';
+import ServiceCatalogue from '../screens/ServiceCatalogue';
 
 
 const StackComponent = createStackNavigator<RootStackParamList>();
@@ -87,6 +88,7 @@ const StackNavigator = () => {
 				<StackComponent.Screen name="LenderAddReview" component={LenderAddReview} />
 
 				<StackComponent.Screen name="Temp" component={Temp} />
+				<StackComponent.Screen name="ServiceCatalogue" component={ServiceCatalogue}/>
 
 				{/* Services Quotation Screens */}
 				<StackComponent.Screen name="QuoteCleaning" component={QuoteCleaning} />

@@ -46,6 +46,7 @@ export type RootStackParamList = {
     Messages: undefined;
 
     Temp: undefined;
+    ServiceCatalogue: undefined;
 
     FavouriteCollection: undefined;
 

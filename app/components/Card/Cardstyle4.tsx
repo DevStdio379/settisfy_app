@@ -74,7 +74,7 @@ const Cardstyle4 = ({ id, title, imageUrl, description, deposit, averageRating, 
                 >
                     <Image
                         style={{ height: undefined, width: '100%', aspectRatio: 1 / 1.2, }}
-                        source={ imageUrl }
+                        source={{ uri: imageUrl }}
                     />
                     <View
                         style={{

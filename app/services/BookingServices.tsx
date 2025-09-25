@@ -1,6 +1,5 @@
 import { db } from './firebaseConfig';
-import { collection, addDoc, query, where, getDocs, doc, getDoc, updateDoc, CollectionReference, DocumentReference, setDoc } from 'firebase/firestore';
-import { Product2 } from './ProductServices2';
+import { collection, addDoc, query, where, getDocs, doc, getDoc, updateDoc, CollectionReference, DocumentReference, setDoc, onSnapshot } from 'firebase/firestore';
 import { Address } from './AddressServices';
 
 export interface Booking {
@@ -56,7 +55,6 @@ export const createBooking = async (bookingData: Booking) => {
   }
 };
 
-
 const mapBorrowingData = (doc: any): Booking => {
   const data = doc.data();
   return {
@@ -96,6 +94,14 @@ const mapBorrowingData = (doc: any): Booking => {
     updatedAt: data.updatedAt,
   };
 };
+
+export function subscribeToBookings(setJobs: (jobs: Booking[]) => void) {
+  const q = query(collection(db, "bookings"), where("status", "==", "0"));
+  return onSnapshot(q, (snap) => {
+    const jobs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Booking));
+    setJobs(jobs);
+  });
+}
 
 // Function to fetch products for a specific user from Firestore
 export const fetchBookingsByUser = async (userID: string): Promise<Booking[]> => {
