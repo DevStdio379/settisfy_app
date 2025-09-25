@@ -3,6 +3,13 @@ import { collection, addDoc, query, where, getDocs, doc, getDoc, updateDoc, Coll
 import { Address } from './AddressServices';
 import { Catalogue } from './CatalogueServices';
 
+export interface Acceptor {
+  settlerId: string;
+  firstName: string;
+  lastName: string;
+  acceptedAt: string; // store as ISO string, or use Firestore Timestamp if needed
+}
+
 export interface Booking {
   id?: string;
   userId: string;
@@ -23,6 +30,7 @@ export interface Booking {
   paymentIntentId?: string;
 
   // after broadcast
+  acceptors?: Acceptor[];
   settlerId?: string;
   settlerFirstName?: string;
   settlerLastName?: string;
@@ -71,6 +79,7 @@ const mapBorrowingData = (doc: any): Booking => {
     paymentIntentId: data.paymentIntentId || '',  // Ensure paymentIntentId is always a string
 
     // after broadcast
+    acceptors: data.acceptors,
     settlerId: data.settlerId || '',
     settlerFirstName: data.settlerFirstName || '',
     settlerLastName: data.settlerLastName || '',
@@ -83,11 +92,22 @@ const mapBorrowingData = (doc: any): Booking => {
   };
 };
 
-export function subscribeToBookings(setJobs: (jobs: Booking[]) => void) {
+export function subscribeToBookings(setJobs: (booking: Booking[]) => void) {
   const q = query(collection(db, "bookings"), where("status", "==", "0"));
   return onSnapshot(q, (snap) => {
     const jobs = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Booking));
     setJobs(jobs);
+  });
+}
+
+export function subscribeToOneBooking(bookingId: string, onUpdate: (booking: Booking | null) => void) {
+  const bookingRef = doc(db, "bookings", bookingId);
+  return onSnapshot(bookingRef, (docSnap) => {
+    if (docSnap.exists()) {
+      onUpdate({ id: docSnap.id, ...docSnap.data() } as Booking);
+    } else {
+      onUpdate(null); // Job deleted or not found
+    }
   });
 }
 
@@ -144,7 +164,7 @@ export const fetchLendingsByUser = async (userID: string): Promise<Booking[]> =>
   }
 };
 
-export const updateBooking = async (bookingId: string, updatedData: Partial<Booking>) => {
+export const updateBooking = async (bookingId: string, updatedData: Partial<any>) => {
   try {
     const borrowingRef = doc(db, 'bookings', bookingId);
     await updateDoc(borrowingRef, updatedData);

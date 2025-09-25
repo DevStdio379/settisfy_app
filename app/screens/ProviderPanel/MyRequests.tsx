@@ -7,7 +7,7 @@ import { RootStackParamList } from "../../navigation/RootStackParamList";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchSelectedUser, User, useUser } from "../../context/UserContext";
 import { fetchLendingsByUser } from "../../services/BorrowingServices";
-import { Booking, subscribeToBookings } from "../../services/BookingServices";
+import { Booking, fetchBookingsByUser, subscribeToBookings } from "../../services/BookingServices";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../services/firebaseConfig";
 
@@ -17,8 +17,8 @@ type MyRequestsScreenProps = StackScreenProps<RootStackParamList, 'MyRequests'>;
 const MyRequests = ({ navigation, route }: MyRequestsScreenProps) => {
 
   const { user } = useUser();
-  const [activeLendings, setActiveLendings] = useState<any[]>([]);
-  const [inactiveLendings, setInactiveLendings] = useState<any[]>([]);
+  const [activeJobs, setActiveJobs] = useState<any[]>([]);
+  const [inactiveJobs, setInactiveJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -30,11 +30,11 @@ const MyRequests = ({ navigation, route }: MyRequestsScreenProps) => {
 
   const fetchData = async () => {
     if (user?.uid) {
-      const myListingsData = await fetchLendingsByUser(user.uid);
-      const activeLendings = myListingsData.filter(listing => listing.status <= 5);
-      const inactiveLendings = myListingsData.filter(listing => listing.status > 5);
-      setActiveLendings(activeLendings);
-      setInactiveLendings(inactiveLendings);
+      const setRequestsData = await fetchBookingsByUser(user.uid);
+      const activeJobs = setRequestsData.filter(listing => listing.status <= 5);
+      const inactiveJobs = setRequestsData.filter(listing => listing.status > 5);
+      setActiveJobs(activeJobs);
+      setInactiveJobs(inactiveJobs);
     }
     setLoading(false);
   };
@@ -134,7 +134,43 @@ const MyRequests = ({ navigation, route }: MyRequestsScreenProps) => {
                 >
                   <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40, paddingTop: 10 }]}>
                     <View>
-                      
+                      {
+                        activeJobs.map((data: any, index) => (
+                          <View style={{ marginVertical: 5, height: 100 }} key={index}>
+                            <TouchableOpacity
+                              activeOpacity={0.8}
+                              onPress={() => navigation.navigate('MyRequestDetails', { booking: data })}
+                              style={{
+                                borderRadius: 10,
+                                borderWidth: 1,
+                                borderColor: COLORS.blackLight,
+                                backgroundColor: COLORS.card,
+                              }}>
+                              <View style={[GlobalStyleSheet.flexcenter, { justifyContent: 'flex-start' }]}>
+                                {data.catalogueService.imageUrls && data.catalogueService.imageUrls.length > 0 ? (
+                                  <View style={{ width: '30%' }}>
+                                    <Image
+                                      style={{ height: '100%', width: '100%', resizeMode: 'cover', borderTopLeftRadius: 10, borderBottomLeftRadius: 10 }}
+                                      source={{ uri: data.catalogueService.imageUrls[0] }}
+                                    />
+                                  </View>
+                                ) : (
+                                  <View style={{ width: '30%', height: '100%', backgroundColor: COLORS.background, borderTopLeftRadius: 10, borderBottomLeftRadius: 10, justifyContent: 'center', alignItems: 'center' }}>
+                                    <Ionicons name={'image-outline'} size={30} color={COLORS.black} style={{ opacity: .5 }} />
+                                  </View>
+                                )}
+                                <View style={{ width: '70%', padding: 10 }}>
+                                  <Text numberOfLines={1} style={{ fontSize: 16, color: COLORS.black, fontWeight: 'bold' }}>{data.catalogueService.title}</Text>
+                                  <Text style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}>borrowed by {data.firstName} {data.lastName}</Text>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <Text style={{ fontSize: 14 }}>{new Date(data.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.startDate).toLocaleDateString('en-GB', { weekday: 'short' })} to {new Date(data.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.endDate).toLocaleDateString('en-GB', { weekday: 'short' })}</Text>
+                                  </View>
+                                </View>
+                              </View>
+                            </TouchableOpacity>
+                          </View>
+                        ))
+                      }
                     </View>
                   </View>
                 </ScrollView>

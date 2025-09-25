@@ -13,12 +13,12 @@ import { fetchSelectedUser, User, useUser } from '../../context/UserContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { createReview, getReviewByBorrowingId, Review } from '../../services/ReviewServices';
 import axios from 'axios';
-import { Booking, fetchSelectedBooking, updateBooking } from '../../services/BookingServices';
+import { Booking, fetchSelectedBooking, subscribeToBookings, subscribeToOneBooking, updateBooking } from '../../services/BookingServices';
 
-type MyBorrowingDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyBookingDetails'>;
+type MyBookingDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyBookingDetails'>;
 
 
-const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps) => {
+const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) => {
 
     const { user } = useUser();
     const mapRef = useRef<MapView | null>(null);
@@ -42,6 +42,13 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
     const [validationMessage, setValidationMessage] = useState<string | null>(null);
     const inputs = useRef<Array<TextInput | null>>(Array(CODE_LENGTH).fill(null));
     const [review, setReview] = useState<Review>();
+
+    // selected settler
+    const [selectedSettlerId, setSelectedSettlerId] = useState<string>('');
+    const [selectedSettlerFirstName, setSelectedSettlerFirstName] = useState<string>('');
+    const [selectedSettlerLastName, setSelectedSettlerLastName] = useState<string>('');
+
+
 
     const handleChange = (text: string, index: number) => {
         if (/^\d?$/.test(text)) {
@@ -97,13 +104,13 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                     //     setOwner(fetchedOwner);
                     // }
 
-                    const fetchedReview = await getReviewByBorrowingId(selectedBooking.productId || 'undefined', selectedBooking.id || 'unefined');
-                    if (fetchedReview) {
-                        // Alert.alert('B Review found');
-                        setReview(fetchedReview);
-                    } else {
-                        // Alert.alert('B Review not found');
-                    }
+                    // const fetchedReview = await getReviewByBorrowingId(selectedBooking.productId || 'undefined', selectedBooking.id || 'unefined');
+                    // if (fetchedReview) {
+                    //     // Alert.alert('B Review found');
+                    //     setReview(fetchedReview);
+                    // } else {
+                    //     // Alert.alert('B Review not found');
+                    // }
                 }
             } catch (error) {
                 console.error('Failed to fetch selected borrowing details:', error);
@@ -115,32 +122,21 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
     };
 
     useEffect(() => {
-        const fetchData = async () => {
-            if (booking) {
-                // Alert.alert('2 Borrowing found');
-                setImages(booking.imageUrls);
-                setSelectedImage(booking.imageUrls[0]);
-                setBooking(booking);
+        if (!booking.id) return;
 
-                const selectedBooking = await fetchSelectedBooking(booking.id || 'undefined');
-                if (selectedBooking) {
-                    // const fetchedOwner = await fetchSelectedUser(selectedBorrowing.product.ownerID);
-                    // if (fetchedOwner) {
-                    //     setOwner(fetchedOwner);
-                    // }
-
-                    const fetchedReview = await getReviewByBorrowingId(selectedBooking.productId || 'undefined', selectedBooking.productId || 'undefined');
-                    if (fetchedReview && fetchedReview.id) {
-                        setReview(fetchedReview);
-                    }
-                }
+        const unsubscribe = subscribeToOneBooking(booking.id, (job) => {
+            if (job) {
+                console.log("Job updated:", job);
             } else {
-                // Alert.alert('B Borrowing not found');
+                console.log("Job deleted or not found");
             }
-        };
+        });
+        setImages(booking.catalogueService.imageUrls);
+        setSelectedImage(booking.catalogueService.imageUrls[0]);
+        setBooking(booking);
         setStatus(booking.status);
-        fetchData();
-    }, [booking]);
+        return () => unsubscribe();
+    }, [booking.id]);
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
@@ -274,50 +270,57 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                             {status === 0 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                     <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>Broadcasting your service job</Text>
-                                    <TouchableOpacity
-                                        style={{
-                                            backgroundColor: COLORS.primary,
-                                            padding: 10,
-                                            borderRadius: 10,
-                                            marginVertical: 10,
-                                            width: '80%',
-                                            alignItems: 'center',
-                                        }}
-                                        onPress={async () => {
-                                            await updateBooking(booking.id || 'undefined', { status: status! + 1, serviceStartCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
-                                            setStatus(status! + 1);
-                                            onRefresh();
-                                        }}
-                                    >
-                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>[Demo] Manual Accept</Text>
-                                    </TouchableOpacity>
-                                    <Text style={{ fontSize: 10, color: COLORS.black, textAlign: 'center' }}>This usually takes about 1-2 hours waiting</Text>
+                                    <Text style={{ fontSize: 10, color: COLORS.blackLight2, textAlign: 'center' }}>This usually takes about 1-2 hours waiting</Text>
+                                    {
+                                        booking.acceptors && booking.acceptors.length === 0 ? (
+                                            <Text style={{ fontSize: 14, color: COLORS.danger, marginBottom: 8 }}>
+                                                No settler has accepted your job yet.
+                                            </Text>
+                                        ) : (
+                                            <View>
+                                                {booking.acceptors?.map((acceptor, index) => {
+                                                    const isSelected = selectedSettlerId === acceptor.settlerId;
+                                                    return (
+                                                        <TouchableOpacity
+                                                            key={index}
+                                                            style={[{ paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8, borderWidth: 1, borderColor: "#ccc", backgroundColor: "#fff", minWidth: 100, alignItems: "center" }, isSelected && { backgroundColor: "#007bff", borderColor: "#007bff" }]}
+                                                            onPress={async () => {
+                                                                await updateBooking(booking.id || 'undefined', {
+                                                                    status: status! + 1,
+                                                                    settlerId: acceptor.settlerId,
+                                                                    settlerFirstName: acceptor.firstName,
+                                                                    settlerLastName: acceptor.lastName,
+                                                                    serviceStartCode: Math.floor(1000000 + Math.random() * 9000000).toString()
+                                                                });
+                                                                setStatus(status! + 1);
+                                                                onRefresh();
+                                                            }}
+                                                            activeOpacity={0.8}
+                                                        >
+                                                            <Text style={[{ color: "#333", fontSize: 14, fontWeight: "500" }, isSelected && { color: "#fff", fontWeight: "600" }]}>
+                                                                {acceptor.settlerId || `Settler ${index + 1}`}
+                                                            </Text>
+                                                            <Text style={[{ color: "#333", fontSize: 14, fontWeight: "500" }, isSelected && { color: "#fff", fontWeight: "600" }]}>
+                                                                {acceptor.firstName + " " + acceptor.lastName || `Settler ${index + 1}`}
+                                                            </Text>
+                                                            <Text style={{ fontSize: 10, color: "#888", marginTop: 4 }}>
+                                                                {new Date(acceptor.acceptedAt).toLocaleDateString()}
+                                                            </Text>
+                                                        </TouchableOpacity>
+                                                    );
+                                                })}
+                                            </View>
+                                        )}
                                 </View>
                             ) : status === 1 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Please provide this code to our settler</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Your service start-code is</Text>
                                     <Text style={{ fontSize: 24, fontWeight: "bold", color: "indigo" }}>{booking.serviceStartCode}</Text>
-                                    <TouchableOpacity
-                                        style={{
-                                            backgroundColor: COLORS.primary,
-                                            padding: 10,
-                                            borderRadius: 10,
-                                            marginVertical: 10,
-                                            width: '80%',
-                                            alignItems: 'center',
-                                        }}
-                                        onPress={async () => {
-                                            await updateBooking(booking.id || 'undefined', { status: status! + 1 });
-                                            setStatus(status! + 1);
-                                            onRefresh();
-                                        }}
-                                    >
-                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>[Demo] Settler Enter Given Code</Text>
-                                    </TouchableOpacity>
+                                    <Text style={{ fontSize: 10, color: COLORS.blackLight2, textAlign: 'center' }}>Please deliver this code to the service provider upon meetup.</Text>
                                 </View>
                             ) : status === 2 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontWeight: 'bold' }}>Please confirm the starting of this service</Text>
+                                    <Text style={{ fontWeight: 'bold' }}>Please confirm this service start</Text>
                                     <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                         <TouchableOpacity
                                             style={{
@@ -342,20 +345,11 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                                 alignItems: 'center',
                                             }}
                                             onPress={async () => {
-                                                // const result = await handleReleasePayment();
-
-                                                // if (result.success) {
-                                                //     // console.log('Transfer ID:', result.data.transferId);
-                                                //     await updateBorrowing(booking.id || 'undefined', { status: status! + 1 });
-                                                //     setStatus(status! + 1);
-                                                // } else {
-                                                //     // console.log('Release failed:', result.error);
-                                                // }
                                                 await updateBooking(booking.id || 'undefined', { status: status! + 1 });
                                                 setStatus(status! + 1);
                                             }}
                                         >
-                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes {booking.total}</Text>
+                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
                                         </TouchableOpacity>
                                     </View>
                                 </View>
@@ -375,18 +369,19 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                             alignItems: 'center',
                                         }}
                                         onPress={async () => {
-                                            await updateBooking(booking.id || 'undefined', { status: status! + 1, serviceEndCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
+                                            if (booking.id) {
+                                                await updateBooking(booking.id, { status: status! + 1 });
+                                            }
                                             setStatus(status! + 1);
-                                            onRefresh();
                                         }}
                                     >
-                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>[Demo] End Task By Settler</Text>
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Settler</Text>
                                     </TouchableOpacity>
                                 </View>
                             ) : status === 4 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: "500" }}>Enter Completion Code</Text>
-                                    <Text style={{ fontSize: 13, marginBottom: 10, color: COLORS.blackLight2 }}>Kindly ask our settler for the completion code</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: "500" }}>Verify Service Completion</Text>
+                                    <Text style={{ fontSize: 13, textAlign:'center', marginBottom: 10, color: COLORS.blackLight2 }}>Check job completion before asking our settler for the service-end code</Text>
                                     <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                         {returnCode.map((digit, index) => (
                                             <TextInput
@@ -403,11 +398,10 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                         ))}
                                     </View>
                                     <Text style={{ fontSize: 12, marginBottom: 4, marginTop: 10, color: COLORS.danger }}>{validationMessage}</Text>
-                                    <Text style={{ fontSize: 13, marginBottom: 10, color: COLORS.blackLight2 }}>{booking.serviceEndCode}</Text>
                                 </View>
                             ) : status === 5 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>Awaiting settler completion confirmation</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>Service is now completed.</Text>
                                     <TouchableOpacity
                                         style={{
                                             backgroundColor: COLORS.primary,
@@ -422,12 +416,13 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                             setStatus(status! + 1);
                                         }}
                                     >
-                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Message settler</Text>
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Settler</Text>
                                     </TouchableOpacity>
                                     <Text style={{ fontSize: 10, color: COLORS.black, textAlign: 'center' }}>The settler needs to confirm the completion.</Text>
                                 </View>
                             ) : (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                    <Text style={{ fontWeight: 'bold' }}>Your feedback matters for this platform</Text>
                                     {review ? (
                                         review.borrowerStatus === 0 ? (
                                             <TouchableOpacity
@@ -489,36 +484,36 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                                                 alignItems: 'center',
                                             }}
                                             onPress={async () => {
-                                                const newReview = await createReview({
-                                                    borrowingId: booking.id || '',
-                                                    borrowerReviewerId: user?.uid || '',
-                                                    borrowerOverallRating: 0,
-                                                    productId: booking.productId || '',
+                                                // const newReview = await createReview({
+                                                //     borrowingId: booking.id || '',
+                                                //     borrowerReviewerId: user?.uid || '',
+                                                //     borrowerOverallRating: 0,
+                                                //     productId: booking.productId || '',
 
-                                                    borrowerCollectionRating: 0,
-                                                    borrowerCollectionFeedback: [''],
-                                                    borrowerOtherCollectionReview: '',
-                                                    borrowerReturnRating: 0,
-                                                    borrowerReturnFeedback: [''],
-                                                    borrowerOtherReturnReview: '',
-                                                    borrowerListingMatch: '',
-                                                    borrowerListingMatchFeedback: [''],
-                                                    borrowerOtherListingMatchReview: '',
-                                                    borrowerCommunicationRating: 0,
-                                                    borrowerCommunicationFeedback: [''],
-                                                    borrowerOtherCommunicationReview: '',
-                                                    borrowerProductConditionRating: 0,
-                                                    borrowerProductConditionFeedback: [''],
-                                                    borrowerOtherProductConditionReview: '',
-                                                    borrowerPriceWorthyRating: 0,
-                                                    borrowerPublicReview: '',
-                                                    borrowerPrivateNotesforLender: '',
-                                                    borrowerUpdatedAt: new Date(),
-                                                    borrowerCreateAt: new Date(),
-                                                    borrowerStatus: 0,
-                                                }, booking.productId || 'undefined');
+                                                //     borrowerCollectionRating: 0,
+                                                //     borrowerCollectionFeedback: [''],
+                                                //     borrowerOtherCollectionReview: '',
+                                                //     borrowerReturnRating: 0,
+                                                //     borrowerReturnFeedback: [''],
+                                                //     borrowerOtherReturnReview: '',
+                                                //     borrowerListingMatch: '',
+                                                //     borrowerListingMatchFeedback: [''],
+                                                //     borrowerOtherListingMatchReview: '',
+                                                //     borrowerCommunicationRating: 0,
+                                                //     borrowerCommunicationFeedback: [''],
+                                                //     borrowerOtherCommunicationReview: '',
+                                                //     borrowerProductConditionRating: 0,
+                                                //     borrowerProductConditionFeedback: [''],
+                                                //     borrowerOtherProductConditionReview: '',
+                                                //     borrowerPriceWorthyRating: 0,
+                                                //     borrowerPublicReview: '',
+                                                //     borrowerPrivateNotesforLender: '',
+                                                //     borrowerUpdatedAt: new Date(),
+                                                //     borrowerCreateAt: new Date(),
+                                                //     borrowerStatus: 0,
+                                                // }, booking.productId || 'undefined');
                                                 console.log('Review not found');
-                                                navigation.navigate('BookingAddReview', { reviewId: newReview, booking: booking });
+                                                // navigation.navigate('BookingAddReview', { reviewId: newReview, booking: booking });
                                             }}
                                         >
                                             <Text style={{ color: 'white', fontWeight: 'bold' }}>Review</Text>
@@ -529,7 +524,6 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
                             }
                         </View>
                         {/* Borrowing Details */}
-                        <View style={{ alignItems:"center"}}><Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.danger, textAlign:'center' }}>A proper handshake between settler & customer in the making. :) {'\n'}</Text></View>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                             {buttons.map((btn: any, i: number) => (
                                 <View
@@ -719,4 +713,4 @@ const MyBorrowingDetails = ({ navigation, route }: MyBorrowingDetailsScreenProps
     )
 }
 
-export default MyBorrowingDetails
+export default MyBookingDetails

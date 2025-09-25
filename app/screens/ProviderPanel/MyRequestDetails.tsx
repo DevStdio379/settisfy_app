@@ -12,6 +12,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { createReview, getReviewByBorrowingId, Review } from '../../services/ReviewServices';
 import axios from 'axios';
 import { Booking, fetchSelectedBooking, updateBooking } from '../../services/BookingServices';
+import { arrayUnion } from 'firebase/firestore';
 
 type MyRequestDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyRequestDetails'>;
 
@@ -42,6 +43,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     const [validationMessage, setValidationMessage] = useState<string | null>(null);
     const inputs = useRef<Array<TextInput | null>>(Array(CODE_LENGTH).fill(null));
 
+    const userAlreadyAccepted = booking.acceptors?.some(
+        (acceptor) => acceptor.settlerId === user?.uid
+    );
+
     const handleChange = (text: string, index: number) => {
         if (/^\d?$/.test(text)) {
             const newPin = [...collectionCode];
@@ -64,7 +69,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
         const correctPin = booking?.serviceStartCode; // Replace with actual validation logic
         if (enteredPin === correctPin) {
             if (booking.id) {
-                await updateBorrowing(booking.id, { status: status! + 1 });
+                await updateBooking(booking.id, { status: status! + 1 });
             }
             setStatus(status! + 1);
             setCollectionCode(Array(CODE_LENGTH).fill("")); // Reset input
@@ -156,7 +161,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
         { label: "Service\nStarted", date: "Enter start\ncode", completed: (status ?? 0) > 2 },
         { label: "Service\nOn-Going", date: "\n", completed: (status ?? 0) > 2 },
         { label: "Service\nEnded", date: "Show end\ncode", completed: (status ?? 0) > 3 },
-        { label: "Booking\nCompleted", date: `${formatDate(booking?.selectedDate)}`, completed: (status ?? 0) > 6 },
+        { label: "Booking\nCompleted", date: `${formatDate(booking?.selectedDate)}`, completed: (status ?? 0) > 5 },
     ];
 
     const actions = [
@@ -272,46 +277,60 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         <View style={{ backgroundColor: "#f3f3f3", padding: 16, borderRadius: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, marginVertical: 20, marginHorizontal: 10 }}>
                             {status === 0 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontWeight: 'bold' }}>Take this job?</Text>
-                                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
-                                        <TouchableOpacity
-                                            style={{
-                                                backgroundColor: COLORS.primary,
-                                                padding: 10,
-                                                borderRadius: 10,
-                                                marginVertical: 10,
-                                                width: '40%',
-                                                alignItems: 'center',
-                                            }}
-                                            onPress={() => { }}
-                                        >
-                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>No</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={{
-                                                backgroundColor: COLORS.primary,
-                                                padding: 10,
-                                                borderRadius: 10,
-                                                marginVertical: 10,
-                                                width: '40%',
-                                                alignItems: 'center',
-                                            }}
-                                            onPress={async () => {
-                                                if (booking.id) {
-                                                    await updateBooking(booking.id, { status: status! + 1, serviceStartCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
-                                                    onRefresh();
-                                                }
-                                                setStatus(status! + 1);
-                                            }}
-                                        >
-                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
-                                        </TouchableOpacity>
-                                    </View>
+                                    {userAlreadyAccepted ? (
+                                        <Text style={{ color: "green", textAlign: 'center' }}>You already accepted this job, Wait for customer respond.</Text>
+                                    ) : (
+                                        <View>
+                                            <Text style={{ fontWeight: 'bold' }}>Take this job?</Text>
+                                            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
+                                                <TouchableOpacity
+                                                    style={{
+                                                        backgroundColor: COLORS.primary,
+                                                        padding: 10,
+                                                        borderRadius: 10,
+                                                        marginVertical: 10,
+                                                        width: '40%',
+                                                        alignItems: 'center',
+                                                    }}
+                                                    onPress={() => { }}
+                                                >
+                                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>No</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    style={{
+                                                        backgroundColor: COLORS.primary,
+                                                        padding: 10,
+                                                        borderRadius: 10,
+                                                        marginVertical: 10,
+                                                        width: '40%',
+                                                        alignItems: 'center',
+                                                    }}
+                                                    onPress={async () => {
+                                                        if (booking.id) {
+                                                            await updateBooking(booking.id, {
+                                                                acceptors: arrayUnion({
+                                                                    settlerId: user?.uid,
+                                                                    firstName: user?.firstName,
+                                                                    lastName: user?.lastName,
+                                                                    acceptedAt: new Date() // cleaner than Date.toISOString
+                                                                }),
+                                                                status: 0,
+                                                            });
+                                                            onRefresh();
+                                                        }
+                                                        setStatus(status! + 1);
+                                                    }}
+                                                >
+                                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    )}
                                 </View>
-                            ) : status === 1 ? (
+                            ) : status === 1 && booking.settlerId === user?.uid ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: "500" }}>Enter Pickup Code</Text>
-                                    <Text style={{ fontSize: 13, marginBottom: 10, color: COLORS.blackLight2 }}>Kindly ask the borrower for the pickup code</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: "500" }}>Enter Service-Start Code</Text>
+                                    <Text style={{ fontSize: 13, marginBottom: 10, color: COLORS.blackLight2 }}>Kindly ask customer for the service-start code</Text>
                                     <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                         {collectionCode.map((digit, index) => (
                                             <TextInput
@@ -329,9 +348,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                     </View>
                                     <Text style={{ fontSize: 12, marginBottom: 4, marginTop: 10, color: COLORS.danger }}>{validationMessage}</Text>
                                 </View>
-                            ) : status === 2 ? (
+                            ) : status === 2 &&  booking.settlerId === user?.uid ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4, textAlign: 'center' }}>Awaiting for borrower's pickup confirmation</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4, textAlign: 'center' }}>You can start your service now.</Text>
                                     <TouchableOpacity
                                         style={{
                                             backgroundColor: COLORS.primary,
@@ -343,12 +362,47 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                         }}
                                         onPress={async () => {
                                             if (booking.id) {
-                                                await updateBorrowing(booking.id, { status: status! + 1 });
+                                                await updateBooking(booking.id, { status: status! + 1 });
                                             }
                                             setStatus(status! + 1);
                                         }}
                                     >
-                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Message borrower</Text>
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Message customer</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : status === 3 ? (
+                                <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4, textAlign: 'center' }}>Service in progress</Text>
+                                    <TouchableOpacity
+                                        style={{
+                                            backgroundColor: COLORS.primary,
+                                            padding: 10,
+                                            borderRadius: 10,
+                                            marginVertical: 10,
+                                            width: '80%',
+                                            alignItems: 'center',
+                                        }}
+                                        onPress={async () => {
+                                            if (booking.id) {
+                                                await updateBooking(booking.id, { status: status! + 1, serviceEndCode: Math.floor(1000000 + Math.random() * 9000000).toString()});
+                                            }
+                                            setStatus(status! + 1);
+                                        }}
+                                    >
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Complete Job</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={{
+                                            backgroundColor: COLORS.primary,
+                                            padding: 10,
+                                            borderRadius: 10,
+                                            marginVertical: 10,
+                                            width: '80%',
+                                            alignItems: 'center',
+                                        }}
+                                        onPress={async () => { }}
+                                    >
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Customer</Text>
                                     </TouchableOpacity>
                                 </View>
                             ) : status === 3 ? (
@@ -378,12 +432,12 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 </View>
                             ) : status === 4 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Your return code is</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Your return service-end code is</Text>
                                     <Text style={{ fontSize: 24, fontWeight: "bold", color: "indigo" }}>{booking.serviceEndCode}</Text>
                                 </View>
                             ) : status === 5 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontWeight: 'bold' }}>Please confirm this return?</Text>
+                                    <Text style={{ fontWeight: 'bold' }}>Please confirm your job completion</Text>
                                     <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                         <TouchableOpacity
                                             style={{
@@ -409,55 +463,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             }}
                                             onPress={async () => {
                                                 if (booking.id) {
-                                                    await updateBorrowing(booking.id, { status: status! + 1 });
-                                                }
-                                                setStatus(status! + 1);
-                                            }}
-                                        >
-                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                            ) : status === 6 ? (
-                                <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontWeight: 'bold' }}>Is your item in good condition?</Text>
-                                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
-                                        <TouchableOpacity
-                                            style={{
-                                                backgroundColor: COLORS.primary,
-                                                padding: 10,
-                                                borderRadius: 10,
-                                                marginVertical: 10,
-                                                width: '40%',
-                                                alignItems: 'center',
-                                            }}
-                                            onPress={() => { }}
-                                        >
-                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>No</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={{
-                                                backgroundColor: COLORS.primary,
-                                                padding: 10,
-                                                borderRadius: 10,
-                                                marginVertical: 10,
-                                                width: '40%',
-                                                alignItems: 'center',
-                                            }}
-                                            onPress={async () => {
-                                                // const result = await handleRefund();
-
-                                                // if (result && result.success) {
-                                                //     console.log('Refund processed:', result.data);
-                                                //     if (lending.id) {
-                                                //         await updateBorrowing(lending.id, { status: status! + 1 });
-                                                //     }
-                                                //     setStatus(status! + 1);
-                                                // } else if (result) {
-                                                //     console.error('Refund failed:', result.error);
-                                                // }
-                                                if (booking.id) {
-                                                    await updateBorrowing(booking.id, { status: status! + 1 });
+                                                    await updateBooking(booking.id, { status: status! + 1 });
                                                 }
                                                 setStatus(status! + 1);
                                             }}
@@ -468,6 +474,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 </View>
                             ) : (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                    <Text style={{ fontWeight: 'bold' }}>Your feedback matters for this platform</Text>
                                     {review ? (
                                         review.lenderStatus === 0 ? (
                                             <TouchableOpacity
