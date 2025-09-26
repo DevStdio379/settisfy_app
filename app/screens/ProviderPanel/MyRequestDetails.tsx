@@ -9,7 +9,7 @@ import { GlobalStyleSheet } from '../../constants/StyleSheet';
 import { fetchSelectedBorrowing, Borrowing, updateBorrowing } from '../../services/BorrowingServices';
 import { fetchSelectedUser, User, useUser } from '../../context/UserContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { createReview, getReviewByBorrowingId, Review } from '../../services/ReviewServices';
+import { createReview, getReviewByBookingId, Review } from '../../services/ReviewServices';
 import axios from 'axios';
 import { Booking, fetchSelectedBooking, updateBooking } from '../../services/BookingServices';
 import { arrayUnion } from 'firebase/firestore';
@@ -102,7 +102,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         setOwner(fetchedOwner);
                     }
 
-                    const fetchedReview = await getReviewByBorrowingId(selectedBooking.catalogueService.id || '', booking.id || '');
+                    const fetchedReview = await getReviewByBookingId(selectedBooking.catalogueService.id || '', booking.id || '');
                     if (fetchedReview) {
                         // Alert.alert('L Review found');
                         setReview(fetchedReview);
@@ -133,7 +133,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         setOwner(fetchedOwner);
                     }
 
-                    const fetchedReview = await getReviewByBorrowingId(selectedBooking.product.id || 'undefined', selectedBooking.id || 'undefined');
+                    const fetchedReview = await getReviewByBookingId(selectedBooking.product.id || 'undefined', selectedBooking.id || 'undefined');
                     if (fetchedReview && fetchedReview.id) {
                         setReview(fetchedReview);
                     }
@@ -476,7 +476,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                     <Text style={{ fontWeight: 'bold' }}>Your feedback matters for this platform</Text>
                                     {review ? (
-                                        review.lenderStatus === 0 ? (
+                                        review.settlerStatus === 0 ? (
                                             <TouchableOpacity
                                                 style={{
                                                     backgroundColor: COLORS.primary,
@@ -488,12 +488,12 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 }}
                                                 onPress={() => {
                                                     console.log('Review found');
-                                                    navigation.navigate('LenderAddReview', { reviewId: review.id || 'newReview', booking: booking });
+                                                    navigation.navigate('SettlerAddReview', { reviewId: review.id || 'newReview', booking: booking });
                                                 }}
                                             >
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Edit Review</Text>
                                             </TouchableOpacity>
-                                        ) : review.lenderStatus ? (
+                                        ) : review.settlerStatus ? (
                                             <TouchableOpacity
                                                 style={{
                                                     backgroundColor: COLORS.primary,
@@ -519,7 +519,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 }}
                                                 onPress={() => {
                                                     console.log('Review found');
-                                                    navigation.navigate('LenderAddReview', { reviewId: review.id || 'newReview', booking: booking });
+                                                    navigation.navigate('SettlerAddReview', { reviewId: review.id || 'newReview', booking: booking });
                                                 }}
                                             >
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Review</Text>
@@ -537,34 +537,35 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             }}
                                             onPress={async () => {
                                                 const newReview = await createReview({
-                                                    borrowingId: booking.id || '',
-                                                    lenderReviewerId: user?.uid || '',
-                                                    lenderOverallRating: 0,
-                                                    productId: booking.catalogueService.id || '',
+                                                    bookingId: booking.id || '',
+                                                    settlerReviewerId: user?.uid || '',
+                                                    catalogueServiceId: booking.catalogueService.id || '',
 
-                                                    lenderCollectionRating: 0,
-                                                    lenderCollectionFeedback: [''],
-                                                    lenderOtherCollectionReview: '',
-                                                    lenderReturnRating: 0,
-                                                    lenderReturnFeedback: [''],
-                                                    lenderOtherReturnReview: '',
-                                                    lenderGivenInstructionFollowed: '',
-                                                    lenderGivenInstructionFollowedFeedback: [''],
-                                                    lenderOtherGivenInstructionFollowedReview: '',
-                                                    lenderCommunicationRating: 0,
-                                                    lenderCommunicationFeedback: [''],
-                                                    lenderOtherCommunicationReview: '',
-                                                    lenderReturnedProductConditionRating: 0,
-                                                    lenderReturnedProductConditionFeedback: [''],
-                                                    lenderOtherReturnedProductConditionReview: '',
-                                                    lenderPublicReview: '',
-                                                    lenderPrivateNotesforLender: '',
-                                                    lenderUpdatedAt: new Date(),
-                                                    lenderCreateAt: new Date(),
-                                                    lenderStatus: 0,
+                                                    settlerOverallRating: 0,
+                                                    settlerTimelinessRating: 0,
+                                                    settlerTimelinessFeedback: [''],
+                                                    settlerOtherTimelinessReview: '',
+                                                    settlerCooperationRating: 0,
+                                                    settlerCooperationFeedback: [''],
+                                                    settlerOtherCooperationReview: '',
+                                                    settlerBehaviourRating: 0,
+                                                    settlerBehaviourFeedback: [''],
+                                                    settlerOtherBehaviourReview: '',
+                                                    settlerCommunicationRating: 0,
+                                                    settlerCommunicationFeedback: [''],
+                                                    settlerOtherCommunicationReview: '',
+                                                    settlerRequestAccuracyRating: 0,
+                                                    settlerRequestAccuracyFeedback: [''],
+                                                    settlerOtherRequestAccuracyReview: '',
+                                                    settlerPriceWorthyRating: 0,
+                                                    settlerPublicReview: '',
+                                                    settlerPrivateNotesforCustomer: '',
+                                                    settlerUpdatedAt: new Date(),
+                                                    settlerCreateAt: new Date(),
+                                                    settlerStatus: 0,
                                                 }, booking.catalogueService.id || 'undefined');
                                                 console.log('Review not found');
-                                                navigation.navigate('LenderAddReview', { reviewId: newReview, booking: booking });
+                                                navigation.navigate('SettlerAddReview', { reviewId: newReview, booking: booking });
                                             }}
                                         >
                                             <Text style={{ color: 'white', fontWeight: 'bold' }}>Review</Text>

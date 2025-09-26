@@ -8,35 +8,35 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { fetchSelectedUser, User, useUser } from '../../context/UserContext';
 import Input from '../../components/Input/Input';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { createReview, getReviewByBorrowingId, updateReview } from '../../services/ReviewServices';
+import { createReview, getReviewByBookingId, updateReview } from '../../services/ReviewServices';
 
-type LenderAddReviewScreenProps = StackScreenProps<RootStackParamList, 'LenderAddReview'>;
+type SettlerAddReviewScreenProps = StackScreenProps<RootStackParamList, 'SettlerAddReview'>;
 
-const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
+const SettlerAddReview = ({ navigation, route }: SettlerAddReviewScreenProps) => {
 
     const { user } = useUser();
-    const { reviewId, lending } = route.params;
+    const { reviewId, booking } = route.params;
     const [index, setIndex] = useState(reviewId === 'newReview' ? 0 : 1);
 
-    const [overallRating, setOverallRating] = useState<number>(0);
-    const [collectionRating, setCollectionRating] = useState<number>(0);
-    const [collectionFeedback, setCollectionFeedback] = useState<string[]>([]);
-    const [otherCollectionReview, setOtherCollectionReview] = useState<string>('');
-    const [returnRating, setReturnRating] = useState<number>(0);
-    const [returnFeedback, setReturnFeedback] = useState<string[]>([]);
-    const [otherReturnReview, setOtherReturnReview] = useState<string>('');
-    const [givenInstructionFollowed, setGivenInstructionFollowed] = useState<string>('');
-    const [givenInstructionFollowedFeedback, setGivenInstructionFollowedFeedback] = useState<string[]>([]);
-    const [otherGivenInstructionFollowedReview, setOtherGivenInstructionFollowedReview] = useState<string>('');
-    const [communicationRating, setCommunicationRating] = useState<number>(0);
-    const [communicationFeedback, setCommunicationFeedback] = useState<string[]>([]);
-    const [otherCommunicationReview, setOtherCommunicationReview] = useState<string>('');
-    const [productConditionRating, setReturnedProductConditionRating] = useState<number>(0);
-    const [productConditionFeedback, setReturnedProductConditionFeedback] = useState<string[]>([]);
-    const [otherProductConditionReview, setOtherReturnedProductConditionReview] = useState<string>('');
-    const [priceWorthyRating, setPriceWorthyRating] = useState<number>(0);
-    const [publicReview, setPublicReview] = useState<string>('');
-    const [privateNotesforLender, setPrivateNotesforLender] = useState<string>('');
+    const [settlerOverallRating, setSettlerOverallRating] = useState<number>(0);
+    const [settlerTimelinessRating, setSettlerTimelinessRating] = useState<number>(0);
+    const [settlerTimelinessFeedback, setSettlerTimelinessFeedback] = useState<string[]>([]);
+    const [settlerOtherTimelinessReview, setSettlerOtherTimelinessReview] = useState<string>('');
+    const [settlerCooperationRating, setSettlerCooperationRating] = useState<number>(0);
+    const [settlerCooperationFeedback, setSettlerCooperationFeedback] = useState<string[]>([]);
+    const [settlerOtherCooperationReview, setSettlerOtherCooperationReview] = useState<string>('');
+    const [settlerBehaviourRating, setSettlerBehaviourRating] = useState<number>(0);
+    const [settlerBehaviourFeedback, setSettlerBehaviourFeedback] = useState<string[]>([]);
+    const [settlerOtherBehaviourReview, setSettlerOtherBehaviorReview] = useState<string>('');
+    const [settlerCommunicationRating, setSettlerCommunicationRating] = useState<number>(0);
+    const [settlerCommunicationFeedback, setSettlerCommunicationFeedback] = useState<string[]>([]);
+    const [settlerOtherCommunicationReview, setSettlerOtherCommunicationReview] = useState<string>('');
+    const [settlerRequestAccuracyRating, setSettlerRequestAccuracyRating] = useState<number>(0);
+    const [settlerRequestAccuracyFeedback, setSettlerRequestAccuracyFeedback] = useState<string[]>([]);
+    const [settlerOtherRequestAccuracyReview, setSettlerOtherRequestAccuracyReview] = useState<string>('');
+    const [settlerPriceWorthyRating, setSettlerPriceWorthyRating] = useState<number>(0);
+    const [settlerPublicReview, setSettlerPublicReview] = useState<string>('');
+    const [settlerPrivateNotesforCustomer, settlerSetPrivateNotesforCustomer] = useState<string>('');
 
     const [isFocused1, setisFocused1] = useState(false);
     const [isFocused2, setisFocused2] = useState(false);
@@ -53,48 +53,48 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
 
     const snapPoints = useMemo(() => ['1%', '35%'], []);
 
-    const toggleCollectionFeedback = (collectionFeedback: string) => {
-        setCollectionFeedback((prevCollectionFeedback) =>
-            prevCollectionFeedback.includes(collectionFeedback)
-                ? prevCollectionFeedback.filter((f) => f !== collectionFeedback)
-                : [...prevCollectionFeedback, collectionFeedback]
+    const toggleCollectionFeedback = (settlerTimelinessFeedback: string) => {
+        setSettlerTimelinessFeedback((prevCollectionFeedback) =>
+            prevCollectionFeedback.includes(settlerTimelinessFeedback)
+                ? prevCollectionFeedback.filter((f) => f !== settlerTimelinessFeedback)
+                : [...prevCollectionFeedback, settlerTimelinessFeedback]
         );
     };
 
-    const toggleReturnFeedback = (returnFeedback: string) => {
-        setReturnFeedback((prevReturnFeedback) =>
-            prevReturnFeedback.includes(returnFeedback)
-                ? prevReturnFeedback.filter((f) => f !== returnFeedback)
-                : [...prevReturnFeedback, returnFeedback]
+    const toggleReturnFeedback = (settlerCooperationFeedback: string) => {
+        setSettlerCooperationFeedback((prevReturnFeedback) =>
+            prevReturnFeedback.includes(settlerCooperationFeedback)
+                ? prevReturnFeedback.filter((f) => f !== settlerCooperationFeedback)
+                : [...prevReturnFeedback, settlerCooperationFeedback]
         );
     };
 
-    const toggleListingMatchFeedback = (givenInstructionFollowedFeedback: string) => {
-        setGivenInstructionFollowedFeedback((prevListingMatchFeedback) =>
-            prevListingMatchFeedback.includes(givenInstructionFollowedFeedback)
-                ? prevListingMatchFeedback.filter((f) => f !== givenInstructionFollowedFeedback)
-                : [...prevListingMatchFeedback, givenInstructionFollowedFeedback]
+    const toggleListingMatchFeedback = (settlerBehaviourFeedback: string) => {
+        setSettlerBehaviourFeedback((prevListingMatchFeedback) =>
+            prevListingMatchFeedback.includes(settlerBehaviourFeedback)
+                ? prevListingMatchFeedback.filter((f) => f !== settlerBehaviourFeedback)
+                : [...prevListingMatchFeedback, settlerBehaviourFeedback]
         );
     };
 
-    const toggleCommunicationFeedback = (communicationFeedback: string) => {
-        setCommunicationFeedback((prevCommunicationFeedback) =>
-            prevCommunicationFeedback.includes(communicationFeedback)
-                ? prevCommunicationFeedback.filter((f) => f !== communicationFeedback)
-                : [...prevCommunicationFeedback, communicationFeedback]
+    const toggleCommunicationFeedback = (settlerCommunicationFeedback: string) => {
+        setSettlerCommunicationFeedback((prevCommunicationFeedback) =>
+            prevCommunicationFeedback.includes(settlerCommunicationFeedback)
+                ? prevCommunicationFeedback.filter((f) => f !== settlerCommunicationFeedback)
+                : [...prevCommunicationFeedback, settlerCommunicationFeedback]
         );
     };
 
-    const toggleProductConditionFeedback = (productConditionFeedback: string) => {
-        setReturnedProductConditionFeedback((prevProductConditionFeedback) =>
-            prevProductConditionFeedback.includes(productConditionFeedback)
-                ? prevProductConditionFeedback.filter((f) => f !== productConditionFeedback)
-                : [...prevProductConditionFeedback, productConditionFeedback]
+    const toggleProductConditionFeedback = (settlerRequestAccuracyFeedback: string) => {
+        setSettlerRequestAccuracyFeedback((prevProductConditionFeedback) =>
+            prevProductConditionFeedback.includes(settlerRequestAccuracyFeedback)
+                ? prevProductConditionFeedback.filter((f) => f !== settlerRequestAccuracyFeedback)
+                : [...prevProductConditionFeedback, settlerRequestAccuracyFeedback]
         );
     };
 
     const fetchBorrower = async () => {
-        const fetchedBorrower = await fetchSelectedUser(lending.userId);
+        const fetchedBorrower = await fetchSelectedUser(booking.userId);
         if (fetchedBorrower) {
             setBorrower(fetchedBorrower);
         }
@@ -127,27 +127,27 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
         if (reviewId !== 'newReview') {
             const fetchReview = async () => {
                 try {
-                    if (lending.product.id && lending.id) {
-                        const selectedProduct = await getReviewByBorrowingId(lending.product.id, lending.id);
-                        if (selectedProduct) {
-                            setOverallRating(selectedProduct.lenderOverallRating || 0);
-                            setCollectionRating(selectedProduct.lenderCollectionRating || 0);
-                            setCollectionFeedback(selectedProduct.lenderCollectionFeedback || []);
-                            setOtherCollectionReview(selectedProduct.lenderOtherCollectionReview || '');
-                            setReturnRating(selectedProduct.lenderReturnRating || 0);
-                            setReturnFeedback(selectedProduct.lenderReturnFeedback || []);
-                            setOtherReturnReview(selectedProduct.lenderOtherReturnReview || '');
-                            setGivenInstructionFollowed(selectedProduct.lenderGivenInstructionFollowed || '');
-                            setGivenInstructionFollowedFeedback(selectedProduct.lenderGivenInstructionFollowedFeedback || []);
-                            setOtherGivenInstructionFollowedReview(selectedProduct.lenderOtherGivenInstructionFollowedReview || '');
-                            setCommunicationRating(selectedProduct.lenderCommunicationRating || 0);
-                            setCommunicationFeedback(selectedProduct.lenderCommunicationFeedback || []);
-                            setOtherCommunicationReview(selectedProduct.lenderOtherCommunicationReview || '');
-                            setReturnedProductConditionRating(selectedProduct.lenderReturnedProductConditionRating || 0);
-                            setReturnedProductConditionFeedback(selectedProduct.lenderReturnedProductConditionFeedback || []);
-                            setOtherReturnedProductConditionReview(selectedProduct.lenderOtherReturnedProductConditionReview || '');
-                            setPublicReview(selectedProduct.lenderPublicReview || '');
-                            setPrivateNotesforLender(selectedProduct.lenderPrivateNotesforLender || '');
+                    if (booking.catalogueService.id && booking.id) {
+                        const selectedBooking = await getReviewByBookingId(booking.catalogueService.id, booking.id);
+                        if (selectedBooking) {
+                            setSettlerOverallRating(selectedBooking.settlerOverallRating || 0);
+                            setSettlerTimelinessRating(selectedBooking.settlerTimelinessRating || 0);
+                            setSettlerTimelinessFeedback(selectedBooking.settlerTimelinessFeedback || []);
+                            setSettlerOtherTimelinessReview(selectedBooking.settlerOtherTimelinessReview || '');
+                            setSettlerCooperationRating(selectedBooking.settlerCooperationRating || 0);
+                            setSettlerCooperationFeedback(selectedBooking.settlerCooperationFeedback || []);
+                            setSettlerOtherCooperationReview(selectedBooking.settlerOtherCooperationReview || '');
+                            setSettlerBehaviourRating(selectedBooking.settlerBehaviourRating || 0);
+                            setSettlerBehaviourFeedback(selectedBooking.settlerBehaviourFeedback || []);
+                            setSettlerOtherBehaviorReview(selectedBooking.settlerOtherBehaviourReview || '');
+                            setSettlerCommunicationRating(selectedBooking.settlerCommunicationRating || 0);
+                            setSettlerCommunicationFeedback(selectedBooking.settlerCommunicationFeedback || []);
+                            setSettlerOtherCommunicationReview(selectedBooking.settlerOtherCommunicationReview || '');
+                            setSettlerRequestAccuracyRating(selectedBooking.settlerRequestAccuracyRating || 0);
+                            setSettlerRequestAccuracyFeedback(selectedBooking.settlerRequestAccuracyFeedback || []);
+                            setSettlerOtherRequestAccuracyReview(selectedBooking.settlerOtherRequestAccuracyReview || '');
+                            setSettlerPublicReview(selectedBooking.settlerPublicReview || '');
+                            settlerSetPrivateNotesforCustomer(selectedBooking.settlerPrivateNotesforCustomer || '');
                         }
                     } else {
                         console.error('Product ID or Borrowing ID is missing.');
@@ -167,38 +167,43 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
         bottomSheetRef.current?.snapToIndex(1);
     }, []);
 
-    const screens = 9;
+    const screens = 10;
 
     const nextScreen = async () => {
-        if (index === 1 && overallRating === 0) {
+        if (index === 1 && settlerOverallRating === 0) {
             Alert.alert('Please give an overall rating.');
             return;
         }
-        if (index === 2 && (!collectionRating || collectionFeedback.length === 0)) {
+        if (index === 2 && (!settlerTimelinessRating || settlerTimelinessFeedback.length === 0)) {
             Alert.alert('Please provide both a collection rating and at least one feedback.');
             return;
         }
-        if (index === 3 && (!returnRating || returnFeedback.length === 0)) {
+        if (index === 3 && (!settlerCooperationRating || settlerCooperationFeedback.length === 0)) {
             Alert.alert('Please provide both a return rating and at least one feedback.');
             return;
         }
-        if (index === 4 && (!givenInstructionFollowed || givenInstructionFollowedFeedback.length === 0)) {
+        if (index === 4 && (!settlerBehaviourRating || settlerBehaviourFeedback.length === 0)) {
             Alert.alert('Please select a listing match condition and at least one feedback.');
             return;
         }
-        if (index === 5 && (!communicationRating || communicationFeedback.length === 0)) {
+        if (index === 5 && (!settlerCommunicationRating || settlerCommunicationFeedback.length === 0)) {
             Alert.alert('Please provide both a communication rating and at least one feedback.');
             return;
         }
-        if (index === 6 && (!productConditionRating || productConditionFeedback.length === 0)) {
+        if (index === 6 && (!settlerRequestAccuracyRating || settlerRequestAccuracyFeedback.length === 0)) {
             Alert.alert('Please provide both a product condition rating and at least one feedback.');
             return;
         }
-        if (index === 7 && !publicReview) {
+        if (index === 7 && !settlerPriceWorthyRating) {
+            Alert.alert('Please give a price worthy rating');
+            return;
+        }
+        if (index === 8 && !settlerPublicReview) {
             Alert.alert('Please provide a public review.');
             return;
         }
-        if (index === 8 && !privateNotesforLender) {
+
+        if (index === 9 && !settlerPrivateNotesforCustomer) {
             Alert.alert('Please provide a private note for the lender.');
             return;
         }
@@ -213,57 +218,57 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
             if (user?.uid) {
                 if (reviewId === 'newReview') {
                     await createReview({
-                        borrowingId: lending.id || '',
-                        lenderReviewerId: user.uid,
-                        lenderOverallRating: overallRating || 0,
-                        productId: lending.product.id || '',
+                        bookingId: booking.id || '',
+                        settlerReviewerId: user.uid,
+                        settlerOverallRating: settlerOverallRating || 0,
+                        catalogueServiceId: booking.catalogueService.id || '',
 
-                        lenderCollectionRating: collectionRating || 0,
-                        lenderCollectionFeedback: collectionFeedback || [''],
-                        lenderOtherCollectionReview: otherCollectionReview,
-                        lenderReturnRating: returnRating || 0,
-                        lenderReturnFeedback: returnFeedback || [''],
-                        lenderOtherReturnReview: otherReturnReview || '',
-                        lenderGivenInstructionFollowed: givenInstructionFollowed || '',
-                        lenderGivenInstructionFollowedFeedback: givenInstructionFollowedFeedback || [''],
-                        lenderOtherGivenInstructionFollowedReview: otherGivenInstructionFollowedReview || '',
-                        lenderCommunicationRating: communicationRating || 0,
-                        lenderCommunicationFeedback: communicationFeedback || [''],
-                        lenderOtherCommunicationReview: otherCommunicationReview || '',
-                        lenderReturnedProductConditionRating: productConditionRating || 0,
-                        lenderReturnedProductConditionFeedback: productConditionFeedback || [''],
-                        lenderOtherReturnedProductConditionReview: otherProductConditionReview || '',
-                        lenderPublicReview: publicReview || '',
-                        lenderPrivateNotesforLender: privateNotesforLender || '',
-                        lenderUpdatedAt: new Date(),
-                        lenderCreateAt: new Date(),
-                        lenderStatus: status,
-                    }, lending.product.id || 'undefined');
+                        settlerTimelinessRating: settlerTimelinessRating || 0,
+                        settlerTimelinessFeedback: settlerTimelinessFeedback || [''],
+                        settlerOtherTimelinessReview: settlerOtherTimelinessReview,
+                        settlerCooperationRating: settlerCooperationRating || 0,
+                        settlerCooperationFeedback: settlerCooperationFeedback || [''],
+                        settlerOtherCooperationReview: settlerOtherCooperationReview || '',
+                        settlerBehaviourRating: settlerBehaviourRating || 0,
+                        settlerBehaviourFeedback: settlerBehaviourFeedback || [''],
+                        settlerOtherBehaviourReview: settlerOtherBehaviourReview || '',
+                        settlerCommunicationRating: settlerCommunicationRating || 0,
+                        settlerCommunicationFeedback: settlerCommunicationFeedback || [''],
+                        settlerOtherCommunicationReview: settlerOtherCommunicationReview || '',
+                        settlerRequestAccuracyRating: settlerRequestAccuracyRating || 0,
+                        settlerRequestAccuracyFeedback: settlerRequestAccuracyFeedback || [''],
+                        settlerOtherRequestAccuracyReview: settlerOtherRequestAccuracyReview || '',
+                        settlerPublicReview: settlerPublicReview || '',
+                        settlerPrivateNotesforCustomer: settlerPrivateNotesforCustomer || '',
+                        settlerUpdatedAt: new Date(),
+                        settlerCreateAt: new Date(),
+                        settlerStatus: status,
+                    }, booking.catalogueService.id || 'undefined');
                     Alert.alert('Review created successfully.');
                 } else {
-                    await updateReview(lending.product.id || 'undefined', reviewId, {
-                        borrowingId: lending.id || '',
-                        lenderReviewerId: user.uid,
-                        lenderOverallRating: overallRating || 0,
-                        lenderCollectionRating: collectionRating || 0,
-                        lenderCollectionFeedback: collectionFeedback || [''],
-                        lenderOtherCollectionReview: otherCollectionReview,
-                        lenderReturnRating: returnRating || 0,
-                        lenderReturnFeedback: returnFeedback || [''],
-                        lenderOtherReturnReview: otherReturnReview || '',
-                        lenderGivenInstructionFollowed: givenInstructionFollowed || '',
-                        lenderGivenInstructionFollowedFeedback: givenInstructionFollowedFeedback || [''],
-                        lenderOtherGivenInstructionFollowedReview: otherGivenInstructionFollowedReview || '',
-                        lenderCommunicationRating: communicationRating || 0,
-                        lenderCommunicationFeedback: communicationFeedback || [''],
-                        lenderOtherCommunicationReview: otherCommunicationReview || '',
-                        lenderReturnedProductConditionRating: productConditionRating || 0,
-                        lenderReturnedProductConditionFeedback: productConditionFeedback || [''],
-                        lenderOtherReturnedProductConditionReview: otherProductConditionReview || '',
-                        lenderPublicReview: publicReview || '',
-                        lenderPrivateNotesforLender: privateNotesforLender || '',
-                        lenderUpdatedAt: new Date(),
-                        lenderStatus: status,
+                    await updateReview(booking.catalogueService.id || 'undefined', reviewId, {
+                        bookingId: booking.id || '',
+                        settlerReviewerId: user.uid,
+                        settlerOverallRating: settlerOverallRating || 0,
+                        settlerTimelinessRating: settlerTimelinessRating || 0,
+                        settlerTimelinessFeedback: settlerTimelinessFeedback || [''],
+                        settlerOtherTimelinessReview: settlerOtherTimelinessReview,
+                        settlerCooperationRating: settlerCooperationRating || 0,
+                        settlerCooperationFeedback: settlerCooperationFeedback || [''],
+                        settlerOtherCooperationReview: settlerOtherCooperationReview || '',
+                        settlerBehaviourRating: settlerBehaviourRating || 0,
+                        settlerBehaviourFeedback: settlerBehaviourFeedback || [''],
+                        settlerOtherBehaviourReview: settlerOtherBehaviourReview || '',
+                        settlerCommunicationRating: settlerCommunicationRating || 0,
+                        settlerCommunicationFeedback: settlerCommunicationFeedback || [''],
+                        settlerOtherCommunicationReview: settlerOtherCommunicationReview || '',
+                        settlerRequestAccuracyRating: settlerRequestAccuracyRating || 0,
+                        settlerRequestAccuracyFeedback: settlerRequestAccuracyFeedback || [''],
+                        settlerOtherRequestAccuracyReview: settlerOtherRequestAccuracyReview || '',
+                        settlerPublicReview: settlerPublicReview || '',
+                        settlerPrivateNotesforCustomer: settlerPrivateNotesforCustomer || '',
+                        settlerUpdatedAt: new Date(),
+                        settlerStatus: status,
                     });
                     Alert.alert(`Review updated successfully`);
                 }
@@ -376,7 +381,7 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                                     }
                                 </View>
                                 <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black, paddingTop: 20, }}>Your review is important</Text>
-                                <Text style={{ fontSize: 15, color: COLORS.black }}>Your review will make this app a good community lending &lending platform.</Text>
+                                <Text style={{ fontSize: 15, color: COLORS.black }}>Your review will make this app a good community booking &booking platform.</Text>
                                 <Text style={{ fontSize: 15, color: COLORS.black }}>{'\n'}Your review also will increse your profile rating unlocking, lesser deposit, and trust</Text>
                             </View>
                         </View>
@@ -384,13 +389,13 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                     }
                     {index === 1 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>Rate your lending experience</Text>
-                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>Let us know your overall lending experience</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>Rate your job experience</Text>
+                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>Let us know your overall job experience</Text>
                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 20 }}>
                                 {[1, 2, 3, 4, 5].map((star) => (
-                                    <TouchableOpacity key={star} onPress={() => setOverallRating(star)}>
+                                    <TouchableOpacity key={star} onPress={() => setSettlerOverallRating(star)}>
                                         <Ionicons
-                                            name={star <= overallRating ? 'star' : 'star-outline'}
+                                            name={star <= settlerOverallRating ? 'star' : 'star-outline'}
                                             size={40}
                                             color={COLORS.primary}
                                             style={{ marginHorizontal: 5 }}
@@ -402,12 +407,13 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                     }
                     {index === 2 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50, paddingBottom: 40 }}>How was the pickup experience?</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>Rate the arrangement punctuality?</Text>
+                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>How punctual and available was the customer for the scheduled service.</Text>
                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 40 }}>
                                 {[1, 2, 3, 4, 5].map((star) => (
-                                    <TouchableOpacity key={star} onPress={() => setCollectionRating(star)}>
+                                    <TouchableOpacity key={star} onPress={() => setSettlerTimelinessRating(star)}>
                                         <Ionicons
-                                            name={star <= collectionRating ? 'star' : 'star-outline'}
+                                            name={star <= settlerTimelinessRating ? 'star' : 'star-outline'}
                                             size={40}
                                             color={COLORS.primary}
                                             style={{ marginHorizontal: 5 }}
@@ -418,12 +424,12 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                             <View style={GlobalStyleSheet.line}></View>
                             <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50, paddingBottom: 20 }}>Tell us more</Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingBottom: 20, gap: 10 }}>
-                                {['Arrived On Time', 'Clear and Respectful', 'Friendly and Polite', 'Late Without Notice', 'No Communication Beforehand', 'Seemed Rushed'].map((feedback, index) => (
+                                {['Arrived On Time', 'Flexible with schedule', 'Slightly late', 'No Communication Beforehand', 'Late Without Notice', 'Missed scheduled meetup'].map((feedback, index) => (
                                     <TouchableOpacity
                                         key={index}
                                         style={{
                                             borderRadius: 60,
-                                            backgroundColor: collectionFeedback ? (collectionFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
+                                            backgroundColor: settlerTimelinessFeedback ? (settlerTimelinessFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
                                             padding: 15,
                                             alignItems: 'center',
                                             marginBottom: 10
@@ -435,30 +441,31 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                                 ))}
                             </View>
                             <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>
-                                Other Collection Experience Review
+                                Other Arrangement & Punctuality Review
                                 <Text style={{ fontSize: 12, color: COLORS.blackLight2 }}> (optional)</Text>
-                                </Text>
+                            </Text>
                             <Input
                                 onFocus={() => setisFocused1(true)}
                                 onBlur={() => setisFocused1(false)}
                                 isFocused={isFocused1}
-                                onChangeText={setOtherCollectionReview}
+                                onChangeText={setSettlerOtherTimelinessReview}
                                 backround={COLORS.card}
                                 style={{ fontSize: 12, borderRadius: 10, backgroundColor: COLORS.input }}
-                                placeholder='Add your other collection review here'
+                                placeholder='Add your other punctuality review here'
                                 keyboardType='default'
-                                value={otherCollectionReview}
+                                value={settlerOtherTimelinessReview}
                             />
                         </View>
                     }
                     {index === 3 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50, paddingBottom: 40 }}>How was the return experience?</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>Rate the customer cooperation</Text>
+                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>How prepared was the customer for the service?</Text>
                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 40 }}>
                                 {[1, 2, 3, 4, 5].map((star) => (
-                                    <TouchableOpacity key={star} onPress={() => setReturnRating(star)}>
+                                    <TouchableOpacity key={star} onPress={() => setSettlerCooperationRating(star)}>
                                         <Ionicons
-                                            name={star <= returnRating ? 'star' : 'star-outline'}
+                                            name={star <= settlerCooperationRating ? 'star' : 'star-outline'}
                                             size={40}
                                             color={COLORS.primary}
                                             style={{ marginHorizontal: 5 }}
@@ -469,12 +476,12 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                             <View style={GlobalStyleSheet.line}></View>
                             <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50, paddingBottom: 20 }}>Tell us more</Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingBottom: 20, gap: 10 }}>
-                                {['Returned On Time', 'Notified About Delay', 'Quick and Smooth Handover', 'Easy to Coordinate Return', 'Late Without Communication'].map((feedback, index) => (
+                                {['Everything ready on arrival', 'Slightly unprepared', 'Very helpful during job', 'Difficult to work with'].map((feedback, index) => (
                                     <TouchableOpacity
                                         key={index}
                                         style={{
                                             borderRadius: 60,
-                                            backgroundColor: returnFeedback ? (returnFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
+                                            backgroundColor: settlerCooperationFeedback ? (settlerCooperationFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
                                             padding: 15,
                                             alignItems: 'center',
                                             marginBottom: 10
@@ -486,52 +493,47 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                                 ))}
                             </View>
                             <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>
-                                Other Return Experience Review
+                                Other Cooperation Review
                                 <Text style={{ fontSize: 12, color: COLORS.blackLight2 }}> (optional)</Text>
-                                </Text>
+                            </Text>
                             <Input
                                 onFocus={() => setisFocused2(true)}
                                 onBlur={() => setisFocused2(false)}
                                 isFocused={isFocused2}
-                                onChangeText={setOtherReturnReview}
+                                onChangeText={setSettlerOtherCooperationReview}
                                 backround={COLORS.card}
                                 style={{ fontSize: 12, borderRadius: 10, backgroundColor: COLORS.input }}
-                                placeholder='Add your other return review here'
+                                placeholder='Add your other cooperation review here'
                                 keyboardType='default'
-                                value={otherReturnReview}
+                                value={settlerOtherCooperationReview}
                             />
                         </View>
                     }
                     {index === 4 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>Did the borrower followed your defined instruction?</Text>
-                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>Tell us about borrower followed guidelines or not.</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>How was the customer during your service?</Text>
+                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>Did the customer being respectful & professional during your service.</Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingBottom: 20, }}>
-                                {['Did Not Follow', 'Mostly Followed'].map((condition, index) => (
-                                    <TouchableOpacity
-                                        key={index}
-                                        style={{
-                                            backgroundColor: givenInstructionFollowed === condition ? COLORS.primary : COLORS.input,
-                                            borderRadius: 50,
-                                            paddingVertical: 10,
-                                            paddingHorizontal: 20,
-                                            margin: 5,
-                                        }}
-                                        onPress={() => setGivenInstructionFollowed(condition)}
-                                    >
-                                        <Text style={{ fontSize: 14, color: givenInstructionFollowed === condition ? COLORS.white : COLORS.title }}>
-                                            {condition}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
+                                <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 40 }}>
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <TouchableOpacity key={star} onPress={() => setSettlerBehaviourRating(star)}>
+                                            <Ionicons
+                                                name={star <= settlerBehaviourRating ? 'star' : 'star-outline'}
+                                                size={40}
+                                                color={COLORS.primary}
+                                                style={{ marginHorizontal: 5 }}
+                                            />
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
                                 <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50, paddingBottom: 20 }}>Tell us more</Text>
                                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingBottom: 20, gap: 10 }}>
-                                    {['Used as Intended', 'Read Instructions Properly', 'Did not Read Instructions Properly', 'Mishandled or Abused Item', 'Ignored Usage Guidelines'].map((feedback, index) => (
+                                    {['Natural behaviour', 'Friendly & easy to work with', 'Very professional', 'Sometimes demanding & impatient', 'Rude & disrecpect'].map((feedback, index) => (
                                         <TouchableOpacity
                                             key={index}
                                             style={{
                                                 borderRadius: 60,
-                                                backgroundColor: givenInstructionFollowedFeedback ? (givenInstructionFollowedFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
+                                                backgroundColor: settlerBehaviourFeedback ? (settlerBehaviourFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
                                                 padding: 15,
                                                 alignItems: 'center',
                                                 marginBottom: 10
@@ -544,31 +546,31 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                                 </View>
                             </View>
                             <Text style={{ width: '100%', fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>
-                                Other Review
+                                Other Behvaioural & Professionalism Review
                                 <Text style={{ fontSize: 12, color: COLORS.blackLight2 }}> (optional)</Text>
-                                </Text>
+                            </Text>
                             <Input
                                 onFocus={() => setisFocused3(true)}
                                 onBlur={() => setisFocused3(false)}
                                 isFocused={isFocused3}
-                                onChangeText={setOtherGivenInstructionFollowedReview}
+                                onChangeText={setSettlerOtherBehaviorReview}
                                 backround={COLORS.card}
                                 style={{ fontSize: 12, borderRadius: 10, backgroundColor: COLORS.input }}
-                                placeholder='Add your other listing match review here'
+                                placeholder='Add your other behavioural review here'
                                 keyboardType='default'
-                                value={otherGivenInstructionFollowedReview}
+                                value={settlerOtherBehaviourReview}
                             />
                         </View>
                     }
                     {index === 5 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>How's the communication with {lending.firstName}?</Text>
-                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>From collection to return, how well did {lending.firstName} communicate with you?</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>How's the communication with {booking.firstName}?</Text>
+                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>How well did {booking.firstName} communicate with you?</Text>
                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 40 }}>
                                 {[1, 2, 3, 4, 5].map((star) => (
-                                    <TouchableOpacity key={star} onPress={() => setCommunicationRating(star)}>
+                                    <TouchableOpacity key={star} onPress={() => setSettlerCommunicationRating(star)}>
                                         <Ionicons
-                                            name={star <= communicationRating ? 'star' : 'star-outline'}
+                                            name={star <= settlerCommunicationRating ? 'star' : 'star-outline'}
                                             size={40}
                                             color={COLORS.primary}
                                             style={{ marginHorizontal: 5 }}
@@ -578,12 +580,12 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                             </View>
                             <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50, paddingBottom: 20 }}>Tell us more</Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingBottom: 20, gap: 10 }}>
-                                {['Very Responsive', 'Asked Relevant Questions', 'Respectful Tone Throughout', 'Took Time to Respond', 'Misunderstood Key Info', 'Disrespectful or Rude'].map((feedback, index) => (
+                                {['Very Responsive', 'Asked Relevant Questions', 'Respectful Tone Throughout', 'Took Time to Respond', 'Misunderstood Key Info', 'Confusing communication'].map((feedback, index) => (
                                     <TouchableOpacity
                                         key={index}
                                         style={{
                                             borderRadius: 60,
-                                            backgroundColor: communicationFeedback ? (communicationFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
+                                            backgroundColor: settlerCommunicationFeedback ? (settlerCommunicationFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
                                             padding: 15,
                                             alignItems: 'center',
                                             marginBottom: 10
@@ -595,31 +597,31 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                                 ))}
                             </View>
                             <Text style={{ width: '100%', fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>
-                                Other Review
+                                Other Communication Review
                                 <Text style={{ fontSize: 12, color: COLORS.blackLight2 }}> (optional)</Text>
-                                </Text>
+                            </Text>
                             <Input
                                 onFocus={() => setisFocused4(true)}
                                 onBlur={() => setisFocused4(false)}
                                 isFocused={isFocused4}
-                                onChangeText={setOtherCommunicationReview}
+                                onChangeText={setSettlerOtherCommunicationReview}
                                 backround={COLORS.card}
                                 style={{ fontSize: 12, borderRadius: 10, backgroundColor: COLORS.input }}
                                 placeholder='Add your other communication review here'
                                 keyboardType='default'
-                                value={otherCommunicationReview}
+                                value={settlerOtherCommunicationReview}
                             />
                         </View>
                     }
                     {index === 6 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>What do you think about condition of the returned product?</Text>
-                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>Your opinion about the lending product when you start lending.</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>How accurate the request to actual service?</Text>
+                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>Tell us about the booking accuracy made by this customer.</Text>
                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 40 }}>
                                 {[1, 2, 3, 4, 5].map((star) => (
-                                    <TouchableOpacity key={star} onPress={() => setReturnedProductConditionRating(star)}>
+                                    <TouchableOpacity key={star} onPress={() => setSettlerRequestAccuracyRating(star)}>
                                         <Ionicons
-                                            name={star <= productConditionRating ? 'star' : 'star-outline'}
+                                            name={star <= settlerRequestAccuracyRating ? 'star' : 'star-outline'}
                                             size={40}
                                             color={COLORS.primary}
                                             style={{ marginHorizontal: 5 }}
@@ -629,12 +631,12 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                             </View>
                             <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50, paddingBottom: 20 }}>Tell us about the product condition</Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingBottom: 20, gap: 10 }}>
-                                {['Excellent condition', 'Light Wear', 'Very Clean', 'Works as Before', 'Minor Functional Issues', 'Returned Dirty', 'Some Parts Worn Out', 'Item Not Usable Anymore'].map((feedback, index) => (
+                                {['Very accurate', 'Minor difference', 'Mid / Average', 'Inaccurate & Misleading', 'Completely misrepresented'].map((feedback, index) => (
                                     <TouchableOpacity
                                         key={index}
                                         style={{
                                             borderRadius: 60,
-                                            backgroundColor: productConditionFeedback ? (productConditionFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
+                                            backgroundColor: settlerRequestAccuracyFeedback ? (settlerRequestAccuracyFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
                                             padding: 15,
                                             alignItems: 'center',
                                             marginBottom: 10
@@ -646,57 +648,49 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                                 ))}
                             </View>
                             <Text style={{ width: '100%', fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>
-                                Other Review
+                                Other Customer Request Accuracy Review
                                 <Text style={{ fontSize: 12, color: COLORS.blackLight2 }}> (optional)</Text>
-                                </Text>
+                            </Text>
                             <Input
                                 onFocus={() => setisFocused5(true)}
                                 onBlur={() => setisFocused5(false)}
                                 isFocused={isFocused5}
-                                onChangeText={setOtherReturnedProductConditionReview}
+                                onChangeText={setSettlerOtherRequestAccuracyReview}
                                 backround={COLORS.card}
                                 style={{ fontSize: 12, borderRadius: 10, backgroundColor: COLORS.input }}
-                                placeholder='Add your other product condition review here'
+                                placeholder='Add your customer accuracy review here'
                                 keyboardType='default'
-                                value={otherProductConditionReview}
+                                value={settlerOtherRequestAccuracyReview}
                             />
                         </View>
                     }
                     {index === 7 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 30 }}>Write a public review</Text>
-                            <Text style={{ fontSize: 14, color: COLORS.black, paddingTop: 10, paddingBottom: 30 }}>We'll show this feedback to other borrower in {lending.firstName}'s profile.</Text>
-                            <Input
-                                onFocus={() => setisFocused6(true)}
-                                onBlur={() => setisFocused6(false)}
-                                isFocused={isFocused6}
-                                onChangeText={setPublicReview}
-                                backround={COLORS.card}
-                                style={{
-                                    fontSize: 12,
-                                    borderRadius: 12,
-                                    backgroundColor: COLORS.input,
-                                    borderColor: COLORS.inputBorder,
-                                    borderWidth: 1,
-                                    height: 450,
-                                }}
-                                inputicon
-                                placeholder={`e.g. Great experience! ${lending.firstName} was very helpful and friendly.`}
-                                multiline={true}  // Enable multi-line input
-                                numberOfLines={10} // Suggest the input area size
-                                value={publicReview ? publicReview : ''}
-                            />
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>Price worthy the service?</Text>
+                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>How was the value of the platform service for the price?</Text>
+                            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 20 }}>
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <TouchableOpacity key={star} onPress={() => setSettlerPriceWorthyRating(star)}>
+                                        <Ionicons
+                                            name={star <= settlerPriceWorthyRating ? 'star' : 'star-outline'}
+                                            size={40}
+                                            color={COLORS.primary}
+                                            style={{ marginHorizontal: 5 }}
+                                        />
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
                         </View>
                     }
                     {index === 8 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 30 }}>Write a private note</Text>
-                            <Text style={{ fontSize: 14, color: COLORS.black, paddingTop: 10, paddingBottom: 30 }}>This feedback just for {lending.firstName} - share what they can improve when borrowing.</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 30 }}>Write a public review</Text>
+                            <Text style={{ fontSize: 14, color: COLORS.black, paddingTop: 10, paddingBottom: 30 }}>We'll show this feedback to other borrower in {booking.firstName}'s profile.</Text>
                             <Input
-                                onFocus={() => setisFocused7(true)}
-                                onBlur={() => setisFocused7(false)}
-                                isFocused={isFocused7}
-                                onChangeText={setPrivateNotesforLender}
+                                onFocus={() => setisFocused6(true)}
+                                onBlur={() => setisFocused6(false)}
+                                isFocused={isFocused6}
+                                onChangeText={setSettlerPublicReview}
                                 backround={COLORS.card}
                                 style={{
                                     fontSize: 12,
@@ -707,10 +701,36 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                                     height: 450,
                                 }}
                                 inputicon
-                                placeholder={`e.g. Hey ${lending.firstName}, I think you can improve your borrowing instruction a bit.`}
+                                placeholder={`e.g. Great experience! ${booking.firstName} was very helpful and friendly.`}
                                 multiline={true}  // Enable multi-line input
                                 numberOfLines={10} // Suggest the input area size
-                                value={privateNotesforLender ? privateNotesforLender : ''}
+                                value={settlerPublicReview ? settlerPublicReview : ''}
+                            />
+                        </View>
+                    }
+                    {index === 9 &&
+                        <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 30 }}>Write a private note</Text>
+                            <Text style={{ fontSize: 14, color: COLORS.black, paddingTop: 10, paddingBottom: 30 }}>This feedback just for {booking.firstName} - share what they can improve when borrowing.</Text>
+                            <Input
+                                onFocus={() => setisFocused7(true)}
+                                onBlur={() => setisFocused7(false)}
+                                isFocused={isFocused7}
+                                onChangeText={settlerSetPrivateNotesforCustomer}
+                                backround={COLORS.card}
+                                style={{
+                                    fontSize: 12,
+                                    borderRadius: 12,
+                                    backgroundColor: COLORS.input,
+                                    borderColor: COLORS.inputBorder,
+                                    borderWidth: 1,
+                                    height: 450,
+                                }}
+                                inputicon
+                                placeholder={`e.g. Hey ${booking.firstName}, I think you can improve your borrowing instruction a bit.`}
+                                multiline={true}  // Enable multi-line input
+                                numberOfLines={10} // Suggest the input area size
+                                value={settlerPrivateNotesforCustomer ? settlerPrivateNotesforCustomer : ''}
                             />
                         </View>
                     }
@@ -736,7 +756,7 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                             <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>Start</Text>
                         </TouchableOpacity>
                     </View>
-                ) : index === 8 ? (
+                ) : index === 9 ? (
                     <View style={[GlobalStyleSheet.container, { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 15, paddingVertical: 10 }]}>
                         <TouchableOpacity
                             style={{
@@ -775,88 +795,9 @@ const LenderAddReview = ({ navigation, route }: LenderAddReviewScreenProps) => {
                         </TouchableOpacity>
                     </View>
                 )}
-            </View >
-            <BottomSheet
-                ref={bottomSheetRef}
-                snapPoints={snapPoints}
-                enablePanDownToClose={true} // Allow swipe-down to close
-                index={-1} // Initial snap point
-                handleComponent={() => (
-                    <View
-                        style={{
-                            padding: 10,
-                            backgroundColor: COLORS.background,
-                            borderTopLeftRadius: 22,
-                            borderTopRightRadius: 22,
-                        }}
-                    >
-                        <Text style={{ textAlign: 'center', fontSize: 14, paddingVertical: 10 }}>Save this review as draft?</Text>
-                        <View style={[GlobalStyleSheet.line, { marginTop: 10 }]}></View>
-                    </View>
-                )}
-                backdropComponent={(backdropProps) => (
-                    <BottomSheetBackdrop {...backdropProps} enableTouchThrough={true} />
-                )}
-            >
-                <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-start' }}>
-                    <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, }]}>
-                        <TouchableOpacity
-                            style={{
-                                backgroundColor: COLORS.card,
-                                padding: 15,
-                                borderRadius: 10,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginBottom: 10,
-                            }}
-                            onPress={() => {
-                                // Save draft logic here
-                                handleReview(0);
-                                Alert.alert('Draft Saved', 'Your listing has been saved as a draft.');
-                                bottomSheetRef.current?.close();
-                                navigation.goBack();
-                            }}
-                        >
-                            <Text style={{ fontSize: 16 }}>Save Draft</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={{
-                                backgroundColor: COLORS.card,
-                                padding: 15,
-                                borderRadius: 10,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginBottom: 10,
-                            }}
-                            onPress={() => {
-                                // Discard logic here
-                                Alert.alert('Draft Discarded', 'Your draft has been discarded.');
-                                bottomSheetRef.current?.close();
-                                navigation.goBack();
-                            }}
-                        >
-                            <Text style={{ fontSize: 16, }}>Discard</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={{
-                                backgroundColor: COLORS.card,
-                                padding: 15,
-                                borderRadius: 10,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            }}
-                            onPress={() => {
-                                // Cancel logic here
-                                bottomSheetRef.current?.close();
-                            }}
-                        >
-                            <Text style={{ fontSize: 16,  }}>Cancel</Text>
-                        </TouchableOpacity>
-                    </View>
-                </BottomSheetScrollView>
-            </BottomSheet>
+            </View>
         </View>
     )
 }
 
-export default LenderAddReview
+export default SettlerAddReview

@@ -20,7 +20,7 @@ import Products from '../screens/Products/Products';
 import ProductDetails from '../screens/Products/ProductDetails';
 import MyBorrowingDetails from '../screens/MyBookings/MyBookingDetails';
 import LendingDetails from '../screens/ProviderPanel/MyRequestDetails';
-import LenderAddReview from '../screens/ProviderPanel/LenderAddReview';
+import LenderAddReview from '../screens/ProviderPanel/SettlerAddReview';
 import MyBorrowings from '../screens/MyBookings/MyBookings';
 import Temp from '../screens/Temp';
 import Chat from '../screens/Chat/Chat';
@@ -38,6 +38,7 @@ import QuoteCleaning from '../screens/Products/QuoteCleaning';
 import BookingAddReview from '../screens/Products/BookingAddReview';
 import SettlerAddService from '../screens/ProviderPanel/SettlerAddService';
 import ServiceCatalogue from '../screens/ServiceCatalogue';
+import SettlerAddReview from '../screens/ProviderPanel/SettlerAddReview';
 
 
 const StackComponent = createStackNavigator<RootStackParamList>();
@@ -84,7 +85,7 @@ const StackNavigator = () => {
 				<StackComponent.Screen name="MyServices" component={MyServices} />
 				<StackComponent.Screen name="SettlerAddService" component={SettlerAddService} />
 				<StackComponent.Screen name="MyRequestDetails" component={LendingDetails} />
-				<StackComponent.Screen name="LenderAddReview" component={LenderAddReview} />
+				<StackComponent.Screen name="SettlerAddReview" component={SettlerAddReview} />
 
 				<StackComponent.Screen name="Temp" component={Temp} />
 				<StackComponent.Screen name="ServiceCatalogue" component={ServiceCatalogue}/>

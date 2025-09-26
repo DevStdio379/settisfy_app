@@ -40,7 +40,7 @@ export type RootStackParamList = {
     // Lender Profile
     MyRequests: undefined;
     MyRequestDetails: { booking: Booking };
-    LenderAddReview: { reviewId: string, booking: Booking };
+    SettlerAddReview: { reviewId: string, booking: Booking };
     MyServices: undefined;
     SettlerAddService: {settlerService: SettlerService | null};
     ProviderDashboard: undefined;

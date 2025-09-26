@@ -9,7 +9,7 @@ export interface Review {
   id?: string;  // Add an optional id field
   bookingId: string;
   customerReviewerId?: string;
-  lenderReviewerId?: string;
+  settlerReviewerId?: string;
   catalogueServiceId: string;
 
   // borrowerReview
@@ -37,27 +37,28 @@ export interface Review {
   customerUpdatedAt?: any;
 
   // lenderReview
-  lenderOverallRating?: number;
-  lenderCollectionRating?: number;
-  lenderCollectionFeedback?: string[];
-  lenderOtherCollectionReview?: string;
-  lenderReturnRating?: number;
-  lenderReturnFeedback?: string[];
-  lenderOtherReturnReview?: string;
-  lenderGivenInstructionFollowed?: string;
-  lenderGivenInstructionFollowedFeedback?: string[];
-  lenderOtherGivenInstructionFollowedReview?: string;
-  lenderCommunicationRating?: number;
-  lenderCommunicationFeedback?: string[];
-  lenderOtherCommunicationReview?: string;
-  lenderReturnedProductConditionRating?: number;
-  lenderReturnedProductConditionFeedback?: string[];
-  lenderOtherReturnedProductConditionReview?: string;
-  lenderPublicReview?: string;
-  lenderPrivateNotesforLender?: string;
-  lenderStatus?: number;
-  lenderCreateAt?: any;
-  lenderUpdatedAt?: any;
+  settlerOverallRating?: number;
+  settlerTimelinessRating?: number;
+  settlerTimelinessFeedback?: string[];
+  settlerOtherTimelinessReview?: string;
+  settlerCooperationRating?: number;
+  settlerCooperationFeedback?: string[];
+  settlerOtherCooperationReview?: string;
+  settlerBehaviourRating?: number;
+  settlerBehaviourFeedback?: string[];
+  settlerOtherBehaviourReview?: string;
+  settlerCommunicationRating?: number;
+  settlerCommunicationFeedback?: string[];
+  settlerOtherCommunicationReview?: string;
+  settlerRequestAccuracyRating?: number;
+  settlerRequestAccuracyFeedback?: string[];
+  settlerOtherRequestAccuracyReview?: string;
+  settlerPriceWorthyRating?: number;
+  settlerPublicReview?: string;
+  settlerPrivateNotesforCustomer?: string;
+  settlerStatus?: number;
+  settlerCreateAt?: any;
+  settlerUpdatedAt?: any;
 }
 
 // Function to fetch a review based on borrowingId
