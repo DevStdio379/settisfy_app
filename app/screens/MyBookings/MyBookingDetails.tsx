@@ -11,7 +11,7 @@ import { GlobalStyleSheet } from '../../constants/StyleSheet';
 import { fetchSelectedBorrowing, Borrowing, updateBorrowing } from '../../services/BorrowingServices';
 import { fetchSelectedUser, User, useUser } from '../../context/UserContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { createReview, getReviewByBorrowingId, Review } from '../../services/ReviewServices';
+import { createReview, getReviewByBookingId, Review } from '../../services/ReviewServices';
 import axios from 'axios';
 import { Booking, fetchSelectedBooking, subscribeToBookings, subscribeToOneBooking, updateBooking } from '../../services/BookingServices';
 
@@ -104,13 +104,13 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                     //     setOwner(fetchedOwner);
                     // }
 
-                    // const fetchedReview = await getReviewByBorrowingId(selectedBooking.productId || 'undefined', selectedBooking.id || 'unefined');
-                    // if (fetchedReview) {
-                    //     // Alert.alert('B Review found');
-                    //     setReview(fetchedReview);
-                    // } else {
-                    //     // Alert.alert('B Review not found');
-                    // }
+                    const fetchedReview = await getReviewByBookingId(selectedBooking.catalogueService.id || 'undefined', selectedBooking.id || 'unefined');
+                    if (fetchedReview) {
+                        // Alert.alert('B Review found');
+                        setReview(fetchedReview);
+                    } else {
+                        // Alert.alert('B Review not found');
+                    }
                 }
             } catch (error) {
                 console.error('Failed to fetch selected borrowing details:', error);
@@ -131,10 +131,32 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                 console.log("Job deleted or not found");
             }
         });
-        setImages(booking.catalogueService.imageUrls);
-        setSelectedImage(booking.catalogueService.imageUrls[0]);
-        setBooking(booking);
+
+        const fetchData = async () => {
+            if (booking) {
+                // Alert.alert('2 Borrowing found');
+                setImages(booking.catalogueService.imageUrls);
+                setSelectedImage(booking.catalogueService.imageUrls[0]);
+                setBooking(booking);
+
+                const selectedBooking = await fetchSelectedBooking(booking.id || 'undefined');
+                if (selectedBooking) {
+                    // const fetchedOwner = await fetchSelectedUser(selectedBorrowing.product.ownerID);
+                    // if (fetchedOwner) {
+                    //     setOwner(fetchedOwner);
+                    // }
+
+                    const fetchedReview = await getReviewByBookingId(selectedBooking.catalogueService.id || 'undefined', selectedBooking.id || 'undefined');
+                    if (fetchedReview && fetchedReview.id) {
+                        setReview(fetchedReview);
+                    }
+                }
+            } else {
+                // Alert.alert('B Borrowing not found');
+            }
+        };
         setStatus(booking.status);
+        fetchData();
         return () => unsubscribe();
     }, [booking.id]);
 
@@ -381,7 +403,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                             ) : status === 4 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                     <Text style={{ fontSize: 16, fontWeight: "500" }}>Verify Service Completion</Text>
-                                    <Text style={{ fontSize: 13, textAlign:'center', marginBottom: 10, color: COLORS.blackLight2 }}>Check job completion before asking our settler for the service-end code</Text>
+                                    <Text style={{ fontSize: 13, textAlign: 'center', marginBottom: 10, color: COLORS.blackLight2 }}>Check job completion before asking our settler for the service-end code</Text>
                                     <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                         {returnCode.map((digit, index) => (
                                             <TextInput
@@ -424,7 +446,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                     <Text style={{ fontWeight: 'bold' }}>Your feedback matters for this platform</Text>
                                     {review ? (
-                                        review.borrowerStatus === 0 ? (
+                                        review.customerStatus === 0 ? (
                                             <TouchableOpacity
                                                 style={{
                                                     backgroundColor: COLORS.primary,
@@ -441,7 +463,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                             >
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Edit Review</Text>
                                             </TouchableOpacity>
-                                        ) : review.borrowerStatus ? (
+                                        ) : review.customerStatus ? (
                                             <TouchableOpacity
                                                 style={{
                                                     backgroundColor: COLORS.primary,
@@ -484,36 +506,36 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                 alignItems: 'center',
                                             }}
                                             onPress={async () => {
-                                                // const newReview = await createReview({
-                                                //     borrowingId: booking.id || '',
-                                                //     borrowerReviewerId: user?.uid || '',
-                                                //     borrowerOverallRating: 0,
-                                                //     productId: booking.productId || '',
+                                                const newReview = await createReview({
+                                                    bookingId: booking.id || '',
+                                                    customerReviewerId: user?.uid || '',
+                                                    catalogueServiceId: booking.catalogueService.id || '',
 
-                                                //     borrowerCollectionRating: 0,
-                                                //     borrowerCollectionFeedback: [''],
-                                                //     borrowerOtherCollectionReview: '',
-                                                //     borrowerReturnRating: 0,
-                                                //     borrowerReturnFeedback: [''],
-                                                //     borrowerOtherReturnReview: '',
-                                                //     borrowerListingMatch: '',
-                                                //     borrowerListingMatchFeedback: [''],
-                                                //     borrowerOtherListingMatchReview: '',
-                                                //     borrowerCommunicationRating: 0,
-                                                //     borrowerCommunicationFeedback: [''],
-                                                //     borrowerOtherCommunicationReview: '',
-                                                //     borrowerProductConditionRating: 0,
-                                                //     borrowerProductConditionFeedback: [''],
-                                                //     borrowerOtherProductConditionReview: '',
-                                                //     borrowerPriceWorthyRating: 0,
-                                                //     borrowerPublicReview: '',
-                                                //     borrowerPrivateNotesforLender: '',
-                                                //     borrowerUpdatedAt: new Date(),
-                                                //     borrowerCreateAt: new Date(),
-                                                //     borrowerStatus: 0,
-                                                // }, booking.productId || 'undefined');
+                                                    customerOverallRating: 0,
+                                                    customerTimelinessRating: 0,
+                                                    customerTimelinessFeedback: [''],
+                                                    customerOtherTimelinessReview: '',
+                                                    customerProfessionalismRating: 0,
+                                                    customerProfessionalismFeedback: [''],
+                                                    customerOtherProfessionalismReview: '',
+                                                    customerSafetyRating: 0,
+                                                    customerSafetyFeedback: [''],
+                                                    customerOtherSafetyReview: '',
+                                                    customerCommunicationRating: 0,
+                                                    customerCommunicationFeedback: [''],
+                                                    customerOtherCommunicationReview: '',
+                                                    customerServiceResultRating: 0,
+                                                    customerServiceResultFeedback: [''],
+                                                    customerOtherServiceResultReview: '',
+                                                    customerPriceWorthyRating: 0,
+                                                    customerPublicReview: '',
+                                                    customerPrivateNotesforSettler: '',
+                                                    customerUpdatedAt: new Date(),
+                                                    customerCreateAt: new Date(),
+                                                    customerStatus: 0,
+                                                }, booking.catalogueService.id || 'undefined');
                                                 console.log('Review not found');
-                                                // navigation.navigate('BookingAddReview', { reviewId: newReview, booking: booking });
+                                                navigation.navigate('BookingAddReview', { reviewId: newReview, booking: booking });
                                             }}
                                         >
                                             <Text style={{ color: 'white', fontWeight: 'bold' }}>Review</Text>

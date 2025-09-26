@@ -7,34 +7,34 @@ import { Alert } from 'react-native';
 // Define the Review interface
 export interface Review {
   id?: string;  // Add an optional id field
-  borrowingId: string;
-  borrowerReviewerId?: string;
+  bookingId: string;
+  customerReviewerId?: string;
   lenderReviewerId?: string;
-  productId: string;
+  catalogueServiceId: string;
 
   // borrowerReview
-  borrowerOverallRating?: number;
-  borrowerCollectionRating?: number;
-  borrowerCollectionFeedback?: string[];
-  borrowerOtherCollectionReview?: string;
-  borrowerReturnRating?: number;
-  borrowerReturnFeedback?: string[];
-  borrowerOtherReturnReview?: string;
-  borrowerListingMatch?: string;
-  borrowerListingMatchFeedback?: string[];
-  borrowerOtherListingMatchReview?: string;
-  borrowerCommunicationRating?: number;
-  borrowerCommunicationFeedback?: string[];
-  borrowerOtherCommunicationReview?: string;
-  borrowerProductConditionRating?: number;
-  borrowerProductConditionFeedback?: string[];
-  borrowerOtherProductConditionReview?: string;
-  borrowerPriceWorthyRating?: number;
-  borrowerPublicReview?: string;
-  borrowerPrivateNotesforLender?: string;
-  borrowerStatus?: number;
-  borrowerCreateAt?: any; 
-  borrowerUpdatedAt?: any;
+  customerOverallRating?: number;
+  customerTimelinessRating?: number;
+  customerTimelinessFeedback?: string[];
+  customerOtherTimelinessReview?: string;
+  customerProfessionalismRating?: number;
+  customerProfessionalismFeedback?: string[];
+  customerOtherProfessionalismReview?: string;
+  customerSafetyRating?: number;
+  customerSafetyFeedback?: string[];
+  customerOtherSafetyReview?: string;
+  customerCommunicationRating?: number;
+  customerCommunicationFeedback?: string[];
+  customerOtherCommunicationReview?: string;
+  customerServiceResultRating?: number;
+  customerServiceResultFeedback?: string[];
+  customerOtherServiceResultReview?: string;
+  customerPriceWorthyRating?: number;
+  customerPublicReview?: string;
+  customerPrivateNotesforSettler?: string;
+  customerStatus?: number;
+  customerCreateAt?: any; 
+  customerUpdatedAt?: any;
 
   // lenderReview
   lenderOverallRating?: number;
@@ -61,13 +61,13 @@ export interface Review {
 }
 
 // Function to fetch a review based on borrowingId
-export const getReviewByBorrowingId = async (productId: string ,borrowingId: string) => {
+export const getReviewByBookingId = async (productId: string ,bookingId: string) => {
   try {
     const reviewsRef = collection(db, 'reviews');
     const querySnapshot = await getDocs(reviewsRef);
     const reviews = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Review[];
 
-    const review = reviews.find(review => review.borrowingId === borrowingId);
+    const review = reviews.find(review => review.bookingId === bookingId);
     if (review) {
       return review;
     } else {
@@ -116,10 +116,10 @@ export const getReviewsByProductId = async (productId: string) => {
         const data = doc.data();
         return {
           id: doc.id,
-          borrowerOverallRating: data.borrowerOverallRating,
+          customerOverallRating: data.customerOverallRating,
           borrowerPublicReview: data.borrowerPublicReview,
           borrowerUpdatedAt: data.borrowerUpdatedAt.toDate(),  // Convert Firestore timestamp to JavaScript Date
-          borrowerReviewerId: data.borrowerReviewerId,
+          customerReviewerId: data.customerReviewerId,
           productId: data.productId
         };
       })
@@ -138,14 +138,14 @@ export const getReviewAverageRatingByProductId = async (productId: string): Prom
     const productQuery = query(reviewsRef, where('productId', '==', productId));
     const querySnapshot = await getDocs(productQuery);
 
-    // Calculate the average borrowerOverallRating
+    // Calculate the average customerOverallRating
     let totalRating = 0;
     let ratingCount = 0;
 
     querySnapshot.forEach(doc => {
       const data = doc.data();
-      if (data.borrowerOverallRating) {
-        totalRating += data.borrowerOverallRating;
+      if (data.customerOverallRating) {
+        totalRating += data.customerOverallRating;
         ratingCount++;
       }
     });
@@ -162,7 +162,7 @@ export const calculateBorrowingRatingByUser = async (userID: string): Promise<nu
     const reviewsRef = collection(db, 'reviews');
 
     // Count borrowing reviews
-    const borrowingQuery = query(reviewsRef, where('borrowerReviewerId', '==', userID));
+    const borrowingQuery = query(reviewsRef, where('customerReviewerId', '==', userID));
     const borrowingSnapshot = await getDocs(borrowingQuery);
     const borrowingSize = borrowingSnapshot.size;
 
@@ -198,8 +198,8 @@ export const calculateLendingRatingByUser = async (userID: string): Promise< num
     let totalLendingRating = 0;
     lendingSnapshot.forEach(doc => {
       const data = doc.data();
-      if (data.borrowerOverallRating) {
-        totalLendingRating += data.borrowerOverallRating;
+      if (data.customerOverallRating) {
+        totalLendingRating += data.customerOverallRating;
       }
     });
     const averageLendingRating = lendingSize > 0 ? totalLendingRating / lendingSize : 0;

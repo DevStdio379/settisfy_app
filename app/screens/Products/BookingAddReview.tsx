@@ -8,7 +8,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { fetchSelectedUser, User, useUser } from '../../context/UserContext';
 import Input from '../../components/Input/Input';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { createReview, getReviewAverageRatingByProductId, getReviewByBorrowingId, updateReview } from '../../services/ReviewServices';
+import { createReview, getReviewAverageRatingByProductId, getReviewByBookingId, updateReview } from '../../services/ReviewServices';
 import { updateProduct } from '../../services/ProductServices';
 
 type BookingAddReviewScreenProps = StackScreenProps<RootStackParamList, 'BookingAddReview'>;
@@ -20,24 +20,24 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
     const [index, setIndex] = useState(reviewId === 'newReview' ? 0 : 1);
 
     const [overallRating, setOverallRating] = useState<number>(0);
-    const [collectionRating, setCollectionRating] = useState<number>(0);
-    const [collectionFeedback, setCollectionFeedback] = useState<string[]>([]);
-    const [otherCollectionReview, setOtherCollectionReview] = useState<string>('');
-    const [returnRating, setReturnRating] = useState<number>(0);
-    const [returnFeedback, setReturnFeedback] = useState<string[]>([]);
-    const [otherReturnReview, setOtherReturnReview] = useState<string>('');
-    const [listingMatch, setListingMatch] = useState<string>('');
-    const [listingMatchFeedback, setListingMatchFeedback] = useState<string[]>([]);
-    const [otherListingMatchReview, setOtherListingMatchReview] = useState<string>('');
+    const [timelinessRating, setTimelinessRating] = useState<number>(0);
+    const [timelinessFeedback, setTimelinessFeedback] = useState<string[]>([]);
+    const [otherTimelinessReview, setOtherTimelinessReview] = useState<string>('');
+    const [professionalismRating, setProfessionalismRating] = useState<number>(0);
+    const [professionalismFeedback, setProfessionalismFeedback] = useState<string[]>([]);
+    const [otherProfessionalismReview, setOtherProfessionalismReview] = useState<string>('');
+    const [safetyRating, setSafetyRating] = useState<number>(0);
+    const [safetyFeedback, setSafetyFeedback] = useState<string[]>([]);
+    const [otherSafetyReview, setOtherSafetyReview] = useState<string>('');
     const [communicationRating, setCommunicationRating] = useState<number>(0);
     const [communicationFeedback, setCommunicationFeedback] = useState<string[]>([]);
     const [otherCommunicationReview, setOtherCommunicationReview] = useState<string>('');
-    const [productConditionRating, setProductConditionRating] = useState<number>(0);
-    const [productConditionFeedback, setProductConditionFeedback] = useState<string[]>([]);
-    const [otherProductConditionReview, setOtherProductConditionReview] = useState<string>('');
+    const [serviceResultRating, setServiceResultRating] = useState<number>(0);
+    const [serviceResultFeedback, setProductConditionFeedback] = useState<string[]>([]);
+    const [otherServiceResultReview, setOtherServiceResultReview] = useState<string>('');
     const [priceWorthyRating, setPriceWorthyRating] = useState<number>(0);
     const [publicReview, setPublicReview] = useState<string>('');
-    const [privateNotesforLender, setPrivateNotesforLender] = useState<string>('');
+    const [privateNotesforSettler, setPrivateNotesforSettler] = useState<string>('');
 
     const [isFocused1, setisFocused1] = useState(false);
     const [isFocused2, setisFocused2] = useState(false);
@@ -47,34 +47,34 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
     const [isFocused6, setisFocused6] = useState(false);
     const [isFocused7, setisFocused7] = useState(false);
 
-    const bottomSheetRef = useRef<BottomSheet>(null);
+    // const bottomSheetRef = useRef<BottomSheet>(null);
 
     const [owner, setOwner] = useState<User>();
     const [loading, setLoading] = useState(true);
 
     const snapPoints = useMemo(() => ['1%', '35%'], []);
 
-    const toggleCollectionFeedback = (collectionFeedback: string) => {
-        setCollectionFeedback((prevCollectionFeedback) =>
-            prevCollectionFeedback.includes(collectionFeedback)
-                ? prevCollectionFeedback.filter((f) => f !== collectionFeedback)
-                : [...prevCollectionFeedback, collectionFeedback]
+    const toggleCollectionFeedback = (timelinessFeedback: string) => {
+        setTimelinessFeedback((prevCollectionFeedback) =>
+            prevCollectionFeedback.includes(timelinessFeedback)
+                ? prevCollectionFeedback.filter((f) => f !== timelinessFeedback)
+                : [...prevCollectionFeedback, timelinessFeedback]
         );
     };
 
-    const toggleReturnFeedback = (returnFeedback: string) => {
-        setReturnFeedback((prevReturnFeedback) =>
-            prevReturnFeedback.includes(returnFeedback)
-                ? prevReturnFeedback.filter((f) => f !== returnFeedback)
-                : [...prevReturnFeedback, returnFeedback]
+    const toggleReturnFeedback = (professionalismFeedback: string) => {
+        setProfessionalismFeedback((prevReturnFeedback) =>
+            prevReturnFeedback.includes(professionalismFeedback)
+                ? prevReturnFeedback.filter((f) => f !== professionalismFeedback)
+                : [...prevReturnFeedback, professionalismFeedback]
         );
     };
 
-    const toggleListingMatchFeedback = (listingMatchFeedback: string) => {
-        setListingMatchFeedback((prevListingMatchFeedback) =>
-            prevListingMatchFeedback.includes(listingMatchFeedback)
-                ? prevListingMatchFeedback.filter((f) => f !== listingMatchFeedback)
-                : [...prevListingMatchFeedback, listingMatchFeedback]
+    const toggleListingMatchFeedback = (safetyFeedback: string) => {
+        setSafetyFeedback((prevListingMatchFeedback) =>
+            prevListingMatchFeedback.includes(safetyFeedback)
+                ? prevListingMatchFeedback.filter((f) => f !== safetyFeedback)
+                : [...prevListingMatchFeedback, safetyFeedback]
         );
     };
 
@@ -86,11 +86,11 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
         );
     };
 
-    const toggleProductConditionFeedback = (productConditionFeedback: string) => {
+    const toggleProductConditionFeedback = (serviceResultFeedback: string) => {
         setProductConditionFeedback((prevProductConditionFeedback) =>
-            prevProductConditionFeedback.includes(productConditionFeedback)
-                ? prevProductConditionFeedback.filter((f) => f !== productConditionFeedback)
-                : [...prevProductConditionFeedback, productConditionFeedback]
+            prevProductConditionFeedback.includes(serviceResultFeedback)
+                ? prevProductConditionFeedback.filter((f) => f !== serviceResultFeedback)
+                : [...prevProductConditionFeedback, serviceResultFeedback]
         );
     };
 
@@ -110,28 +110,28 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
         if (reviewId !== 'newReview') {
             const fetchReview = async () => {
                 try {
-                    if (booking.productId && booking.id) {
-                        const selectedProduct = await getReviewByBorrowingId(booking.productId, booking.id);
-                        if (selectedProduct) {
-                            setOverallRating(selectedProduct.borrowerOverallRating ?? 0);
-                            setCollectionRating(selectedProduct.borrowerCollectionRating ?? 0);
-                            setCollectionFeedback(selectedProduct.borrowerCollectionFeedback ?? []);
-                            setOtherCollectionReview(selectedProduct.borrowerOtherCollectionReview || '');
-                            setReturnRating(selectedProduct.borrowerReturnRating ?? 0);
-                            setReturnFeedback(selectedProduct.borrowerReturnFeedback ?? []);
-                            setOtherReturnReview(selectedProduct.borrowerOtherReturnReview || '');
-                            setListingMatch(selectedProduct.borrowerListingMatch || '');
-                            setListingMatchFeedback(selectedProduct.borrowerListingMatchFeedback ?? []);
-                            setOtherListingMatchReview(selectedProduct.borrowerOtherListingMatchReview || '');
-                            setCommunicationRating(selectedProduct.borrowerCommunicationRating ?? 0);
-                            setCommunicationFeedback(selectedProduct.borrowerCommunicationFeedback ?? []);
-                            setOtherCommunicationReview(selectedProduct.borrowerOtherCommunicationReview || '');
-                            setProductConditionRating(selectedProduct.borrowerProductConditionRating ?? 0);
-                            setProductConditionFeedback(selectedProduct.borrowerProductConditionFeedback ?? []);
-                            setOtherProductConditionReview(selectedProduct.borrowerOtherProductConditionReview || '');
-                            setPriceWorthyRating(selectedProduct.borrowerPriceWorthyRating ?? 0);
-                            setPublicReview(selectedProduct.borrowerPublicReview || '');
-                            setPrivateNotesforLender(selectedProduct.borrowerPrivateNotesforLender || '');
+                    if (booking.catalogueService.id && booking.id) {
+                        const selectedBooking = await getReviewByBookingId(booking.catalogueService.id, booking.id);
+                        if (selectedBooking) {
+                            setOverallRating(selectedBooking.customerOverallRating ?? 0);
+                            setTimelinessRating(selectedBooking.customerTimelinessRating ?? 0);
+                            setTimelinessFeedback(selectedBooking.customerTimelinessFeedback ?? []);
+                            setOtherTimelinessReview(selectedBooking.customerOtherTimelinessReview || '');
+                            setProfessionalismRating(selectedBooking.customerProfessionalismRating ?? 0);
+                            setProfessionalismFeedback(selectedBooking.customerProfessionalismFeedback ?? []);
+                            setOtherProfessionalismReview(selectedBooking.customerOtherProfessionalismReview || '');
+                            setSafetyRating(selectedBooking.customerSafetyRating || 0);
+                            setSafetyFeedback(selectedBooking.customerSafetyFeedback ?? []);
+                            setOtherSafetyReview(selectedBooking.customerOtherSafetyReview || '');
+                            setCommunicationRating(selectedBooking.customerCommunicationRating ?? 0);
+                            setCommunicationFeedback(selectedBooking.customerCommunicationFeedback ?? []);
+                            setOtherCommunicationReview(selectedBooking.customerOtherCommunicationReview || '');
+                            setServiceResultRating(selectedBooking.customerServiceResultRating ?? 0);
+                            setProductConditionFeedback(selectedBooking.customerServiceResultFeedback ?? []);
+                            setOtherServiceResultReview(selectedBooking.customerOtherServiceResultReview || '');
+                            setPriceWorthyRating(selectedBooking.customerPriceWorthyRating ?? 0);
+                            setPublicReview(selectedBooking.customerPublicReview || '');
+                            setPrivateNotesforSettler(selectedBooking.customerPrivateNotesforSettler || '');
                         }
                     } else {
                         console.error('Product ID or Borrowing ID is missing.');
@@ -144,12 +144,12 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
             fetchReview();
             setIndex(1);
         }
-        bottomSheetRef.current?.snapToIndex(-1);
+        // bottomSheetRef.current?.snapToIndex(-1);
     }, [reviewId]);
 
-    const handlePress = useCallback(() => {
-        bottomSheetRef.current?.snapToIndex(1);
-    }, []);
+    // const handlePress = useCallback(() => {
+    //     bottomSheetRef.current?.snapToIndex(1);
+    // }, []);
 
     const screens = 10;
 
@@ -158,15 +158,15 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
             Alert.alert('Please give an overall rating.');
             return;
         }
-        if (index === 2 && (!collectionRating || collectionFeedback.length === 0)) {
+        if (index === 2 && (!timelinessRating || timelinessFeedback.length === 0)) {
             Alert.alert('Please provide both a collection rating and at least one feedback.');
             return;
         }
-        if (index === 3 && (!returnRating || returnFeedback.length === 0)) {
+        if (index === 3 && (!professionalismRating || professionalismFeedback.length === 0)) {
             Alert.alert('Please provide both a return rating and at least one feedback.');
             return;
         }
-        if (index === 4 && (!listingMatch || listingMatchFeedback.length === 0)) {
+        if (index === 4 && (!safetyRating || safetyFeedback.length === 0)) {
             Alert.alert('Please select a listing match condition and at least one feedback.');
             return;
         }
@@ -174,7 +174,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
             Alert.alert('Please provide both a communication rating and at least one feedback.');
             return;
         }
-        if (index === 6 && (!productConditionRating || productConditionFeedback.length === 0)) {
+        if (index === 6 && (!serviceResultRating || serviceResultFeedback.length === 0)) {
             Alert.alert('Please provide both a product condition rating and at least one feedback.');
             return;
         }
@@ -186,7 +186,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
             Alert.alert('Please provide a public review.');
             return;
         }
-        if (index === 9 && !privateNotesforLender) {
+        if (index === 9 && !privateNotesforSettler) {
             Alert.alert('Please provide a private note for the lender.');
             return;
         }
@@ -223,63 +223,63 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
             if (user?.uid) {
                 if (reviewId === 'newReview') {
                     await createReview({
-                        borrowingId: booking.id || '',
-                        borrowerReviewerId: user.uid,
-                        borrowerOverallRating: overallRating || 0,
-                        productId: booking.productId || '',
+                        bookingId: booking.id || '',
+                        customerReviewerId: user.uid,
+                        customerOverallRating: overallRating || 0,
+                        catalogueServiceId: booking.catalogueService.id || '',
 
-                        borrowerCollectionRating: collectionRating || 0,
-                        borrowerCollectionFeedback: collectionFeedback || [''],
-                        borrowerOtherCollectionReview: otherCollectionReview,
-                        borrowerReturnRating: returnRating || 0,
-                        borrowerReturnFeedback: returnFeedback || [''],
-                        borrowerOtherReturnReview: otherReturnReview || '',
-                        borrowerListingMatch: listingMatch || '',
-                        borrowerListingMatchFeedback: listingMatchFeedback || [''],
-                        borrowerOtherListingMatchReview: otherListingMatchReview || '',
-                        borrowerCommunicationRating: communicationRating || 0,
-                        borrowerCommunicationFeedback: communicationFeedback || [''],
-                        borrowerOtherCommunicationReview: otherCommunicationReview || '',
-                        borrowerProductConditionRating: productConditionRating || 0,
-                        borrowerProductConditionFeedback: productConditionFeedback || [''],
-                        borrowerOtherProductConditionReview: otherProductConditionReview || '',
-                        borrowerPriceWorthyRating: priceWorthyRating || 0,
-                        borrowerPublicReview: publicReview || '',
-                        borrowerPrivateNotesforLender: privateNotesforLender || '',
-                        borrowerUpdatedAt: new Date(),
-                        borrowerCreateAt: new Date(),
-                        borrowerStatus: status,
-                    }, booking.productId || 'undefined');
+                        customerTimelinessRating: timelinessRating || 0,
+                        customerTimelinessFeedback: timelinessFeedback || [''],
+                        customerOtherTimelinessReview: otherTimelinessReview,
+                        customerProfessionalismRating: professionalismRating || 0,
+                        customerProfessionalismFeedback: professionalismFeedback || [''],
+                        customerOtherProfessionalismReview: otherProfessionalismReview || '',
+                        customerSafetyRating: safetyRating || 0,
+                        customerSafetyFeedback: safetyFeedback || [''],
+                        customerOtherSafetyReview: otherSafetyReview || '',
+                        customerCommunicationRating: communicationRating || 0,
+                        customerCommunicationFeedback: communicationFeedback || [''],
+                        customerOtherCommunicationReview: otherCommunicationReview || '',
+                        customerServiceResultRating: serviceResultRating || 0,
+                        customerServiceResultFeedback: serviceResultFeedback || [''],
+                        customerOtherServiceResultReview: otherServiceResultReview || '',
+                        customerPriceWorthyRating: priceWorthyRating || 0,
+                        customerPublicReview: publicReview || '',
+                        customerPrivateNotesforSettler: privateNotesforSettler || '',
+                        customerUpdatedAt: new Date(),
+                        customerCreateAt: new Date(),
+                        customerStatus: status,
+                    }, booking.catalogueService.id || 'undefined');
                     Alert.alert('Review created successfully.');
                 } else {
-                    await updateReview(booking.productId || 'undefined', reviewId, {
-                        borrowingId: booking.id || '',
-                        borrowerReviewerId: user.uid,
-                        borrowerOverallRating: overallRating || 0,
-                        borrowerCollectionRating: collectionRating || 0,
-                        borrowerCollectionFeedback: collectionFeedback || [''],
-                        borrowerOtherCollectionReview: otherCollectionReview,
-                        borrowerReturnRating: returnRating || 0,
-                        borrowerReturnFeedback: returnFeedback || [''],
-                        borrowerOtherReturnReview: otherReturnReview || '',
-                        borrowerListingMatch: listingMatch || '',
-                        borrowerListingMatchFeedback: listingMatchFeedback || [''],
-                        borrowerOtherListingMatchReview: otherListingMatchReview || '',
-                        borrowerCommunicationRating: communicationRating || 0,
-                        borrowerCommunicationFeedback: communicationFeedback || [''],
-                        borrowerOtherCommunicationReview: otherCommunicationReview || '',
-                        borrowerProductConditionRating: productConditionRating || 0,
-                        borrowerProductConditionFeedback: productConditionFeedback || [''],
-                        borrowerOtherProductConditionReview: otherProductConditionReview || '',
-                        borrowerPriceWorthyRating: priceWorthyRating || 0,
-                        borrowerPublicReview: publicReview || '',
-                        borrowerPrivateNotesforLender: privateNotesforLender || '',
-                        borrowerUpdatedAt: new Date(),
-                        borrowerStatus: status,
+                    await updateReview(booking.catalogueService.id || 'undefined', reviewId, {
+                        bookingId: booking.id || '',
+                        customerReviewerId: user.uid,
+                        customerOverallRating: overallRating || 0,
+                        customerTimelinessRating: timelinessRating || 0,
+                        customerTimelinessFeedback: timelinessFeedback || [''],
+                        customerOtherTimelinessReview: otherTimelinessReview,
+                        customerProfessionalismRating: professionalismRating || 0,
+                        customerProfessionalismFeedback: professionalismFeedback || [''],
+                        customerOtherProfessionalismReview: otherProfessionalismReview || '',
+                        customerSafetyRating: safetyRating || 0,
+                        customerSafetyFeedback: safetyFeedback || [''],
+                        customerOtherSafetyReview: otherSafetyReview || '',
+                        customerCommunicationRating: communicationRating || 0,
+                        customerCommunicationFeedback: communicationFeedback || [''],
+                        customerOtherCommunicationReview: otherCommunicationReview || '',
+                        customerServiceResultRating: serviceResultRating || 0,
+                        customerServiceResultFeedback: serviceResultFeedback || [''],
+                        customerOtherServiceResultReview: otherServiceResultReview || '',
+                        customerPriceWorthyRating: priceWorthyRating || 0,
+                        customerPublicReview: publicReview || '',
+                        customerPrivateNotesforSettler: privateNotesforSettler || '',
+                        customerUpdatedAt: new Date(),
+                        customerStatus: status,
                     });
                     Alert.alert(`Review updated successfully.`);
-                    const latestRating = await getReviewAverageRatingByProductId(booking.productId || 'undefined');
-                    await updateProduct(booking.productId || 'undefined', {averageRating: latestRating.averageRating, ratingCount: latestRating.ratingCount});
+                    const latestRating = await getReviewAverageRatingByProductId(booking.catalogueService.id || 'undefined');
+                    await updateProduct(booking.catalogueService.id || 'undefined', { averageRating: latestRating.averageRating, ratingCount: latestRating.ratingCount });
                 }
             } else {
                 Alert.alert('User ID is missing.');
@@ -343,12 +343,13 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                 <View style={{ flex: 1, alignItems: 'flex-end' }} />
                             ) : (
                                 <TouchableOpacity
-                                    onPress={handlePress}
+                                    // onPress={handlePress}
+                                    onPress={() => { }}
                                     style={{
                                         height: 45,
                                         width: 45,
                                         borderColor: COLORS.blackLight2,
-    
+
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                     }}
@@ -400,8 +401,8 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                     }
                     {index === 1 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>Rate your borrowing experience</Text>
-                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>Let us know your overall borrowing experience</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>Rate your service experience</Text>
+                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>Let us know your overall service experience</Text>
                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 20 }}>
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <TouchableOpacity key={star} onPress={() => setOverallRating(star)}>
@@ -418,12 +419,12 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                     }
                     {index === 2 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50,  paddingBottom: 30 }}>How was the collection experience?</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50, paddingBottom: 30 }}>How would you rate the timeliness of the service?</Text>
                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 40 }}>
                                 {[1, 2, 3, 4, 5].map((star) => (
-                                    <TouchableOpacity key={star} onPress={() => setCollectionRating(star)}>
+                                    <TouchableOpacity key={star} onPress={() => setTimelinessRating(star)}>
                                         <Ionicons
-                                            name={star <= collectionRating ? 'star' : 'star-outline'}
+                                            name={star <= timelinessRating ? 'star' : 'star-outline'}
                                             size={40}
                                             color={COLORS.primary}
                                             style={{ marginHorizontal: 5 }}
@@ -434,12 +435,12 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                             <View style={GlobalStyleSheet.line}></View>
                             <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50, paddingBottom: 20 }}>Tell us more</Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingBottom: 20, gap: 10 }}>
-                                {['Arrived On Time', 'Clear Directions Provided', 'Safe & Convenient Location', 'Easy to Find Location', 'Late Without Notice', 'Rushed the Pickup', 'Did not Communicate Clearly'].map((feedback, index) => (
+                                {['Arrived On Time', 'Clear Directions Provided', 'Safe & Convenient Location', 'Easy to Find Location', 'Late Without Notice', 'Rushed the Meetup', 'Did not Communicate Clearly'].map((feedback, index) => (
                                     <TouchableOpacity
                                         key={index}
                                         style={{
                                             borderRadius: 60,
-                                            backgroundColor: collectionFeedback ? (collectionFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
+                                            backgroundColor: timelinessFeedback ? (timelinessFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
                                             padding: 15,
                                             alignItems: 'center',
                                             marginBottom: 10
@@ -451,29 +452,29 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                 ))}
                             </View>
                             <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>
-                                Other Collection Experience Review <Text style={{ fontSize: 12, color: COLORS.blackLight2 }}> (optional)</Text>
+                                Other Timeliness Experience Review <Text style={{ fontSize: 12, color: COLORS.blackLight2 }}> (optional)</Text>
                             </Text>
                             <Input
                                 onFocus={() => setisFocused1(true)}
                                 onBlur={() => setisFocused1(false)}
                                 isFocused={isFocused1}
-                                onChangeText={setOtherCollectionReview}
+                                onChangeText={setOtherTimelinessReview}
                                 backround={COLORS.card}
                                 style={{ fontSize: 12, borderRadius: 10, backgroundColor: COLORS.input }}
-                                placeholder='Add your other collection review here'
+                                placeholder='Add timeliness & punctuality comment here.'
                                 keyboardType='default'
-                                value={otherCollectionReview}
+                                value={otherTimelinessReview}
                             />
                         </View>
                     }
                     {index === 3 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50, paddingBottom: 30 }}>How was the return {'\n'} experience?</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50, paddingBottom: 30 }}>Was the provider professional and easy to talk to?</Text>
                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 40 }}>
                                 {[1, 2, 3, 4, 5].map((star) => (
-                                    <TouchableOpacity key={star} onPress={() => setReturnRating(star)}>
+                                    <TouchableOpacity key={star} onPress={() => setProfessionalismRating(star)}>
                                         <Ionicons
-                                            name={star <= returnRating ? 'star' : 'star-outline'}
+                                            name={star <= professionalismRating ? 'star' : 'star-outline'}
                                             size={40}
                                             color={COLORS.primary}
                                             style={{ marginHorizontal: 5 }}
@@ -484,12 +485,12 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                             <View style={GlobalStyleSheet.line}></View>
                             <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50, paddingBottom: 20 }}>Tell us more</Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingBottom: 20, gap: 10 }}>
-                                {['Easy to Find Drop-off', 'Quick and Smooth Handover', 'Clear Return Instructions', 'Convenient Return Location', 'Rushed the Return', 'Late Without Notice'].map((feedback, index) => (
+                                {['Friendly & Polite', 'Clear & Responsive', 'Kept Me Updated', 'Good Professional Manner', 'Poor Communication'].map((feedback, index) => (
                                     <TouchableOpacity
                                         key={index}
                                         style={{
                                             borderRadius: 60,
-                                            backgroundColor: returnFeedback ? (returnFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
+                                            backgroundColor: professionalismFeedback ? (professionalismFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
                                             padding: 15,
                                             alignItems: 'center',
                                             marginBottom: 10
@@ -501,53 +502,47 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                 ))}
                             </View>
                             <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>
-                                Other Return Experience Review <Text style={{ fontSize: 12, color: COLORS.blackLight2 }}> (optional)</Text>
-                                </Text>
+                                Other Professionalism Experience Review <Text style={{ fontSize: 12, color: COLORS.blackLight2 }}> (optional)</Text>
+                            </Text>
                             <Input
                                 onFocus={() => setisFocused2(true)}
                                 onBlur={() => setisFocused2(false)}
                                 isFocused={isFocused2}
-                                onChangeText={setOtherReturnReview}
+                                onChangeText={setOtherProfessionalismReview}
                                 backround={COLORS.card}
                                 style={{ fontSize: 12, borderRadius: 10, backgroundColor: COLORS.input }}
-                                placeholder='Add your other return review here'
+                                placeholder='Add your other professionalism review here'
                                 keyboardType='default'
-                                value={otherReturnReview}
+                                value={otherProfessionalismReview}
                             />
                         </View>
                     }
                     {index === 4 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>Did the borrowed product match the description?</Text>
-                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>Tell us the borrowing terms & condition matches as described or not.</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>Rate the provider safety standards</Text>
+                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>Tell us about how the provider handle your property and the service.</Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingBottom: 20, }}>
-                                {['Not Match', 'Mostly Accurate'].map((condition, index) => (
-                                    <TouchableOpacity
-                                        key={index}
-                                        style={{
-                                            backgroundColor: listingMatch === condition ? COLORS.primary : COLORS.input,
-                                            borderColor: listingMatch === condition ? COLORS.primary : COLORS.blackLight,
-                                            paddingVertical: 10,
-                                            paddingHorizontal: 20,
-                                            alignItems: 'center',
-                                            marginBottom: 10,
-                                            borderWidth: 1,
-                                            borderRadius: 20, // Bubble-like design
-                                            marginRight: 10,
-                                        }}
-                                        onPress={() => setListingMatch(condition)}
-                                    >
-                                        <Text style={{ fontSize: 14, color: COLORS.title }}>{condition}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                                <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50, paddingBottom: 20 }}>Tell us more</Text>
+                                <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 20 }}>
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                        <TouchableOpacity key={star} onPress={() => setSafetyRating(star)}>
+                                            <Ionicons
+                                                name={star <= safetyRating ? 'star' : 'star-outline'}
+                                                size={40}
+                                                color={COLORS.primary}
+                                                style={{ marginHorizontal: 5 }}
+                                            />
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                                <View style={GlobalStyleSheet.line}></View>
+                                <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 20, paddingBottom: 20 }}>Tell us more</Text>
                                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingBottom: 20, gap: 10 }}>
-                                    {['Photos matched the item', 'Clear and detailed description', 'Minor Differences', 'Description Was Vague', 'Listing lacked key details', 'Misleading photos or info'].map((feedback, index) => (
+                                    {['Handled Everything Carefully', 'Some Carelessness', 'Do Service as Described', 'Negligent/Unsafe', 'Follow the Safety Standards'].map((feedback, index) => (
                                         <TouchableOpacity
                                             key={index}
                                             style={{
                                                 borderRadius: 60,
-                                                backgroundColor: listingMatchFeedback ? (listingMatchFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
+                                                backgroundColor: safetyFeedback ? (safetyFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
                                                 padding: 15,
                                                 alignItems: 'center',
                                                 marginBottom: 10
@@ -560,19 +555,19 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                 </View>
                             </View>
                             <Text style={{ width: '100%', fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>
-                                Other Review 
+                                Other Safety Review
                                 <Text style={{ fontSize: 12, color: COLORS.blackLight2 }}> (optional)</Text>
-                                </Text>
+                            </Text>
                             <Input
                                 onFocus={() => setisFocused3(true)}
                                 onBlur={() => setisFocused3(false)}
                                 isFocused={isFocused3}
-                                onChangeText={setOtherListingMatchReview}
+                                onChangeText={setOtherSafetyReview}
                                 backround={COLORS.card}
                                 style={{ fontSize: 12, borderRadius: 10, backgroundColor: COLORS.input }}
                                 placeholder='Add your other listing match review here'
                                 keyboardType='default'
-                                value={otherListingMatchReview}
+                                value={otherSafetyReview}
                             />
                         </View>
                     }
@@ -611,9 +606,9 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                 ))}
                             </View>
                             <Text style={{ width: '100%', fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>
-                                Other Review 
+                                Other Communication Review
                                 <Text style={{ fontSize: 12, color: COLORS.blackLight2 }}> (optional)</Text>
-                                </Text>
+                            </Text>
                             <Input
                                 onFocus={() => setisFocused4(true)}
                                 onBlur={() => setisFocused4(false)}
@@ -629,13 +624,13 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                     }
                     {index === 6 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>What do you think about condition of the product?</Text>
-                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>Your opinion about the borrowing product when you start borrowing.</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>What do you think about result of the service</Text>
+                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>Did it meet your expectation.</Text>
                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 40 }}>
                                 {[1, 2, 3, 4, 5].map((star) => (
-                                    <TouchableOpacity key={star} onPress={() => setProductConditionRating(star)}>
+                                    <TouchableOpacity key={star} onPress={() => setServiceResultRating(star)}>
                                         <Ionicons
-                                            name={star <= productConditionRating ? 'star' : 'star-outline'}
+                                            name={star <= serviceResultRating ? 'star' : 'star-outline'}
                                             size={40}
                                             color={COLORS.primary}
                                             style={{ marginHorizontal: 5 }}
@@ -643,14 +638,14 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                     </TouchableOpacity>
                                 ))}
                             </View>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50, paddingBottom: 20 }}>Tell us about the product condition</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 30, paddingBottom: 20 }}>Tell us about the product condition</Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingBottom: 20, gap: 10 }}>
                                 {['Excellent Condition', 'Worked Perfectly', 'Just Like the Photos', 'Minor Wear & Tear', 'Slightly Dirty', 'Had Some Functional Problems', 'Much Worse Than Expected'].map((feedback, index) => (
                                     <TouchableOpacity
                                         key={index}
                                         style={{
                                             borderRadius: 60,
-                                            backgroundColor: productConditionFeedback ? (productConditionFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
+                                            backgroundColor: serviceResultFeedback ? (serviceResultFeedback.includes(feedback) ? COLORS.primary : COLORS.input) : COLORS.input,
                                             padding: 15,
                                             alignItems: 'center',
                                             marginBottom: 10
@@ -662,26 +657,26 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                 ))}
                             </View>
                             <Text style={{ width: '100%', fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>
-                                Other Review 
+                                Other Service Result Review
                                 <Text style={{ fontSize: 12, color: COLORS.blackLight2 }}> (optional)</Text>
-                                </Text>
+                            </Text>
                             <Input
                                 onFocus={() => setisFocused5(true)}
                                 onBlur={() => setisFocused5(false)}
                                 isFocused={isFocused5}
-                                onChangeText={setOtherProductConditionReview}
+                                onChangeText={setOtherServiceResultReview}
                                 backround={COLORS.card}
                                 style={{ fontSize: 12, borderRadius: 10, backgroundColor: COLORS.input }}
                                 placeholder='Add your other product condition review here'
                                 keyboardType='default'
-                                value={otherProductConditionReview}
+                                value={otherServiceResultReview}
                             />
                         </View>
                     }
                     {index === 7 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>Price worthy the borrowing?</Text>
-                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>How was the value of {owner?.firstName}'s place for the price?</Text>
+                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>Price worthy the service?</Text>
+                            <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>How was the value of the platform service for the price?</Text>
                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', paddingBottom: 20 }}>
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <TouchableOpacity key={star} onPress={() => setPriceWorthyRating(star)}>
@@ -699,7 +694,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                     {index === 8 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
                             <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 30 }}>Write a public review</Text>
-                            <Text style={{ fontSize: 14, color: COLORS.black, paddingTop: 10, paddingBottom: 30 }}>We'll show this feedback to other borrower in {owner?.firstName}'s listings. Say a few word about your borrowing.</Text>
+                            <Text style={{ fontSize: 14, color: COLORS.black, paddingTop: 10, paddingBottom: 30 }}>We'll show this feedback to other customer in {owner?.firstName}'s profile. Say a few word about the service.</Text>
                             <Input
                                 onFocus={() => setisFocused6(true)}
                                 onBlur={() => setisFocused6(false)}
@@ -725,12 +720,12 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                     {index === 9 &&
                         <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
                             <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 30 }}>Write a private note</Text>
-                            <Text style={{ fontSize: 14, color: COLORS.black, paddingTop: 10, paddingBottom: 30 }}>This feedback just for {owner?.firstName} - share what they can improve about their place or how they host.</Text>
+                            <Text style={{ fontSize: 14, color: COLORS.black, paddingTop: 10, paddingBottom: 30 }}>This feedback just for {owner?.firstName} - share what they can improve about their service.</Text>
                             <Input
                                 onFocus={() => setisFocused7(true)}
                                 onBlur={() => setisFocused7(false)}
                                 isFocused={isFocused7}
-                                onChangeText={setPrivateNotesforLender}
+                                onChangeText={setPrivateNotesforSettler}
                                 backround={COLORS.card}
                                 style={{
                                     fontSize: 12,
@@ -744,7 +739,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                 placeholder={`e.g. I think the product could be improved by...`}
                                 multiline={true}  // Enable multi-line input
                                 numberOfLines={10} // Suggest the input area size
-                                value={privateNotesforLender ? privateNotesforLender : ''}
+                                value={privateNotesforSettler ? privateNotesforSettler : ''}
                             />
                         </View>
                     }
@@ -811,85 +806,6 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                     </View>
                 )}
             </View >
-            <BottomSheet
-                ref={bottomSheetRef}
-                snapPoints={snapPoints}
-                enablePanDownToClose={true} // Allow swipe-down to close
-                index={-1} // Initial snap point
-                handleComponent={() => (
-                    <View
-                        style={{
-                            padding: 10,
-                            backgroundColor: COLORS.background,
-                            borderTopLeftRadius: 22,
-                            borderTopRightRadius: 22,
-                        }}
-                    >
-                        <Text style={{ textAlign: 'center', fontSize: 14, paddingVertical: 10 }}>Save this review as draft?</Text>
-                        <View style={[GlobalStyleSheet.line, { marginTop: 10 }]}></View>
-                    </View>
-                )}
-                backdropComponent={(backdropProps) => (
-                    <BottomSheetBackdrop {...backdropProps} enableTouchThrough={true} />
-                )}
-            >
-                <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-start' }}>
-                    <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, }]}>
-                        <TouchableOpacity
-                            style={{
-                                backgroundColor: COLORS.card,
-                                padding: 15,
-                                borderRadius: 10,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginBottom: 10,
-                            }}
-                            onPress={() => {
-                                // Save draft logic here
-                                handleReview(0);
-                                Alert.alert('Draft Saved', 'Your listing has been saved as a draft.');
-                                bottomSheetRef.current?.close();
-                                navigation.goBack();
-                            }}
-                        >
-                            <Text style={{ fontSize: 16 }}>Save Draft</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={{
-                                backgroundColor: COLORS.card,
-                                padding: 15,
-                                borderRadius: 10,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                marginBottom: 10,
-                            }}
-                            onPress={() => {
-                                // Discard logic here
-                                Alert.alert('Draft Discarded', 'Your draft has been discarded.');
-                                bottomSheetRef.current?.close();
-                                navigation.goBack();
-                            }}
-                        >
-                            <Text style={{ fontSize: 16 }}>Discard</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={{
-                                backgroundColor: COLORS.card,
-                                padding: 15,
-                                borderRadius: 10,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            }}
-                            onPress={() => {
-                                // Cancel logic here
-                                bottomSheetRef.current?.close();
-                            }}
-                        >
-                            <Text style={{ fontSize: 16 }}>Cancel</Text>
-                        </TouchableOpacity>
-                    </View>
-                </BottomSheetScrollView>
-            </BottomSheet>
         </View>
     )
 }

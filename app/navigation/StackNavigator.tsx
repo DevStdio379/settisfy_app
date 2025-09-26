@@ -20,7 +20,6 @@ import Products from '../screens/Products/Products';
 import ProductDetails from '../screens/Products/ProductDetails';
 import MyBorrowingDetails from '../screens/MyBookings/MyBookingDetails';
 import LendingDetails from '../screens/ProviderPanel/MyRequestDetails';
-import BorrowerAddReview from '../screens/Products/BookingAddReview';
 import LenderAddReview from '../screens/ProviderPanel/LenderAddReview';
 import MyBorrowings from '../screens/MyBookings/MyBookings';
 import Temp from '../screens/Temp';
