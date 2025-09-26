@@ -106,7 +106,7 @@ const Cardstyle4 = ({ id, title, imageUrl, description, deposit, averageRating, 
                 <View style={{ flex: 1, width: '100%' }}>
                     <Text numberOfLines={1} ellipsizeMode="tail" style={{ fontSize: 16, color: COLORS.black }}>{title}</Text>
                     <View style={{ flexDirection: 'row', justifyContent: 'flex-start', width: '100%' }}>
-                        <Text style={{ fontWeight: 'bold', fontSize: 14, color: colors.title }}>From RM {price}</Text>
+                        <Text style={{ fontWeight: 'bold', fontSize: 14, color: colors.title }}>From RM{price}</Text>
                     </View>
                     {MyOrder ? completed ?
                         <TouchableOpacity

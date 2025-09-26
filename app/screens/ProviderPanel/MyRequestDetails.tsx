@@ -432,7 +432,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 </View>
                             ) : status === 4 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Your return service-end code is</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Your service-end code is</Text>
                                     <Text style={{ fontSize: 24, fontWeight: "bold", color: "indigo" }}>{booking.serviceEndCode}</Text>
                                 </View>
                             ) : status === 5 ? (

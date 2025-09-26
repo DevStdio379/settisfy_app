@@ -89,7 +89,7 @@ export const Home = ({ navigation }: HomeScreenProps) => {
     const scrollViewHome = useRef<any>(null);
 
 
-    const buttons = ['plumbing', 'Electrical', 'cleaning', 'Delivery', 'Others'];
+    const buttons = ['All', 'Cleaning', 'Plumbing', 'Electrical', 'Delivery', 'Others'];
 
     const scrollX = useRef(new Animated.Value(0)).current;
     const onCLick = (i: any) => scrollViewHome.current.scrollTo({ x: i * SIZES.width });
@@ -122,8 +122,8 @@ export const Home = ({ navigation }: HomeScreenProps) => {
                             </View>
                         ) : (
                             <View>
-                                <Text style={{ fontSize: 30, fontWeight: 'bold', color: COLORS.title }}>BorrowUp</Text>
-                                <Text style={{ fontSize: 16, color: COLORS.title }}>Lend & borrow items around you.</Text>
+                                <Text style={{ fontSize: 30, fontWeight: 'bold', color: COLORS.title }}>Settisfy</Text>
+                                <Text style={{ fontSize: 16, color: COLORS.title }}>On-demand service marketplace.</Text>
                             </View>
                         )}
                         <TouchableOpacity
@@ -219,7 +219,7 @@ export const Home = ({ navigation }: HomeScreenProps) => {
                                     >
                                         <View style={[GlobalStyleSheet.container, { paddingBottom: 20 }]}>
                                             <FlatList
-                                                data={catalogue.filter(product => product.category === button)}
+                                                data={catalogue.filter(product => product.category.toLowerCase() === button.toLowerCase())}
                                                 scrollEnabled={false}
                                                 renderItem={renderItem} // Assign renderItem function
                                                 keyExtractor={(item) => item.id?.toString() ?? ''} // Unique key for each item
