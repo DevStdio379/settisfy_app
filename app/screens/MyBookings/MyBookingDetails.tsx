@@ -14,6 +14,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { createReview, getReviewByBookingId, Review } from '../../services/ReviewServices';
 import axios from 'axios';
 import { Booking, fetchSelectedBooking, subscribeToBookings, subscribeToOneBooking, updateBooking } from '../../services/BookingServices';
+import { getOrCreateChat } from '../../services/ChatServices';
 
 type MyBookingDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyBookingDetails'>;
 
@@ -23,10 +24,8 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
     const { user } = useUser();
     const mapRef = useRef<MapView | null>(null);
     const [booking, setBooking] = useState<Booking>(route.params.booking);
-    const [accordionOpen, setAccordionOpen] = useState<{ [key: string]: boolean }>({});
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [owner, setOwner] = useState<User>();
     const [images, setImages] = useState<string[]>([]);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [status, setStatus] = useState<number>(booking.status);
@@ -47,6 +46,13 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
     const [selectedSettlerId, setSelectedSettlerId] = useState<string>('');
     const [selectedSettlerFirstName, setSelectedSettlerFirstName] = useState<string>('');
     const [selectedSettlerLastName, setSelectedSettlerLastName] = useState<string>('');
+
+    const handleChat = async (userId: string, otherUserId: string) => {
+        const chatId = await getOrCreateChat(userId, otherUserId, booking.id);
+        if (chatId) {
+            navigation.navigate("Chat", { chatId: chatId });
+        }
+    };
 
 
 
@@ -101,7 +107,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
 
                     // const fetchedOwner = await fetchSelectedUser(selectedBooking.settlerId || 'undefined');
                     // if (fetchedOwner) {
-                    //     setOwner(fetchedOwner);
+                    //     setSettler(fetchedOwner);
                     // }
 
                     const fetchedReview = await getReviewByBookingId(selectedBooking.catalogueService.id || 'undefined', selectedBooking.id || 'unefined');
@@ -141,9 +147,9 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
 
                 const selectedBooking = await fetchSelectedBooking(booking.id || 'undefined');
                 if (selectedBooking) {
-                    // const fetchedOwner = await fetchSelectedUser(selectedBorrowing.product.ownerID);
+                    // const fetchedOwner = await fetchSelectedUser(selectedBorrowing.product.settlerID);
                     // if (fetchedOwner) {
-                    //     setOwner(fetchedOwner);
+                    //     setSettler(fetchedOwner);
                     // }
 
                     const fetchedReview = await getReviewByBookingId(selectedBooking.catalogueService.id || 'undefined', selectedBooking.id || 'undefined');
@@ -314,6 +320,9 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                     settlerLastName: acceptor.lastName,
                                                                     serviceStartCode: Math.floor(1000000 + Math.random() * 9000000).toString()
                                                                 });
+                                                                setSelectedSettlerId(acceptor.settlerId || '');
+                                                                setSelectedSettlerFirstName(acceptor.firstName || '');
+                                                                setSelectedSettlerLastName(acceptor.lastName || '');
                                                                 setStatus(status! + 1);
                                                                 onRefresh();
                                                             }}
@@ -390,12 +399,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                             width: '80%',
                                             alignItems: 'center',
                                         }}
-                                        onPress={async () => {
-                                            if (booking.id) {
-                                                await updateBooking(booking.id, { status: status! + 1 });
-                                            }
-                                            setStatus(status! + 1);
-                                        }}
+                                        onPress={() => { handleChat(user?.uid || '', booking.settlerId || ''); }}
                                     >
                                         <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Settler</Text>
                                     </TouchableOpacity>

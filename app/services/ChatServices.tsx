@@ -13,32 +13,32 @@ import {
 /**
  * Get or create a chat between the logged-in user and another user.
  */
-export const getOrCreateChat = async (user: User, otherUser: User, productId?: string ) => {
+export const getOrCreateChat = async (userId: string, otherUserId: string, serviceId?: string ) => {
 
   const chatRef = collection(db, "chats");
 
   // Check if chat already exists
   const chatQuery = query(
     chatRef,
-    where("participants", "array-contains", user.uid)
+    where("participants", "array-contains", userId)
   );
 
   try {
     const snapshot = await getDocs(chatQuery);
     for (const chat of snapshot.docs) {
       const data = chat.data();
-      if (data.participants.includes(otherUser.uid) && data.productId === productId) {
+      if (data.participants.includes(otherUserId) && data.productId === serviceId) {
         return chat.id; // Return existing chat ID
       }
     }
 
     // Create a new chat
     const newChatRef = await addDoc(chatRef, {
-      participants: [user.uid, otherUser.uid],
+      participants: [userId, otherUserId],
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       lastMessage: "",
-      productId: productId || null
+      productId: serviceId || null
     });
 
     return newChatRef.id;

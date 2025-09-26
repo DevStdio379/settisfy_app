@@ -13,6 +13,7 @@ import { createReview, getReviewByBookingId, Review } from '../../services/Revie
 import axios from 'axios';
 import { Booking, fetchSelectedBooking, updateBooking } from '../../services/BookingServices';
 import { arrayUnion } from 'firebase/firestore';
+import { getOrCreateChat } from '../../services/ChatServices';
 
 type MyRequestDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyRequestDetails'>;
 
@@ -46,6 +47,13 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     const userAlreadyAccepted = booking.acceptors?.some(
         (acceptor) => acceptor.settlerId === user?.uid
     );
+
+    const handleChat = async (userId: string, otherUserId: string) => {
+        const chatId = await getOrCreateChat(userId, otherUserId, booking.id);
+        if (chatId) {
+            navigation.navigate("Chat", { chatId: chatId });
+        }
+    };
 
     const handleChange = (text: string, index: number) => {
         if (/^\d?$/.test(text)) {
@@ -348,7 +356,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                     </View>
                                     <Text style={{ fontSize: 12, marginBottom: 4, marginTop: 10, color: COLORS.danger }}>{validationMessage}</Text>
                                 </View>
-                            ) : status === 2 &&  booking.settlerId === user?.uid ? (
+                            ) : status === 2 && booking.settlerId === user?.uid ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                     <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4, textAlign: 'center' }}>You can start your service now.</Text>
                                     <TouchableOpacity
@@ -360,12 +368,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             width: '80%',
                                             alignItems: 'center',
                                         }}
-                                        onPress={async () => {
-                                            if (booking.id) {
-                                                await updateBooking(booking.id, { status: status! + 1 });
-                                            }
-                                            setStatus(status! + 1);
-                                        }}
+                                         onPress={() => { handleChat(user?.uid || '', booking.userId || ''); }}
                                     >
                                         <Text style={{ color: 'white', fontWeight: 'bold' }}>Message customer</Text>
                                     </TouchableOpacity>
@@ -384,7 +387,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                         }}
                                         onPress={async () => {
                                             if (booking.id) {
-                                                await updateBooking(booking.id, { status: status! + 1, serviceEndCode: Math.floor(1000000 + Math.random() * 9000000).toString()});
+                                                await updateBooking(booking.id, { status: status! + 1, serviceEndCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
                                             }
                                             setStatus(status! + 1);
                                         }}
