@@ -279,7 +279,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                     });
                     Alert.alert(`Review updated successfully.`);
                     const latestRating = await getReviewAverageRatingByProductId(booking.catalogueService.id || 'undefined');
-                    await updateProduct(booking.catalogueService.id || 'undefined', { averageRating: latestRating.averageRating, ratingCount: latestRating.ratingCount });
+                    // await updateProduct(booking.catalogueService.id || 'undefined', { averageRating: latestRating.averageRating, ratingCount: latestRating.ratingCount });
                 }
             } else {
                 Alert.alert('User ID is missing.');

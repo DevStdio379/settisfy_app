@@ -89,7 +89,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
         }
     };
 
-    const fetchSelectedBorrowingData = async () => {
+    const fetchSelectedBookingData = async () => {
         if (booking) {
             try {
                 const selectedBooking = await fetchSelectedBooking(booking.id || 'undefined');
@@ -102,7 +102,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         setOwner(fetchedOwner);
                     }
 
-                    const fetchedReview = await getReviewByBookingId(selectedBooking.catalogueService.id || '', booking.id || '');
+                    const fetchedReview = await getReviewByBookingId(selectedBooking.id || '', booking.id || '');
                     if (fetchedReview) {
                         // Alert.alert('L Review found');
                         setReview(fetchedReview);
@@ -146,7 +146,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
-        fetchSelectedBorrowingData().then(() => setRefreshing(false));
+        fetchSelectedBookingData().then(() => setRefreshing(false));
     }, []);
 
     const formatDate = (dateString: string | undefined) => {
