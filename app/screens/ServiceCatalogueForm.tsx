@@ -5,7 +5,6 @@ import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
 import axios from 'axios';
 import { useStripe } from '@stripe/stripe-react-native';
-import { serviceCatalogue } from '../constants/ServiceCatalogue';
 import Input from '../components/Input/Input';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
@@ -15,9 +14,9 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { createCatalogue, deleteCatalogue, fetchSelectedCatalogue, updateCatalogue } from '../services/CatalogueServices';
 import { set } from 'date-fns';
 
-type ServiceCatalogueScreenProps = StackScreenProps<RootStackParamList, 'ServiceCatalogue'>
+type ServiceCatalogueFormScreenProps = StackScreenProps<RootStackParamList, 'ServiceCatalogueForm'>
 
-export const ServiceCatalogue = ({ navigation, route }: ServiceCatalogueScreenProps) => {
+export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueFormScreenProps) => {
 
   const categories = [
     { label: "Plumbing", value: "plumbing" },
@@ -628,4 +627,4 @@ export const ServiceCatalogue = ({ navigation, route }: ServiceCatalogueScreenPr
   );
 };
 
-export default ServiceCatalogue
+export default ServiceCatalogueForm

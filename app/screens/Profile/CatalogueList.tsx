@@ -73,7 +73,7 @@ const CatalogueList = ({ navigation, route }: CatalogueListScreenProps) => {
                                 borderRadius: 50,
                                 padding: 10,
                             }}
-                            onPress={() => navigation.navigate('ServiceCatalogue', { catalogue: null })}
+                            onPress={() => navigation.navigate('ServiceCatalogueForm', { catalogue: null })}
                         >
                             <Ionicons name="add" size={25} color={COLORS.title} />
                         </TouchableOpacity>
@@ -133,7 +133,7 @@ const CatalogueList = ({ navigation, route }: CatalogueListScreenProps) => {
                                                     <View style={{ marginVertical: 5, height: 100 }} key={index}>
                                                         <TouchableOpacity
                                                             activeOpacity={0.8}
-                                                            onPress={() => navigation.navigate('ServiceCatalogue', { catalogue: data })}
+                                                            onPress={() => navigation.navigate('ServiceCatalogueForm', { catalogue: data })}
                                                             style={{
                                                                 borderRadius: 10,
                                                                 borderWidth: 1,
@@ -199,7 +199,7 @@ const CatalogueList = ({ navigation, route }: CatalogueListScreenProps) => {
                                                     <View style={{ marginVertical: 5, height: 100 }} key={index}>
                                                         <TouchableOpacity
                                                             activeOpacity={0.8}
-                                                            onPress={() => navigation.navigate('ServiceCatalogue', { catalogue: data })}
+                                                            onPress={() => navigation.navigate('ServiceCatalogueForm', { catalogue: data })}
                                                             style={{
                                                                 borderRadius: 10,
                                                                 borderWidth: 1,

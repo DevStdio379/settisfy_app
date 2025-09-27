@@ -37,7 +37,7 @@ import MyBookings from '../screens/MyBookings/MyBookings';
 import QuoteCleaning from '../screens/Products/QuoteCleaning';
 import BookingAddReview from '../screens/Products/BookingAddReview';
 import SettlerAddService from '../screens/ProviderPanel/SettlerAddService';
-import ServiceCatalogue from '../screens/ServiceCatalogue';
+import ServiceCatalogue from '../screens/ServiceCatalogueForm';
 import SettlerAddReview from '../screens/ProviderPanel/SettlerAddReview';
 
 

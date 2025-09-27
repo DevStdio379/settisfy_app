@@ -47,7 +47,7 @@ export type RootStackParamList = {
     Messages: undefined;
 
     Temp: undefined;
-    ServiceCatalogue: {catalogue: Catalogue | null};
+    ServiceCatalogueForm: {catalogue: Catalogue | null};
 
     FavouriteCollection: undefined;
 
