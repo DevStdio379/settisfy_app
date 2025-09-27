@@ -595,7 +595,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                             </View>
                                         </View>
                                     </TouchableOpacity>
-                                    <Text style={{ fontSize: 14, color: COLORS.blackLight }}>handled by {booking.settlerFirstName} {booking.settlerLastName} </Text>
+                                    <Text style={{ fontSize: 14, color: COLORS.black }}>handled by {booking.settlerFirstName} {booking.settlerLastName} </Text>
                                 </View>
                             </View>
                         </View>

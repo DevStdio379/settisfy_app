@@ -282,7 +282,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             ))}
                         </View>
                         {/* Action Card */}
-                        <View style={{ backgroundColor: "#f3f3f3", padding: 16, borderRadius: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, marginVertical: 20, marginHorizontal: 10 }}>
+                        <View style={{ backgroundColor: "#f3f3f3", padding: 16, borderRadius: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, marginVertical: 10, marginHorizontal: 10 }}>
                             {status === 0 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                     {userAlreadyAccepted ? (
@@ -605,52 +605,20 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             </Swiper>
                         </View> */}
                         {/* Borrowing Details */}
-                        <View style={{ width: '100%', paddingHorizontal: 15, borderRadius: 20, borderColor: COLORS.blackLight, borderWidth: 1, marginBottom: 20 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', marginVertical: 10 }}>
-                                <View style={{ flex: 1, alignItems: 'center' }}>
-                                    {
-                                        owner ? (
-                                            <Image
-                                                source={{ uri: owner.profileImageUrl }}
-                                                style={{
-                                                    width: 60,
-                                                    height: 60,
-                                                    borderRadius: 40,
-                                                }}
-                                            />
-                                        ) : (
-                                            <View
-                                                style={{
-                                                    width: 60,
-                                                    height: 60,
-                                                    borderRadius: 40,
-                                                    marginBottom: 10,
-                                                    backgroundColor: COLORS.card,
-                                                    justifyContent: 'center',
-                                                    alignItems: 'center',
-                                                }}
-                                            >
-                                                <Text style={{ color: COLORS.blackLight }}>No image selected</Text>
-                                            </View>
-                                        )
-                                    }
+                        {
+                            booking.status === 1 && booking.settlerId === user?.uid ? (
+                                <View style={{ backgroundColor: COLORS.primaryLight, padding: 10, borderRadius: 20, paddingVertical:10 }}>
+                                    <Text style={{ textAlign: 'center' }}>You're handling this job</Text>
                                 </View>
-                                <View style={{ flex: 7, paddingLeft: 20 }}>
-                                    <TouchableOpacity onPress={() => navigation.navigate('QuoteCleaning', { service: booking.catalogueService })}>
-                                        <View style={{ width: SIZES.width * 0.63 }}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                <Text style={{ fontSize: 17, fontWeight: 'bold', color: COLORS.black, textDecorationLine: 'underline' }} numberOfLines={1} ellipsizeMode="tail">{booking.catalogueService.title}</Text>
-                                                <Ionicons name="link" size={20} color={COLORS.blackLight} style={{ marginLeft: 5 }} />
-                                            </View>
-                                        </View>
-                                    </TouchableOpacity>
-                                    <Text style={{ fontSize: 14, color: COLORS.blackLight }}>borrowed by {owner?.firstName} {owner?.lastName} </Text>
+                            ) : (
+                                <View style={{ backgroundColor: '#FFF3E0', padding: 10, borderRadius: 20, marginVertical: 10 }}>
+                                    <Text style={{ textAlign: 'center' }}>Sorry, you're not selected </Text>
                                 </View>
-                            </View>
-                        </View>
+                            )
+                        }
                         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                             {buttons.map((btn: any, i: number) => (
-                                <View key={i} style={{ flexDirection: 'row', width: SIZES.width * 0.5, paddingHorizontal: 10, justifyContent: 'space-between', alignItems: 'center' }}>
+                                <View key={i} style={{ flexDirection: 'row', width: SIZES.width * 0.5, paddingHorizontal: 10, paddingTop: 20, justifyContent: 'space-between', alignItems: 'center' }}>
                                     <TouchableOpacity
                                         key={btn}
                                         style={{ width: '100%', justifyContent: 'center', alignItems: 'center', }}
@@ -748,7 +716,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                         <Text style={{ fontSize: 14, color: "#333" }}>
                                                                             {addon.name}: {opt.label}
                                                                         </Text>
-                                                                        <Text style={{ fontSize: 14, color: "#333", fontWeight:'bold' }}>£{opt.additionalPrice}</Text>
+                                                                        <Text style={{ fontSize: 14, color: "#333", fontWeight: 'bold' }}>£{opt.additionalPrice}</Text>
                                                                     </View>
                                                                 ))}
                                                             </View>

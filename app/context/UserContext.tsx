@@ -39,7 +39,7 @@ export const defaultUser: User = {
   firstName: "UserFirstName",
   lastName: "UserLastName",
   phoneNumber: "1234567890",
-  accountType: "borrower",
+  accountType: "customer",
   isVerified: false,
   createAt: "Feb 6, 2025, 12:24:09 PM",
   updatedAt: "Feb 6, 2025, 12:24:09 PM",
