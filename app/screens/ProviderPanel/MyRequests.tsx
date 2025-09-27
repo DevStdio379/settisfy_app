@@ -7,7 +7,7 @@ import { RootStackParamList } from "../../navigation/RootStackParamList";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchSelectedUser, User, useUser } from "../../context/UserContext";
 import { fetchLendingsByUser } from "../../services/BorrowingServices";
-import { Booking, fetchBookingsByUser, subscribeToBookings } from "../../services/BookingServices";
+import { Booking, fetchBookingsAsSettler, fetchBookingsByUser, subscribeToBookings } from "../../services/BookingServices";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../services/firebaseConfig";
 
@@ -30,9 +30,9 @@ const MyRequests = ({ navigation, route }: MyRequestsScreenProps) => {
 
   const fetchData = async () => {
     if (user?.uid) {
-      const setRequestsData = await fetchBookingsByUser(user.uid);
-      const activeJobs = setRequestsData.filter(listing => listing.status <= 5);
-      const inactiveJobs = setRequestsData.filter(listing => listing.status > 5);
+      const setRequestsData = await fetchBookingsAsSettler(user.uid);
+      const activeJobs = setRequestsData.filter(booking => booking.status < 5);
+      const inactiveJobs = setRequestsData.filter(booking => booking.status == 6 && booking.settlerId === user.uid);
       setActiveJobs(activeJobs);
       setInactiveJobs(inactiveJobs);
     }
@@ -160,11 +160,9 @@ const MyRequests = ({ navigation, route }: MyRequestsScreenProps) => {
                                   </View>
                                 )}
                                 <View style={{ width: '70%', padding: 10 }}>
+                                  <Text style={{ fontSize: 12, color: COLORS.black, opacity: .5 }}>{data.id}</Text>
                                   <Text numberOfLines={1} style={{ fontSize: 16, color: COLORS.black, fontWeight: 'bold' }}>{data.catalogueService.title}</Text>
-                                  <Text style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}>borrowed by {data.firstName} {data.lastName}</Text>
-                                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <Text style={{ fontSize: 14 }}>{new Date(data.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.startDate).toLocaleDateString('en-GB', { weekday: 'short' })} to {new Date(data.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.endDate).toLocaleDateString('en-GB', { weekday: 'short' })}</Text>
-                                  </View>
+                                  <Text style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}>for {data.firstName} {data.lastName}</Text>
                                 </View>
                               </View>
                             </TouchableOpacity>

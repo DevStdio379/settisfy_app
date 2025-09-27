@@ -1,5 +1,6 @@
 // services/chatService.ts
 import { User } from "../context/UserContext";
+import { Booking } from "./BookingServices";
 import { db, auth } from "./firebaseConfig";
 import {
   collection,
@@ -13,7 +14,7 @@ import {
 /**
  * Get or create a chat between the logged-in user and another user.
  */
-export const getOrCreateChat = async (userId: string, otherUserId: string, serviceId?: string ) => {
+export const getOrCreateChat = async (userId: string, otherUserId: string, booking?: Booking ) => {
 
   const chatRef = collection(db, "chats");
 
@@ -27,7 +28,11 @@ export const getOrCreateChat = async (userId: string, otherUserId: string, servi
     const snapshot = await getDocs(chatQuery);
     for (const chat of snapshot.docs) {
       const data = chat.data();
-      if (data.participants.includes(otherUserId) && data.productId === serviceId) {
+      if (
+        data.participants.includes(otherUserId) &&
+        booking &&
+        data.id === booking.id
+      ) {
         return chat.id; // Return existing chat ID
       }
     }
@@ -38,7 +43,7 @@ export const getOrCreateChat = async (userId: string, otherUserId: string, servi
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       lastMessage: "",
-      productId: serviceId || null
+      booking: booking || null
     });
 
     return newChatRef.id;

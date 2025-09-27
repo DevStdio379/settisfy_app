@@ -117,8 +117,26 @@ export const fetchBookingsByUser = async (userID: string): Promise<Booking[]> =>
     const userMyBorrowingsList: Booking[] = [];
     const snapshot = await getDocs(collection(db, 'bookings')); // Fetch products from 'products' collection
     snapshot.forEach(doc => {
-      const borrowingData = doc.data();
-      if (borrowingData.userId === userID) {  // Check if the product belongs to the user
+      const bookingData = doc.data();
+      if (bookingData.userId === userID) {  // Check if the product belongs to the user
+        userMyBorrowingsList.push(mapBorrowingData(doc));  // Push the formatted product to the list
+      }
+    });
+    return userMyBorrowingsList;
+  } catch (error) {
+    console.error('Error fetching user borrowings: ', error);
+    throw error;  // Throwing the error to handle it at the call site
+  }
+};
+
+// Function to fetch products for a specific user from Firestore
+export const fetchBookingsAsSettler = async (userId: string): Promise<Booking[]> => {
+  try {
+    const userMyBorrowingsList: Booking[] = [];
+    const snapshot = await getDocs(collection(db, 'bookings')); // Fetch products from 'products' collection
+    snapshot.forEach(doc => {
+      const bookingData = doc.data();
+      if (bookingData.settlerId === userId) {  // Check if the product belongs to the user
         userMyBorrowingsList.push(mapBorrowingData(doc));  // Push the formatted product to the list
       }
     });

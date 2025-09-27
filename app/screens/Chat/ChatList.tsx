@@ -10,12 +10,13 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { Avatar } from 'react-native-gifted-chat';
 import { COLORS } from '../../constants/theme';
 import { fetchSelectedProduct, Product } from '../../services/ProductServices';
+import { Booking } from '../../services/BookingServices';
 
 type ChatListScreenProps = StackScreenProps<RootStackParamList, 'ChatList'>
 
 export const ChatList = ({ navigation }: ChatListScreenProps) => {
     const { user } = useUser();
-    const [chats, setChats] = useState<{ id: string; participants: string[]; otherParticipantDetails?: User; lastMessage?: string; product?: Product; updatedAt?: any; }[]>([]);
+    const [chats, setChats] = useState<{ id: string; participants: string[]; otherParticipantDetails?: User; lastMessage?: string; booking?: Booking; updatedAt?: any; }[]>([]);
     const [refreshing, setRefreshing] = useState(false);
 
     const fetchUsersByIds = async (userIds: string[]): Promise<User[]> => {
@@ -115,8 +116,9 @@ export const ChatList = ({ navigation }: ChatListScreenProps) => {
                         onPress={() => navigation.navigate("Chat", { chatId: item.id })}
                         style={{ flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#ccc' }}
                     >
-                        <Image source={{ uri: item.product?.imageUrls[0] }} style={{ height: 60, width: 60, borderRadius: 45 }} />
+                        <Image source={{ uri: item.booking?.catalogueService.imageUrls[0] }} style={{ height: 60, width: 60, borderRadius: 45 }} />
                         <View style={{ marginLeft: 16 }}>
+                            <Text style={{ fontSize: 12, color: COLORS.black, opacity: .5 }}>{item.id}</Text>
                             <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{item.otherParticipantDetails?.firstName} {item.otherParticipantDetails?.lastName}</Text>
                             <Text style={{ color: '#888' }}>{item.lastMessage || 'Last message preview...'}</Text>
                             <Text>{item.updatedAt?.toDate().toLocaleString() || 'Unknown date'}</Text>

@@ -49,7 +49,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     );
 
     const handleChat = async (userId: string, otherUserId: string) => {
-        const chatId = await getOrCreateChat(userId, otherUserId, booking.id);
+        const chatId = await getOrCreateChat(userId, otherUserId, booking);
         if (chatId) {
             navigation.navigate("Chat", { chatId: chatId });
         }

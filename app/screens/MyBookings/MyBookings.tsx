@@ -162,6 +162,7 @@ const MyBookings = ({ navigation }: MyBookingsScreenProps) => {
                                                                     </View>
                                                                 )}
                                                                 <View style={{ width: '70%', padding: 10 }}>
+                                                                    <Text style={{ fontSize: 12, color: COLORS.black, opacity: .5 }}>{data.id}</Text>
                                                                     <Text numberOfLines={1} style={{ fontSize: 16, color: COLORS.black, fontWeight: 'bold' }}>{data.catalogueService.title}</Text>
                                                                     <Text style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}>provided by {data.ownerFirstName} {data.ownerLastName}</Text>
                                                                     <Text style={{ fontSize: 14 }}>{new Date(data.selectedDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.selectedDate).toLocaleDateString('en-GB', { weekday: 'long' })}</Text>
@@ -211,6 +212,7 @@ const MyBookings = ({ navigation }: MyBookingsScreenProps) => {
                                                                     </View>
                                                                 )}
                                                                 <View style={{ width: '70%', padding: 10 }}>
+                                                                    <Text style={{ fontSize: 12, color: COLORS.black, opacity: .5 }}>{data.id}</Text>
                                                                     <Text numberOfLines={1} style={{ fontSize: 16, color: COLORS.black, fontWeight: 'bold' }}>{data.catalogueService.title}</Text>
                                                                     <Text style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}>provided by {data.ownerFirstName} {data.ownerLastName}</Text>
                                                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
