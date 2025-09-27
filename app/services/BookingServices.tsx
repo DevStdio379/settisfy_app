@@ -10,6 +10,19 @@ export interface Acceptor {
   acceptedAt: string; // store as ISO string, or use Firestore Timestamp if needed
 }
 
+
+export interface SubOption {
+    label: string;        // e.g. "10 sqft"
+    additionalPrice: number; // e.g. 15 (store as number for calculations)
+    notes?: string;       // optional: "measure carefully"
+}
+
+export interface DynamicOption {
+    name: string;          // e.g. "sqft", "extras"
+    subOptions: SubOption[];
+    multipleSelect: boolean;
+}
+
 export interface Booking {
   id?: string;
   userId: string;
@@ -26,6 +39,7 @@ export interface Booking {
 
   // booking details
   total: number;
+  addons?: DynamicOption[];
   paymentMethod: string;
   paymentIntentId?: string;
 
@@ -75,6 +89,7 @@ const mapBorrowingData = (doc: any): Booking => {
 
     // booking details
     total: data.total,
+    addons: data.addons,
     paymentMethod: data.paymentMethod,
     paymentIntentId: data.paymentIntentId || '',  // Ensure paymentIntentId is always a string
 

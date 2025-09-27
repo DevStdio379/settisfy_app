@@ -173,12 +173,12 @@ export const searchServices = async (queryStr: string): Promise<Catalogue[]> => 
       );
 
     // Fetch review counts in parallel to reduce Firestore calls
-    await Promise.all(filteredProducts.map(async product => {
-      if (product.id) {
-        const reviewsSnapshot = await getDocs(collection(db, "products", product.id, "reviews"));
-        productList.push({ ...product, ratingCount: reviewsSnapshot.size });
-      }
-    }));
+    // await Promise.all(filteredProducts.map(async product => {
+    //   if (product.id) {
+    //     const reviewsSnapshot = await getDocs(collection(db, "products", product.id, "reviews"));
+    //     productList.push({ ...product, ratingCount: reviewsSnapshot.size });
+    //   }
+    // }));
 
     return productList;
   } catch (error) {

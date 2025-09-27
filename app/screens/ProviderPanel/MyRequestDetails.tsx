@@ -288,7 +288,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                     {userAlreadyAccepted ? (
                                         <Text style={{ color: "green", textAlign: 'center' }}>You already accepted this job, Wait for customer respond.</Text>
                                     ) : (
-                                        <View>
+                                        <View style={{ alignItems: "center", justifyContent: "center" }}>
                                             <Text style={{ fontWeight: 'bold' }}>Take this job?</Text>
                                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                                 <TouchableOpacity
@@ -368,7 +368,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             width: '80%',
                                             alignItems: 'center',
                                         }}
-                                         onPress={() => { handleChat(user?.uid || '', booking.userId || ''); }}
+                                        onPress={() => { handleChat(user?.uid || '', booking.userId || ''); }}
                                     >
                                         <Text style={{ color: 'white', fontWeight: 'bold' }}>Message customer</Text>
                                     </TouchableOpacity>
@@ -739,8 +739,20 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                                                             <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
                                                             <Text style={{ fontSize: 14, color: "#333" }}>1 x session</Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.total.toFixed(2)}</Text>
+                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.catalogueService.basePrice}</Text>
                                                         </View>
+                                                        {booking.addons && booking.addons.map((addon) => (
+                                                            <View key={addon.name} style={{ flexDirection: "column" }}>
+                                                                {addon.subOptions.map((opt) => (
+                                                                    <View key={opt.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                                                                        <Text style={{ fontSize: 14, color: "#333" }}>
+                                                                            {addon.name}: {opt.label}
+                                                                        </Text>
+                                                                        <Text style={{ fontSize: 14, color: "#333", fontWeight:'bold' }}>£{opt.additionalPrice}</Text>
+                                                                    </View>
+                                                                ))}
+                                                            </View>
+                                                        ))}
                                                         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                                                             <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
                                                             <Text style={{ fontSize: 14, color: "#333" }}></Text>

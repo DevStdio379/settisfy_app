@@ -190,6 +190,13 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
       return;
     }
 
+    // Convert selectedAddons object to DynamicOption[] array
+    const addonsArray = Object.entries(selectedAddons).map(([category, options]) => ({
+      name: category,
+      subOptions: options,
+      multipleSelect: false, // Set appropriately if you have this info
+    }));
+
     const bookingData = {
       userId: user?.uid || '',
       status: 0,
@@ -204,6 +211,7 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
       catalogueService: service,
 
       // booking details
+      addons: addonsArray,
       total: grandTotal || 0,
       paymentMethod: paymentMethod,
       paymentIntentId: paymentIntentId,

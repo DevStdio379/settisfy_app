@@ -22,6 +22,7 @@ type MyBookingDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyBooki
 const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) => {
 
     const { user } = useUser();
+    const [settler, setSettler] = useState<User>();
     const mapRef = useRef<MapView | null>(null);
     const [booking, setBooking] = useState<Booking>(route.params.booking);
     const [loading, setLoading] = useState(true);
@@ -297,8 +298,8 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                         <View style={{ backgroundColor: "#f3f3f3", padding: 16, borderRadius: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, marginVertical: 20, marginHorizontal: 10 }}>
                             {status === 0 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>Broadcasting your service job</Text>
-                                    <Text style={{ fontSize: 10, color: COLORS.blackLight2, textAlign: 'center' }}>This usually takes about 1-2 hours waiting</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>Broadcasting your service request</Text>
+                                    <Text style={{ fontSize: 12, color: COLORS.blackLight2, textAlign: 'center' }}>This usually takes about 1-2 hours waiting</Text>
                                     {
                                         booking.acceptors && booking.acceptors.length === 0 ? (
                                             <Text style={{ fontSize: 14, color: COLORS.danger, marginBottom: 8 }}>
@@ -306,6 +307,9 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                             </Text>
                                         ) : (
                                             <View>
+                                                <Text style={{ fontSize: 14, color: COLORS.black, marginBottom: 8, marginTop: 10 }}>
+                                                    Select your preferred settler from the list below:
+                                                </Text>
                                                 {booking.acceptors?.map((acceptor, index) => {
                                                     const isSelected = selectedSettlerId === acceptor.settlerId;
                                                     return (
@@ -320,6 +324,11 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                     settlerLastName: acceptor.lastName,
                                                                     serviceStartCode: Math.floor(1000000 + Math.random() * 9000000).toString()
                                                                 });
+
+                                                                const selectedSettler = await fetchSelectedUser(acceptor.settlerId || 'undefined');
+                                                                if (selectedSettler) {
+                                                                    setSettler(selectedSettler);
+                                                                }
                                                                 setSelectedSettlerId(acceptor.settlerId || '');
                                                                 setSelectedSettlerFirstName(acceptor.firstName || '');
                                                                 setSelectedSettlerLastName(acceptor.lastName || '');
@@ -328,14 +337,11 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                             }}
                                                             activeOpacity={0.8}
                                                         >
-                                                            <Text style={[{ color: "#333", fontSize: 14, fontWeight: "500" }, isSelected && { color: "#fff", fontWeight: "600" }]}>
+                                                            <Text style={[{ color: "#333", fontSize: 12 }, isSelected && { color: "#fff", fontWeight: "600" }]}>
                                                                 {acceptor.settlerId || `Settler ${index + 1}`}
                                                             </Text>
-                                                            <Text style={[{ color: "#333", fontSize: 14, fontWeight: "500" }, isSelected && { color: "#fff", fontWeight: "600" }]}>
+                                                            <Text style={[{ color: "#333", fontSize: 14, fontWeight: "bold" }, isSelected && { color: "#fff", fontWeight: "600" }]}>
                                                                 {acceptor.firstName + " " + acceptor.lastName || `Settler ${index + 1}`}
-                                                            </Text>
-                                                            <Text style={{ fontSize: 10, color: "#888", marginTop: 4 }}>
-                                                                {new Date(acceptor.acceptedAt).toLocaleDateString()}
                                                             </Text>
                                                         </TouchableOpacity>
                                                     );
@@ -550,6 +556,49 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                             }
                         </View>
                         {/* Borrowing Details */}
+                        <View style={{ width: '100%', paddingHorizontal: 15, borderRadius: 20, borderColor: COLORS.blackLight, borderWidth: 1, marginBottom: 20 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', marginVertical: 10 }}>
+                                <View style={{ flex: 1, alignItems: 'center' }}>
+                                    {
+                                        settler?.profileImageUrl ? (
+                                            <Image
+                                                source={{ uri: settler.profileImageUrl }}
+                                                style={{
+                                                    width: 60,
+                                                    height: 60,
+                                                    borderRadius: 40,
+                                                }}
+                                            />
+                                        ) : (
+                                            <View
+                                                style={{
+                                                    width: 60,
+                                                    height: 60,
+                                                    borderRadius: 40,
+                                                    marginBottom: 10,
+                                                    backgroundColor: COLORS.card,
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center',
+                                                }}
+                                            >
+                                                <Ionicons name="person" size={30} color={COLORS.blackLight} />
+                                            </View>
+                                        )
+                                    }
+                                </View>
+                                <View style={{ flex: 7, paddingLeft: 20 }}>
+                                    <TouchableOpacity onPress={() => navigation.navigate('QuoteCleaning', { service: booking.catalogueService })}>
+                                        <View style={{ width: SIZES.width * 0.63 }}>
+                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                <Text style={{ fontSize: 17, fontWeight: 'bold', color: COLORS.black, textDecorationLine: 'underline' }} numberOfLines={1} ellipsizeMode="tail">{booking.catalogueService.title}</Text>
+                                                <Ionicons name="link" size={20} color={COLORS.blackLight} style={{ marginLeft: 5 }} />
+                                            </View>
+                                        </View>
+                                    </TouchableOpacity>
+                                    <Text style={{ fontSize: 14, color: COLORS.blackLight }}>handled by {booking.settlerFirstName} {booking.settlerLastName} </Text>
+                                </View>
+                            </View>
+                        </View>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                             {buttons.map((btn: any, i: number) => (
                                 <View
@@ -656,8 +705,20 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                                                             <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
                                                             <Text style={{ fontSize: 14, color: "#333" }}>1 x session</Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.total.toFixed(2)}</Text>
+                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.catalogueService.basePrice}</Text>
                                                         </View>
+                                                        {booking.addons && booking.addons.map((addon) => (
+                                                            <View key={addon.name} style={{ flexDirection: "column" }}>
+                                                                {addon.subOptions.map((opt) => (
+                                                                    <View key={opt.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                                                                        <Text style={{ fontSize: 14, color: "#333" }}>
+                                                                            {addon.name}: {opt.label}
+                                                                        </Text>
+                                                                        <Text style={{ fontSize: 14, color: "#333", fontWeight: 'bold' }}>£{opt.additionalPrice}</Text>
+                                                                    </View>
+                                                                ))}
+                                                            </View>
+                                                        ))}
                                                         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                                                             <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
                                                             <Text style={{ fontSize: 14, color: "#333" }}></Text>

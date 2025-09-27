@@ -73,10 +73,10 @@ const ProviderDashboard = ({ navigation }: ProviderDashboardScreenProps) => {
     }
 
     const handleChat = async (user: User, otherUser: User) => {
-        const chatId = await getOrCreateChat(user, otherUser);
-        if (chatId) {
-            navigation.navigate("Chat", { chatId: chatId });
-        }
+        // const chatId = await getOrCreateChat(user, otherUser);
+        // if (chatId) {
+        //     navigation.navigate("Chat", { chatId: chatId });
+        // }
     };
 
 
