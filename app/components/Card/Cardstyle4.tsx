@@ -50,7 +50,7 @@ const Cardstyle4 = ({ id, title, imageUrl, description, deposit, averageRating, 
 
     const handleToggle = () => {
         if (!user) return;
-        dispatch(toggleFavorite({ userId: user?.uid, productId: id }));
+        dispatch(toggleFavorite({ userId: user?.uid, serviceId: id }));
     };
 
     return (

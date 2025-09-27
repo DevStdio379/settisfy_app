@@ -24,7 +24,7 @@ const BottomNavigation = () => {
     }
     
     return (
-        user.accountType === 'borrower' ? (
+        user.accountType === 'customer' ? (
             <Tab.Navigator
                 initialRouteName='HomeStack'
                 screenOptions={{
@@ -53,7 +53,7 @@ const BottomNavigation = () => {
                     component={ProfileStack}
                 />
             </Tab.Navigator>
-        ) : user.accountType === 'lender' && (
+        ) : user.accountType === 'settler' && (
             <Tab.Navigator
                 initialRouteName='ProviderDashboard'
                 screenOptions={{

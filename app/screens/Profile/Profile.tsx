@@ -88,7 +88,7 @@ const Profile = ({ navigation }: ProfileScreenProps) => {
     const handleSwitchAccountType = async () => {
         try {
             if (user?.uid) {
-                await updateUserData(user.uid, { 'accountType': user.accountType === 'borrower' ? 'lender' : 'borrower' });
+                await updateUserData(user.uid, { 'accountType': user.accountType === 'customer' ? 'settler' : 'customer' });
                 navigation.navigate('BottomNavigation', { screen: 'HomeStack' });
             } else {
                 console.error("User ID is undefined");
@@ -194,13 +194,13 @@ const Profile = ({ navigation }: ProfileScreenProps) => {
                                 <Text style={{ fontSize: 14, color: COLORS.blackLight }}>
                                     {borrowingRating.toFixed(2)} <Ionicons name="star" size={14} color={COLORS.placeholder} />
                                 </Text>
-                                <Text style={{ fontSize: 14, color: colors.text }}>Borrowings</Text>
+                                <Text style={{ fontSize: 14, color: colors.text }}>Customer</Text>
                             </View>
                             <View style={{ flex: 1 }}>
                                 <Text style={{ fontSize: 14, color: COLORS.blackLight }}>
                                     {lendingRating.toFixed(2)} <Ionicons name="star" size={14} color={COLORS.placeholder} />
                                 </Text>
-                                <Text style={{ fontSize: 14, color: colors.text }}>Lendings</Text>
+                                <Text style={{ fontSize: 14, color: colors.text }}>Settler</Text>
                             </View>
                             <View style={{ flex: 1 }}>
                                 <Text style={{ fontSize: 14, color: COLORS.blackLight }}>
@@ -334,7 +334,7 @@ const Profile = ({ navigation }: ProfileScreenProps) => {
                             onPress={() => handleSwitchAccountType()}
                         >
                             <Text style={{ fontSize: 18, color: COLORS.card, lineHeight: 21 }}>
-                                {user?.accountType === 'borrower' ? 'Switch to Service Provider Profile' : 'Switch to Customer Profile'}
+                                {user?.accountType === 'customer' ? 'Switch to Service Provider Profile' : 'Switch to Customer Profile'}
                             </Text>
                         </TouchableOpacity>
                         {/* {

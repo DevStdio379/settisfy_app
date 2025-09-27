@@ -794,7 +794,7 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
               />
               <View style={{ flex: 1, marginTop: 5 }}>
                 <Text style={{ fontSize: 16, marginBottom: 5 }}>
-                  <Text style={{ color: "#E63946", fontWeight: "bold" }}>£{totalPrice}</Text> / Session {" "}
+                  <Text style={{ color: "#E63946", fontWeight: "bold" }}>£{basePrice}</Text> / Session {" "}
                   {/* <Text style={styles.originalPrice}>£40.20</Text> */}
                 </Text>
                 <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }}>Cleaning Service</Text>

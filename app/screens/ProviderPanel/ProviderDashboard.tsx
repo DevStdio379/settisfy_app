@@ -23,12 +23,12 @@ const ProviderDashboard = ({ navigation }: ProviderDashboardScreenProps) => {
         [
             {
                 imageUri: 'https://firebasestorage.googleapis.com/v0/b/tags-1489a.appspot.com/o/static%2Fyard-sale.jpg?alt=media&token=90c4772e-450f-4431-85a7-c0d1e48f286c',
-                title: 'Help your listing stand out',
+                title: 'Help Your Service Stand Out',
                 description: 'Learn how to maximize your earnings.',
             },
             {
                 imageUri: 'https://firebasestorage.googleapis.com/v0/b/tags-1489a.appspot.com/o/static%2Ffence%20sharing.jpg?alt=media&token=6409463f-31f9-466f-a895-2e5506438f5f',
-                title: 'How to Lend Safely',
+                title: 'How to do Job Safely',
                 description: 'Tips for safe lending practices.',
             },
         ]
@@ -88,7 +88,7 @@ const ProviderDashboard = ({ navigation }: ProviderDashboardScreenProps) => {
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Text style={{ fontSize: 14, color: COLORS.title }}>{user.currentAddress?.addressName}</Text>
                         </View>
-                        <Text style={{ fontSize: 30, fontWeight: 'bold', color: COLORS.title }}>Owner Dashboard</Text>
+                        <Text style={{ fontSize: 30, fontWeight: 'bold', color: COLORS.title }}>Settler Dashboard</Text>
                     </View>
                 ) : (
                     <View>
@@ -148,7 +148,7 @@ const ProviderDashboard = ({ navigation }: ProviderDashboardScreenProps) => {
                 <View style={{ marginTop: 20 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                         <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.title }}>
-                            Recent Lendings
+                            Recent Requests
                         </Text>
                         <TouchableOpacity onPress={() => navigation.navigate('MyRequests')}>
                             <Text style={{ fontSize: 14, color: COLORS.primary }}>

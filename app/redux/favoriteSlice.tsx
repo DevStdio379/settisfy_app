@@ -31,10 +31,10 @@ export const fetchFavorites = createAsyncThunk(
 
 export const toggleFavorite = createAsyncThunk(
   'favorites/toggleFavorite',
-  async ({ userId, productId }: { userId: string; productId: string }, { getState }: any) => {
+  async ({ userId, serviceId }: { userId: string; serviceId: string }, { getState }: any) => {
     const state = getState();
-    const isFavorite = state.favorites.favorites.includes(productId);
-    const ref = doc(db, `users/${userId}/favorites/${productId}`);
+    const isFavorite = state.favorites.favorites.includes(serviceId);
+    const ref = doc(db, `users/${userId}/favorites/${serviceId}`);
 
     if (isFavorite) {
       await deleteDoc(ref);
@@ -42,7 +42,7 @@ export const toggleFavorite = createAsyncThunk(
       await setDoc(ref, { addedAt: serverTimestamp() });
     }
 
-    return productId;
+    return serviceId;
   }
 );
 const favoritesSlice = createSlice({
@@ -59,11 +59,11 @@ const favoritesSlice = createSlice({
         state.loading = false;
       })
       .addCase(toggleFavorite.fulfilled, (state, action) => {
-        const productId = action.payload;
-        if (state.favorites.includes(productId)) {
-          state.favorites = state.favorites.filter((id) => id !== productId);
+        const serviceId = action.payload;
+        if (state.favorites.includes(serviceId)) {
+          state.favorites = state.favorites.filter((id) => id !== serviceId);
         } else {
-          state.favorites.push(productId);
+          state.favorites.push(serviceId);
         }
       });
   },

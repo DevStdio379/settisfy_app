@@ -9,6 +9,8 @@ import { AppDispatch, RootState } from '../../redux/store';
 import { fetchFavorites } from '../../redux/favoriteSlice';
 import { fetchSelectedProduct, Product } from '../../services/ProductServices';
 import Cardstyle4 from '../../components/Card/Cardstyle4';
+import { Catalogue, fetchCatalogue, fetchSelectedCatalogue } from '../../services/CatalogueServices';
+import { fetchSelectedSettlerService } from '../../services/SettlerServiceServices';
 
 type FavouriteCollectionScreenProps = StackScreenProps<RootStackParamList, 'FavouriteCollection'>
 
@@ -17,29 +19,29 @@ const Map = ({ navigation }: FavouriteCollectionScreenProps) => {
   const { user } = useUser();
   const dispatch = useDispatch<AppDispatch>();
   const favoriteIds = useSelector((state: RootState) => state.favorites.favorites);
-  const [products, setProducts] = useState<Record<string, Product | null>>({});
+  const [services, setServices] = useState<Record<string, Catalogue | null>>({});
 
   useEffect(() => {
     dispatch(fetchFavorites(user?.uid || ''));
   }, [dispatch, user?.uid]);
 
   useEffect(() => {
-    const loadProducts = async () => {
-      const updates: Record<string, Product | null> = {};
+    const loadServices = async () => {
+      const updates: Record<string, Catalogue | null> = {};
       for (const id of favoriteIds) {
-        if (!products[id]) {
+        if (!services[id]) {
           try {
-            const product = await fetchSelectedProduct(id);
-            updates[id] = product;
+            const service = await fetchSelectedCatalogue(id);
+            updates[id] = service;
           } catch (err) {
             updates[id] = null; // handle deleted product
           }
         }
       }
-      setProducts((prev) => ({ ...prev, ...updates }));
+      setServices((prev) => ({ ...prev, ...updates }));
     };
 
-    if (favoriteIds.length) loadProducts();
+    if (favoriteIds.length) loadServices();
   }, [favoriteIds]);
 
   if (!user || !user.isActive) {
@@ -65,7 +67,7 @@ const Map = ({ navigation }: FavouriteCollectionScreenProps) => {
             {/* left header element */}
           </View>
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center', marginVertical: 10 }}>Saved Product</Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center', marginVertical: 10 }}>Saved Services</Text>
           </View>
           <View style={{ flex: 1, alignItems: 'flex-end' }}>
             {/* right header element */}
@@ -82,10 +84,10 @@ const Map = ({ navigation }: FavouriteCollectionScreenProps) => {
           keyExtractor={(id) => id}
           numColumns={2}
           columnWrapperStyle={{ justifyContent: 'space-between' }}
-          renderItem={({ item: productId }) => {
-            const product = products[productId];
+          renderItem={({ item: serviceId }) => {
+            const service = services[serviceId];
 
-            if (!product) {
+            if (!service) {
               return (
                 <View/>
               );
@@ -94,18 +96,18 @@ const Map = ({ navigation }: FavouriteCollectionScreenProps) => {
             return (
               <View style={{ flex: 1, margin: 5 }}>
                 <Cardstyle4
-                  id={productId}
-                  imageUrl={product.imageUrls[0]}
-                  price={product.lendingRate}
-                  ownerID={product.ownerID}
-                  description={product.description}
-                  location={product.address}
-                  title={product.title}
-                  onPress={() => navigation.navigate('ProductDetails', { product: product })}
+                  id={serviceId}
+                  imageUrl={service.imageUrls[0]}
+                  price={service.basePrice}
+                  ownerID={''}
+                  description={service.description}
+                  location={''}
+                  title={service.title}
+                  onPress={() => navigation.navigate('QuoteCleaning', { service: service })}
                   product={true}
-                  ratingCount={product.ratingCount} 
-                  deposit={product.depositAmount}
-                  averageRating={product.averageRating}/>
+                  ratingCount={0} 
+                  deposit={0}
+                  averageRating={0}/>
               </View>
             );
           }}

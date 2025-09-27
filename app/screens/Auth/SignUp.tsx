@@ -53,7 +53,7 @@ const SignUp = ({ navigation }: SignUpScreenProps) => {
                 firstName: firstName,
                 lastName: lastName,
                 phoneNumber: '',
-                accountType: 'borrower',
+                accountType: 'customer',
                 isVerified: false,
                 createAt: new Date(),
                 updatedAt: new Date(),

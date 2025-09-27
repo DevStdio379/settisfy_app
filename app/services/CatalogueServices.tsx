@@ -1,6 +1,6 @@
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { db, storage } from "./firebaseConfig";
-import { addDoc, collection, doc, getDocs, updateDoc } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
 
 export interface SubOption {
     label: string;        // e.g. "10 sqft"
@@ -125,6 +125,23 @@ export const fetchCatalogue = async (): Promise<Catalogue[]> => {
     return catalogueList;
   } catch (error) {
     console.error('Error fetching catalogue: ', error);
+    throw error;  // Throwing the error to handle it at the call site
+  }
+};
+
+export const fetchSelectedCatalogue = async (serviceId: string): Promise<Catalogue | null> => {
+  try {
+    const catalogueRef = doc(db, 'catalogue', serviceId);
+    const catalogueDoc = await getDoc(catalogueRef);
+
+    if (catalogueDoc.exists() && catalogueDoc.data()) {
+      return mapDocToCatalogue(catalogueDoc);
+    } else {
+      console.log('No such selected product exists.');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching selected product: ', error);
     throw error;  // Throwing the error to handle it at the call site
   }
 };
