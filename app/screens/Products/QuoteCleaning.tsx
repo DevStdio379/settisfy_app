@@ -616,6 +616,7 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
             </View>
             <Calendar
               onDayPress={(day) => setSelectedDate(day.dateString)}
+              minDate={new Date().toISOString().split('T')[0]}
               markedDates={
                 selectedDate
                   ? {
@@ -899,7 +900,7 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
           >
             <Text style={{ color: COLORS.white, fontSize: 16, fontWeight: 'bold' }}>{[
               `Pick Dates`,
-              'Delivery Method',
+              'Select Address',
             ][index] || ''}</Text>
           </TouchableOpacity>
         </View>

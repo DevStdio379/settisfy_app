@@ -68,12 +68,12 @@ export const SearchResults = ({ navigation, route }: SearchResultsScreenProps) =
                                 <Cardstyle4
                                     id={item.id}
                                     imageUrl={item.imageUrls[0]}
-                                    price={item.lendingRate.toString()}
+                                    price={item.basePrice}
                                     ownerID={item.ownerID}
                                     description={item.description}
                                     location={item.address}
                                     title={item.title}
-                                    onPress={() => navigation.navigate('ProductDetails', { product: item })}
+                                    onPress={() => navigation.navigate('QuoteCleaning', { service: item })}
                                     // onPress5={() => addItemToWishList(item)}
                                     product={true}
                                     deposit={item.depositAmount}

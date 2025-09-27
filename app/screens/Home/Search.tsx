@@ -13,6 +13,7 @@ import { RootStackParamList } from "../../navigation/RootStackParamList";
 import { StackScreenProps } from "@react-navigation/stack";
 import { COLORS, SIZES } from "../../constants/theme";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { searchServices } from "../../services/CatalogueServices";
 
 type SearchProps = StackScreenProps<RootStackParamList, 'Search'>
 const Search = ({ navigation }: SearchProps) => {
@@ -30,7 +31,7 @@ const Search = ({ navigation }: SearchProps) => {
         const fetchSuggestions = async () => {
             setLoading(true);
             try {
-                const results = await searchProducts(query);
+                const results = await searchServices(query);
                 setAllSearchResults(results);
                 setSuggestions(results.slice(0, 5)); // Limit suggestions to 5
             } catch (err) {
@@ -63,7 +64,7 @@ const Search = ({ navigation }: SearchProps) => {
                     <View style={{ width: SIZES.width * 0.8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderColor: COLORS.inputBackground, borderWidth: 1, borderRadius: 20, paddingLeft: 10 }}>
                         <TextInput
                             placeholderTextColor={COLORS.blackLight}
-                            placeholder="Search for borrowable items..."
+                            placeholder="Search for available services..."
                             value={query}
                             onChangeText={setQuery}
                             onSubmitEditing={() => handleSearch()} // Search on enter
