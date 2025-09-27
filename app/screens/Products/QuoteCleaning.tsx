@@ -17,6 +17,19 @@ import Input from "../../components/Input/Input";
 import TabButtonStyleHome from "../../components/Tabs/TabButtonStyleHome";
 import { createBooking } from "../../services/BookingServices";
 
+interface AddonOption {
+  label: string;
+  additionalPrice: number;
+  notes?: string;
+}
+
+interface AddonCategory {
+  name: string;
+  subOptions: AddonOption[];
+  multipleSelect: boolean;
+}
+
+
 type QuoteCleaningScreenProps = StackScreenProps<RootStackParamList, "QuoteCleaning">;
 
 const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
@@ -92,10 +105,15 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
   const [isFocused, setisFocused] = useState(false);
   const [notesForSettler, setnotesForSettler] = useState<string>('');
   const [grandTotal, setGrandTotal] = useState<number>(0);
+  const [selectedAddons, setSelectedAddons] = useState<{ [key: string]: AddonOption[] }>({});
+  const basePrice = service ? service.basePrice : 0;
+  const [totalQuote, setTotalQuote] = useState(basePrice);
+  const platformFee = 2; // Fixed platform fee
+
 
   // tabview
   const scrollViewHome = useRef<any>(null);
-  const buttons = ['Options', 'Details', 'What\'s Included', 'Before You Borrow', 'Reviews'];
+  const buttons = ['Options', 'Service Details', 'Before You Book', 'Reviews'];
 
   const scrollX = useRef(new Animated.Value(0)).current;
   const onCLick = (i: any) => scrollViewHome.current.scrollTo({ x: i * SIZES.width });
@@ -116,7 +134,7 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
       return;
     }
     if (index === 4) {
-      let grandTotal = totalPrice + 2; // Adding platform fee of $2
+      let grandTotal = totalQuote + 2; // Adding platform fee of $2
       setGrandTotal(grandTotal);
     }
     if (index === 5) {
@@ -128,6 +146,37 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
   // previous screen
   const prevScreen = () =>
     setIndex((prev) => (prev - 1 + screens) % screens);
+
+  function toggleAddon(category: AddonCategory, option: AddonOption) {
+  setSelectedAddons((prev) => {
+    const prevOptions = prev[category.name] || [];
+
+    let newOptions: AddonOption[];
+
+    if (category.multipleSelect) {
+      // ✅ Single selection: replace entire list
+      newOptions = prevOptions[0]?.label === option.label ? [] : [option];
+    } else {
+      // ✅ Multiple selection: toggle
+      const exists = prevOptions.some((o) => o.label === option.label);
+      newOptions = exists
+        ? prevOptions.filter((o) => o.label !== option.label)
+        : [...prevOptions, option];
+    }
+
+    const newSelections = { ...prev, [category.name]: newOptions };
+
+    // Recalculate total
+    const addonsTotal = Object.values(newSelections)
+      .flat()
+      .reduce((sum, o) => sum + Number(o.additionalPrice), 0);
+
+    setTotalQuote(Number(basePrice) + Number(addonsTotal));
+    return newSelections;
+  });
+}
+
+
 
   // checkout
   const handleCheckout = async (borrowingRef: any, paymentIntentId: string) => {
@@ -268,7 +317,7 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
             <View style={{ alignItems: 'center' }}>
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center' }}>
                 {[
-                  `Cleaning Service`,
+                  `${service.title}`,
                   'Select Dates',
                   'Service Address',
                   'Payment Method',
@@ -365,53 +414,49 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
                   <View style={{}}>
                     {index === 0 && (
                       <View>
-                        {service.dynamicOptions.map((option, optionIndex) => (
-                          <View key={optionIndex}>
-                            <Text style={styles.sectionTitle}>{option.name}</Text>
-                            <FlatList
-                              data={option.subOptions.map((sub, i) => ({
-                                id: `${optionIndex}-${i}`, // unique id for FlatList key
-                                label: sub.label,
-                                price: sub.additionalPrice,
-                                notes: sub.notes || "",
-                              }))}
-                              keyExtractor={(item) => item.id.toString()}
-                              horizontal
-                              renderItem={({ item }) => (
-                                <Card
-                                  item={item}
-                                  isSelected={selectedArea === Number(item.id)}
-                                  onPress={() => setSelectedArea(Number(item.id))}
-                                />
-                              )}
-                              showsHorizontalScrollIndicator={false}
-                            />
-                          </View>
-                        ))}
+                        {service.dynamicOptions.map((cat) => (
+  <View key={cat.name} style={{ marginVertical: 10 }}>
+    <Text style={{ fontWeight: "bold", fontSize: 16 }}>
+      {cat.name} {cat.multipleSelect && "(Select one)"}
+    </Text>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 5 }}>
+      {cat.subOptions.map((option) => {
+        const isSelected = selectedAddons[cat.name]?.some((o) => o.label === option.label);
+        return (
+          <TouchableOpacity
+            key={option.label}
+            style={{
+              padding: 10,
+              borderWidth: 1,
+              borderColor: isSelected ? "blue" : "#ccc",
+              backgroundColor: isSelected ? "#e0f0ff" : "white",
+              borderRadius: 8,
+              minWidth: 100,
+            }}
+            onPress={() => toggleAddon(cat, option)}
+          >
+            <Text>{option.label}</Text>
+            <Text style={{ fontSize: 12, color: "#555" }}>+${option.additionalPrice}</Text>
+            {option.notes && <Text style={{ fontSize: 10, color: "#888" }}>{option.notes}</Text>}
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  </View>
+))}
+
+
                       </View>
                     )}
                     {index === 1 && (
                       <View style={{ paddingTop: 10, paddingRight: 40 }}>
                         <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Description</Text>
-                        <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>Blabla sample description</Text>
+                        <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>{service.description}</Text>
+                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>What's Included</Text>
+                        <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>{service.includedServices}</Text>
                       </View>
                     )}
                     {index === 2 && (
-                      <View style={{ paddingRight: 40 }}>
-                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>What's Included</Text>
-                        <View style={{ paddingLeft: 10 }}>
-                          {includedItems.map((item, index) => (
-                            <View key={index} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 5 }}>
-                              <Ionicons name="ellipse" size={10} color={COLORS.black} />
-                              <Text style={{ fontSize: 15, color: COLORS.black, paddingLeft: 10 }}>{item}</Text>
-                            </View>
-                          ))}
-                        </View>
-                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black, paddingVertical: 10 }}>Usage Guidelines</Text>
-                        <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>Welcome to my shop</Text>
-                      </View>
-                    )}
-                    {index === 3 && (
                       <View style={{ paddingRight: 40 }}>
                         <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Deposit Policy</Text>
                         <View style={GlobalStyleSheet.line} />
@@ -787,8 +832,18 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                 <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
                 <Text style={{ fontSize: 14, color: "#333" }}>1 x session</Text>
-                <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{totalPrice.toFixed(2)}</Text>
+                <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{service.basePrice}</Text>
               </View>
+              {
+                Object.entries(selectedAddons).map(([category, options]) => (
+                  options.map((option, idx) => (
+                    <View key={`${category}-${idx}`} style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                      <Text style={{ fontSize: 14, color: "#333" }}>{category}: {option.label}</Text>
+                      <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{option.additionalPrice}</Text>
+                    </View>
+                  ))
+                ))
+              }
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                 <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
                 <Text style={{ fontSize: 14, color: "#333" }}></Text>
@@ -822,7 +877,7 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
             <View style={{ flexDirection: 'column' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                 <Text style={{ fontSize: 24, color: COLORS.title, fontWeight: 'bold' }}>
-                  Starting at £{totalPrice}
+                  Starting at £{totalQuote}
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', gap: 5 }}>

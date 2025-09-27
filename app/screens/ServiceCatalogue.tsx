@@ -23,6 +23,7 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
   const [serviceCardImageUrls, setServiceCardImageUrls] = useState<string[]>([]);
   const [serviceTitle, setServiceTitle] = useState<string>('');
   const [serviceCardBrief, setServiceCardBrief] = useState<string>('');
+  const [includedServices, setIncludedServices] = useState<string>('');
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [basePrice, setBasePrice] = useState<number>(0);
@@ -31,6 +32,7 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
       id: number;
       name: string;
       subOptions: { id: number; label: string; additionalPrice: number; notes: string }[];
+      multipleSelect: boolean;
     }[]
   >([]);
 
@@ -38,7 +40,7 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
   const addMainOption = () => {
     setDynamicOptions((prev) => [
       ...prev,
-      { id: Date.now(), name: "", subOptions: [] },
+      { id: Date.now(), name: "", subOptions: [], multipleSelect: false },
     ]);
   };
 
@@ -98,9 +100,14 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
       imageUrls: serviceCardImageUrls,
       title: serviceTitle,
       description: serviceCardBrief,
+      includedServices: includedServices,
       category: selectedCategory,
       basePrice: basePrice,
-      dynamicOptions: dynamicOptions,
+      dynamicOptions: dynamicOptions.map(opt => ({
+        name: opt.name,
+        subOptions: opt.subOptions,
+        multipleSelect: opt.multipleSelect // or true, depending on your logic
+      })),
       isActive: true,
       createAt: new Date(),
       updateAt: new Date()
@@ -337,7 +344,28 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
                   height: 150,
                 }}
                 inputicon
-                placeholder='e.g. Cleaning includes house cleaning etc'
+                placeholder='e.g. General cleaning is a light cleaning job etc'
+                multiline={true}
+                numberOfLines={4}
+              />
+              <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>What's included</Text>
+              <Input
+                onFocus={() => setisFocused2(true)}
+                onBlur={() => setisFocused2(false)}
+                isFocused={isFocused2}
+                value={includedServices}
+                onChangeText={setIncludedServices}
+                backround={COLORS.card}
+                style={{
+                  fontSize: 12,
+                  borderRadius: 12,
+                  backgroundColor: COLORS.input,
+                  borderColor: COLORS.inputBorder,
+                  borderWidth: 1,
+                  height: 150,
+                }}
+                inputicon
+                placeholder='e.g. Cleaning includes house cleaning, gutter cleaning, garbage disposal, etc'
                 multiline={true}
                 numberOfLines={4}
               />
@@ -367,6 +395,33 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
                     placeholder="Main option (e.g. sqft, extras)"
                     style={{ marginBottom: 10 }}
                   />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                    <TouchableOpacity
+                      onPress={() =>
+                        setDynamicOptions(prev =>
+                          prev.map(o =>
+                            o.id === opt.id ? { ...o, multipleSelect: !o.multipleSelect } : o
+                          )
+                        )
+                      }
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: 4,
+                        borderWidth: 2,
+                        borderColor: COLORS.inputBorder,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        marginRight: 8,
+                        backgroundColor: !opt.multipleSelect ? COLORS.primary : COLORS.input,
+                      }}
+                    >
+                      {!opt.multipleSelect && (
+                        <Ionicons name="checkmark" size={18} color={COLORS.white} />
+                      )}
+                    </TouchableOpacity>
+                    <Text>Allow multiple selection</Text>
+                  </View>
 
                   {/* Sub Options */}
                   {opt.subOptions.map((sub) => (

@@ -11,6 +11,7 @@ export interface SubOption {
 export interface DynamicOption {
     name: string;          // e.g. "sqft", "extras"
     subOptions: SubOption[];
+    multipleSelect: boolean;
 }
 
 export interface Catalogue {
@@ -19,6 +20,7 @@ export interface Catalogue {
     imageUrls: string[];
     title: string;
     description: string;
+    includedServices: string;
     category: string;
     basePrice: number;
 
@@ -95,6 +97,7 @@ const mapDocToCatalogue = (doc: any): Catalogue => {
         imageUrls: catalogueData.imageUrls,
         title: catalogueData.title,
         description: catalogueData.description,
+        includedServices: catalogueData.includedServices,
         category: catalogueData.category,
         basePrice: catalogueData.basePrice,
 
