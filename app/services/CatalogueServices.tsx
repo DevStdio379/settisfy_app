@@ -1,14 +1,16 @@
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { db, storage } from "./firebaseConfig";
-import { addDoc, collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
 
 export interface SubOption {
+    id: number;
     label: string;        // e.g. "10 sqft"
     additionalPrice: number; // e.g. 15 (store as number for calculations)
     notes?: string;       // optional: "measure carefully"
 }
 
 export interface DynamicOption {
+    id: number;
     name: string;          // e.g. "sqft", "extras"
     subOptions: SubOption[];
     multipleSelect: boolean;
@@ -129,6 +131,21 @@ export const fetchCatalogue = async (): Promise<Catalogue[]> => {
   }
 };
 
+export const fetchAllCatalogue = async (): Promise<Catalogue[]> => {
+  try {
+    const catalogueList: Catalogue[] = [];
+    const snapshot = await getDocs(collection(db, 'catalogue')); // Fetch products from 'products' collection
+    for (const doc of snapshot.docs) {
+      const catalogue = mapDocToCatalogue(doc);
+      catalogueList.push({ ...catalogue});
+    }
+    return catalogueList;
+  } catch (error) {
+    console.error('Error fetching catalogue: ', error);
+    throw error;  // Throwing the error to handle it at the call site
+  }
+};
+
 export const fetchSelectedCatalogue = async (serviceId: string): Promise<Catalogue | null> => {
   try {
     const catalogueRef = doc(db, 'catalogue', serviceId);
@@ -183,6 +200,28 @@ export const searchServices = async (queryStr: string): Promise<Catalogue[]> => 
     return productList;
   } catch (error) {
     console.error("Error searching products:", error);
+    throw error;
+  }
+};
+
+export const updateCatalogue = async (catalogueId: string, updatedCatalogue: Partial<Catalogue>) => {
+  try {
+    const catalogueRef = doc(db, 'catalogue', catalogueId);
+    await updateDoc(catalogueRef, updatedCatalogue);
+    console.log('Catalogue updated successfully');
+  } catch (error) {
+    console.error('Error updating catalogue: ', error);
+    throw error;  // Throwing the error to handle it at the call site
+  }
+};
+
+export const deleteCatalogue = async (catalogueId: string) => {
+  try {
+    const catalogueRef = doc(db, 'catalogue', catalogueId);
+    await deleteDoc(catalogueRef);
+    console.log('Catalogue deleted successfully');
+  } catch (error) {
+    console.error('Error deleting catalogue: ', error);
     throw error;
   }
 };

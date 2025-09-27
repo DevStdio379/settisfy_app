@@ -47,11 +47,12 @@ export type RootStackParamList = {
     Messages: undefined;
 
     Temp: undefined;
-    ServiceCatalogue: undefined;
+    ServiceCatalogue: {catalogue: Catalogue | null};
 
     FavouriteCollection: undefined;
 
     // Services Quotatation Screens
     QuoteCleaning: {service: Catalogue};
+    CatalogueList: undefined;
 
 };

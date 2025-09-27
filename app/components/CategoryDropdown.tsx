@@ -4,31 +4,25 @@ import { StyleSheet, View } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 
 interface CategoryDropdownProps {
-  selectedCategory: string;
-  setSelectedCategory: (value: string) => void;
+  options: { label: string; value: string }[];
+  selectedOption: string;
+  setSelectedOption: (value: string) => void;
 }
 
-const categories = [
-  { label: "Plumbing", value: "plumbing" },
-  { label: "Electrical", value: "electrical" },
-  { label: "Cleaning", value: "cleaning" },
-  { label: "Delivery", value: "delivery" },
-  { label: "Others", value: "others" },
-];
-
 export const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
-  selectedCategory,
-  setSelectedCategory,
+  options,
+  selectedOption,
+  setSelectedOption,
 }) => {
   return (
     <View style={styles.container}>
       <Dropdown
-        data={categories}
+        data={options}
         labelField="label"
         valueField="value"
         placeholder="Select a category"
-        value={selectedCategory}
-        onChange={(item) => setSelectedCategory(item.value)}
+        value={selectedOption}
+        onChange={(item) => setSelectedOption(item.value)}
         style={styles.dropdown}
         placeholderStyle={styles.placeholder}
         selectedTextStyle={styles.selectedText}

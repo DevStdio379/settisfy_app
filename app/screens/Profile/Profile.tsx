@@ -278,7 +278,7 @@ const Profile = ({ navigation }: ProfileScreenProps) => {
                     <View style={[GlobalStyleSheet.line, { margin: 10 },]} />
                     <TouchableOpacity
                         activeOpacity={0.8}
-                        onPress={() => navigation.navigate('ServiceCatalogue')}>
+                        onPress={() => navigation.navigate('CatalogueList')}>
                         <View style={[GlobalStyleSheet.flexcenter, { width: '100%', gap: 20, justifyContent: 'space-between', marginBottom: 15, alignItems: 'center' }]} >
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }} >
                                 <View style={[styles.cardimg]} >

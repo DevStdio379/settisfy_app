@@ -68,12 +68,6 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
     },
   ]
 
-  const includedItems = [
-    "Dusting all surfaces",
-    "Vacuuming and mopping floors",
-    "Cleaning bathrooms and kitchens",
-  ]
-
   // Payment Methods
   const paymentMethods = [
     {

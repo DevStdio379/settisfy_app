@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, TouchableOpacity, Image, Linking, Alert, ActivityIndicator, TextInput, RefreshControl } from 'react-native'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { COLORS } from '../constants/theme';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/RootStackParamList';
@@ -12,12 +12,22 @@ import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { GlobalStyleSheet } from '../constants/StyleSheet';
 import { CategoryDropdown } from '../components/CategoryDropdown';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { createCatalogue } from '../services/CatalogueServices';
+import { createCatalogue, deleteCatalogue, fetchSelectedCatalogue, updateCatalogue } from '../services/CatalogueServices';
+import { set } from 'date-fns';
 
 type ServiceCatalogueScreenProps = StackScreenProps<RootStackParamList, 'ServiceCatalogue'>
 
-export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) => {
+export const ServiceCatalogue = ({ navigation, route }: ServiceCatalogueScreenProps) => {
 
+  const categories = [
+    { label: "Plumbing", value: "plumbing" },
+    { label: "Electrical", value: "electrical" },
+    { label: "Cleaning", value: "cleaning" },
+    { label: "Delivery", value: "delivery" },
+    { label: "Others", value: "others" },
+  ];
+
+  const [catalogue, setCatalogue] = useState(route.params.catalogue);
   const [isFocused2, setisFocused2] = useState(false);
   const [selectedServiceCardImageUrls, setSelectedServiceCardImageUrls] = useState<string | null>(null);
   const [serviceCardImageUrls, setServiceCardImageUrls] = useState<string[]>([]);
@@ -27,14 +37,22 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [basePrice, setBasePrice] = useState<number>(0);
-  const [dynamicOptions, setDynamicOptions] = useState<
-    {
-      id: number;
-      name: string;
-      subOptions: { id: number; label: string; additionalPrice: number; notes: string }[];
-      multipleSelect: boolean;
-    }[]
-  >([]);
+  const [selectedStatus, setSelectedStatus] = useState('active');
+  type DynamicSubOption = {
+    id: number;
+    label: string;
+    additionalPrice: number;
+    notes: string;
+  };
+
+  type DynamicOption = {
+    id: number;
+    name: string;
+    subOptions: DynamicSubOption[];
+    multipleSelect: boolean;
+  };
+
+  const [dynamicOptions, setDynamicOptions] = useState<DynamicOption[]>([]);
 
   // options addon
   const addMainOption = () => {
@@ -96,22 +114,43 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
   };
 
   const handleListing = async () => {
-    await createCatalogue({
-      imageUrls: serviceCardImageUrls,
-      title: serviceTitle,
-      description: serviceCardBrief,
-      includedServices: includedServices,
-      category: selectedCategory,
-      basePrice: basePrice,
-      dynamicOptions: dynamicOptions.map(opt => ({
-        name: opt.name,
-        subOptions: opt.subOptions,
-        multipleSelect: opt.multipleSelect // or true, depending on your logic
-      })),
-      isActive: true,
-      createAt: new Date(),
-      updateAt: new Date()
-    })
+    if (catalogue) {
+      await updateCatalogue(catalogue.id || '', {
+        imageUrls: serviceCardImageUrls,
+        title: serviceTitle,
+        description: serviceCardBrief,
+        includedServices: includedServices,
+        category: selectedCategory,
+        basePrice: basePrice,
+        dynamicOptions: dynamicOptions.map(opt => ({
+          id: opt.id,
+          name: opt.name,
+          subOptions: opt.subOptions,
+          multipleSelect: opt.multipleSelect // or true, depending on your logic
+        })),
+        isActive: selectedStatus === 'active' ? true : false,
+        updateAt: new Date()
+      })
+      fetchSelectedCatalogueData(catalogue.id || '');
+    } else {
+      await createCatalogue({
+        imageUrls: serviceCardImageUrls,
+        title: serviceTitle,
+        description: serviceCardBrief,
+        includedServices: includedServices,
+        category: selectedCategory,
+        basePrice: basePrice,
+        dynamicOptions: dynamicOptions.map(opt => ({
+          id: opt.id,
+          name: opt.name,
+          subOptions: opt.subOptions,
+          multipleSelect: opt.multipleSelect // or true, depending on your logic
+        })),
+        isActive: selectedStatus === 'active' ? true : false,
+        createAt: new Date(),
+        updateAt: new Date()
+      })
+    }
   }
 
 
@@ -173,6 +212,32 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
     });
   };
 
+  useEffect(() => {
+    if (catalogue) {
+      setServiceCardImageUrls(catalogue.imageUrls || []);
+      setSelectedServiceCardImageUrls(catalogue.imageUrls && catalogue.imageUrls.length > 0 ? catalogue.imageUrls[0] : null);
+      setServiceTitle(catalogue.title || '');
+      setServiceCardBrief(catalogue.description || '');
+      setIncludedServices(catalogue.includedServices || '');
+      setSelectedCategory(catalogue.category || '');
+      setBasePrice(catalogue.basePrice || 0);
+      setSelectedStatus(catalogue.isActive ? 'active' : 'inactive');
+      setDynamicOptions(
+        (catalogue?.dynamicOptions || []).map((opt, idx) => ({
+          id: opt.id ?? idx,
+          name: opt.name ?? "",
+          multipleSelect: opt.multipleSelect ?? false,
+          subOptions: (opt.subOptions || []).map((sub, subIdx) => ({
+            id: sub.id ?? subIdx,
+            label: sub.label ?? "",
+            additionalPrice: sub.additionalPrice ?? 0,
+            notes: sub.notes ?? ""
+          }))
+        }))
+      );
+    }
+  }, [catalogue]);
+
   // Function to delete the selected image
   const deleteImage = () => {
     if (!selectedServiceCardImageUrls) return;
@@ -182,8 +247,44 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
     setSelectedServiceCardImageUrls(updatedImages.length > 0 ? updatedImages[0] : null);
   };
 
+  const fetchSelectedCatalogueData = async (catalogueId: string) => {
+    try {
+      const fetchedCatalogue = await fetchSelectedCatalogue(catalogueId);
+      if (fetchedCatalogue) {
+        setCatalogue(fetchedCatalogue);
+        setServiceCardImageUrls(fetchedCatalogue.imageUrls || []);
+        setSelectedServiceCardImageUrls(fetchedCatalogue.imageUrls && fetchedCatalogue.imageUrls.length > 0 ? fetchedCatalogue.imageUrls[0] : null);
+        setServiceTitle(fetchedCatalogue.title || '');
+        setServiceCardBrief(fetchedCatalogue.description || '');
+        setIncludedServices(fetchedCatalogue.includedServices || '');
+        setSelectedCategory(fetchedCatalogue.category || '');
+        setBasePrice(fetchedCatalogue.basePrice || 0);
+        setSelectedStatus(fetchedCatalogue.isActive ? 'active' : 'inactive');
+        setDynamicOptions(
+          (catalogue && catalogue.dynamicOptions ? catalogue.dynamicOptions : []).map((opt, idx) => ({
+            id: opt.id ?? idx,
+            name: opt.name ?? "",
+            multipleSelect: opt.multipleSelect ?? false,
+            subOptions: (opt.subOptions || []).map((sub, subIdx) => ({
+              id: sub.id ?? subIdx,
+              label: sub.label ?? "",
+              additionalPrice: sub.additionalPrice ?? 0,
+              notes: sub.notes ?? ""
+            }))
+          }))
+        );
+      } else {
+        console.log('No catalogue data found');
+      }
+    } catch (error) {
+      console.error('Error fetching catalogue data:', error);
+    }
+  }
+
   const onRefresh = useCallback(() => {
-  }, []);
+    setRefreshing(true);
+    fetchSelectedCatalogueData(catalogue?.id || '').then(() => setRefreshing(false));
+  }, [catalogue]);
 
   return (
     <KeyboardAwareScrollView
@@ -199,7 +300,7 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
               {/* left header element */}
             </View>
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center', marginVertical: 10 }}>Add Service</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center', marginVertical: 10 }}>{catalogue === null ? 'Add Service' : 'Manage Service'}</Text>
             </View>
             <View style={{ flex: 1, alignItems: 'flex-end' }}>
               <TouchableOpacity
@@ -207,11 +308,14 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
                   borderRadius: 50,
                   padding: 10,
                 }}
-                onPress={() => navigation.navigate('SettlerAddService', { settlerService: null })}
+                onPress={() =>
+                  deleteCatalogue(catalogue?.id || '').then(() => navigation.goBack())
+                }
               >
-                <Ionicons name="add" size={25} color={COLORS.title} />
+                <Ionicons name="trash-outline" size={25} color={COLORS.title} />
               </TouchableOpacity>
             </View>
+
           </View>
         </View>
         <ScrollView
@@ -221,8 +325,16 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }>
           <View style={{ paddingTop: 20, justifyContent: 'center', alignItems: 'center' }}>
-            <View style={{ width: '90%', paddingTop: 20, }}>
-              <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
+            <View style={{ width: '90%' }}>
+              {
+              (catalogue) && (
+                <View style={{ flex: 1, flexDirection: 'row', marginTop: 15, marginBottom: 5 }}>
+                  <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginRight: 10 }}>Catalogue Id:</Text>
+                  <Text>{catalogue.id}</Text>
+                </View>
+              )
+            }
+              <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', gap: 10, paddingTop: 10 }}>
                 {/* Large Preview Image */}
                 {selectedServiceCardImageUrls ? (
                   <View style={{ flex: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
@@ -324,6 +436,7 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
                 isFocused={isFocused2}
                 onChangeText={setServiceTitle}
                 backround={COLORS.card}
+                value={serviceTitle}
                 style={{ borderRadius: 12, backgroundColor: COLORS.input, borderColor: COLORS.inputBorder, borderWidth: 1, height: 50 }}
                 placeholder='e.g. Cleaning service'
               />
@@ -371,8 +484,9 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
               />
               <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Category</Text>
               <CategoryDropdown
-                selectedCategory={selectedCategory}
-                setSelectedCategory={setSelectedCategory}
+                options={categories}
+                selectedOption={selectedCategory}
+                setSelectedOption={setSelectedCategory}
               />
               <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Base Price</Text>
               <Input
@@ -380,10 +494,17 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
                 onBlur={() => setisFocused2(false)}
                 isFocused={isFocused2}
                 onChangeText={setBasePrice}
+                value={basePrice ? basePrice.toString() : ''}
                 backround={COLORS.card}
                 style={{ borderRadius: 12, backgroundColor: COLORS.input, borderColor: COLORS.inputBorder, borderWidth: 1, height: 50 }}
                 placeholder='e.g. 20'
                 keyboardType={'numeric'}
+              />
+              <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Status</Text>
+              <CategoryDropdown
+                options={[{ label: 'Active', value: 'active' }, { label: 'Inactive', value: 'inactive' }]}
+                selectedOption={selectedStatus}
+                setSelectedOption={setSelectedStatus}
               />
               <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Service Options</Text>
               {dynamicOptions.map((opt) => (
@@ -462,7 +583,6 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
                   </TouchableOpacity>
                 </View>
               ))}
-
               {/* Add Main Option Button */}
               <TouchableOpacity
                 onPress={addMainOption}
@@ -479,6 +599,7 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
                 <Text>Add Option</Text>
               </TouchableOpacity>
             </View>
+
             <View style={[GlobalStyleSheet.container, { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 15, paddingVertical: 10 }]}>
               <TouchableOpacity
                 style={{
@@ -490,12 +611,14 @@ export const ServiceCatalogue = ({ navigation }: ServiceCatalogueScreenProps) =>
                   width: '100%'
                 }}
                 onPress={() => {
-                  handleListing()
+                  handleListing();
                   Alert.alert('Listing Completed');
                   navigation.goBack();
                 }}
               >
-                <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>Submit</Text>
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
+                  {catalogue ? 'Update' : 'Submit'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
