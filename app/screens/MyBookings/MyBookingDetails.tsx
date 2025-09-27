@@ -188,7 +188,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
     ];
 
     const actions = [
-        { buttonTitle: 'Extend Borrowing', onPressAction: () => Alert.alert('Extend Borrowing Pressed') },
+        { buttonTitle: 'Extend Service', onPressAction: () => Alert.alert('Extend Service Pressed') },
         { buttonTitle: 'Report Issue', onPressAction: () => Alert.alert('Report Issue Pressed') },
         { buttonTitle: 'Contact Support', onPressAction: () => Alert.alert('Contact Support Pressed') },
     ];
@@ -785,7 +785,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                     }}
                                     onPress={() => { }}
                                 >
-                                    <Text style={{ fontSize: 14, color: COLORS.danger, lineHeight: 21, fontWeight: 'bold', textDecorationLine: 'underline' }}>Cancel Borrowing</Text>
+                                    <Text style={{ fontSize: 14, color: COLORS.danger, lineHeight: 21, fontWeight: 'bold', textDecorationLine: 'underline' }}>Cancel Booking</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>

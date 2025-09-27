@@ -173,7 +173,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     ];
 
     const actions = [
-        { buttonTitle: 'Extend Borrowing', onPressAction: () => Alert.alert('Extend Borrowing Pressed') },
+        { buttonTitle: 'Extend Service', onPressAction: () => Alert.alert('Extend Service Pressed') },
         { buttonTitle: 'Report Issue', onPressAction: () => Alert.alert('Report Issue Pressed') },
         { buttonTitle: 'Contact Support', onPressAction: () => Alert.alert('Contact Support Pressed') },
     ];
@@ -606,7 +606,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         </View> */}
                         {/* Borrowing Details */}
                         {
-                            booking.status === 1 && booking.settlerId === user?.uid ? (
+                            booking.status > 0 && booking.settlerId === user?.uid ? (
                                 <View style={{ backgroundColor: COLORS.primaryLight, padding: 10, borderRadius: 20, paddingVertical:10 }}>
                                     <Text style={{ textAlign: 'center' }}>You're handling this job</Text>
                                 </View>
@@ -914,7 +914,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                     }}
                                     onPress={() => { }}
                                 >
-                                    <Text style={{ fontSize: 14, color: COLORS.danger, lineHeight: 21, fontWeight: 'bold', textDecorationLine: 'underline' }}>Cancel Lending</Text>
+                                    <Text style={{ fontSize: 14, color: COLORS.danger, lineHeight: 21, fontWeight: 'bold', textDecorationLine: 'underline' }}>Cancel Job</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
