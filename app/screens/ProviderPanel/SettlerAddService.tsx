@@ -16,6 +16,8 @@ import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { set } from 'date-fns';
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { createSettlerService, fetchSelectedSettlerService, updateSettlerService } from '../../services/SettlerServiceServices';
+import { Catalogue, fetchAllCatalogue } from '../../services/CatalogueServices';
+import { categories } from '../../constants/ServiceCategory';
 
 type SettlerAddServiceScreenProps = StackScreenProps<RootStackParamList, 'SettlerAddService'>;
 
@@ -39,10 +41,9 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
     const [settlerFirstName, setSettlerFirstName] = useState<string>(user ? user?.firstName : '');
     const [settlerLastName, setSettlerLastName] = useState<string>(user ? user?.lastName : '');
 
-    const [serviceReferenceId, setServiceReferenceId] = useState<string>('');
-    const [serviceReferenceCategory, setServiceReferenceCategory] = useState<string>('');
-    const [serviceReferenceTitle, setServiceReferenceTitle] = useState<string>('');
-    const [serviceReferenceDescription, setServiceReferenceDescription] = useState<string>('');
+    const [category, setCategory] = useState<string>('');
+    const [catalogue, setCatalogue] = useState<Catalogue[]>();
+    const [selectedCatalogue, setSelectedCatalogue] = useState<Catalogue | null>(null);
     const [isExperienced, setIsExperienced] = useState<boolean>(false);
     const [serviceCardImageUrls, setServiceCardImageUrls] = useState<string[]>([]);
     const [selectedServiceCardImageUrls, setSelectedServiceCardImageUrls] = useState<string | null>(null);
@@ -87,54 +88,55 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
     };
 
     useEffect(() => {
-        if (settlerService !== null) {
-            Alert.alert(settlerService?.id ? settlerService?.id : 'sd')
-            const fetchSettlerService = async () => {
-                try {
-                    const selectedSettlerService = await fetchSelectedSettlerService(settlerService.id || '');
-                    if (selectedSettlerService) {
-                        // Set the state with the fetched listing details
-                        setServiceId(selectedSettlerService.id || '');
-                        setSettlerId(user?.uid || '');
-                        setSettlerFirstName(user?.firstName || '');
-                        setSettlerLastName(user?.lastName || '');
-                        setServiceReferenceCategory(selectedSettlerService.serviceReferenceCategory);
-                        setServiceReferenceTitle(selectedSettlerService.serviceReferenceTitle);
-                        setIsExperienced(selectedSettlerService.isExperienced)
+        const fetchData = async () => {
+            if (settlerService !== null) {
+                const fetchSettlerService = async () => {
+                    try {
+                        const selectedSettlerService = await fetchSelectedSettlerService(settlerService.id || '');
+                        if (selectedSettlerService) {
+                            // Set the state with the fetched listing details
+                            setServiceId(selectedSettlerService.id || '');
+                            setSettlerId(user?.uid || '');
+                            setSettlerFirstName(user?.firstName || '');
+                            setSettlerLastName(user?.lastName || '');
+                            setIsExperienced(selectedSettlerService.isExperienced)
 
-                        setServiceReferenceDescription(selectedSettlerService.serviceReferenceDescription);
-                        setServiceCardImageUrls(selectedSettlerService.serviceCardImageUrls);
-                        setSelectedServiceCardImageUrls(selectedSettlerService.serviceCardImageUrls[0]);
-                        setServiceCardBrief(selectedSettlerService.serviceCardBrief);
-                        setIsAvailableImmediately(selectedSettlerService.isAvailableImmediately);
-                        setAvailableDays(selectedSettlerService.availableDays);
-                        setServiceStartTime(selectedSettlerService.serviceStartTime);
-                        setServiceEndTime(selectedSettlerService.serviceEndTime);
+                            setServiceCardImageUrls(selectedSettlerService.serviceCardImageUrls);
+                            setSelectedServiceCardImageUrls(selectedSettlerService.serviceCardImageUrls[0]);
+                            setServiceCardBrief(selectedSettlerService.serviceCardBrief);
+                            setIsAvailableImmediately(selectedSettlerService.isAvailableImmediately);
+                            setAvailableDays(selectedSettlerService.availableDays);
+                            setServiceStartTime(selectedSettlerService.serviceStartTime);
+                            setServiceEndTime(selectedSettlerService.serviceEndTime);
 
-                        setAddressId(selectedSettlerService.addressId);
-                        setLatitude(selectedSettlerService.latitude);
-                        setLongitude(selectedSettlerService.longitude);
-                        setAddressName(selectedSettlerService.addressName);
-                        setAddress(selectedSettlerService.address);
-                        setAddressAdditionalDetails(selectedSettlerService.addressAdditionalDetails);
-                        setPostcode(selectedSettlerService.postcode);
+                            setAddressId(selectedSettlerService.addressId);
+                            setLatitude(selectedSettlerService.latitude);
+                            setLongitude(selectedSettlerService.longitude);
+                            setAddressName(selectedSettlerService.addressName);
+                            setAddress(selectedSettlerService.address);
+                            setAddressAdditionalDetails(selectedSettlerService.addressAdditionalDetails);
+                            setPostcode(selectedSettlerService.postcode);
 
-                        setQualifications(selectedSettlerService.qualifications);
-                        setIsActive(selectedSettlerService.isActive);
-                        setRatingCount(selectedSettlerService.ratingCount || 0);
-                        setAverageRating(selectedSettlerService.averageRating || 0);
-                        setCreatedAt(selectedSettlerService.createdAt);
-                        setUpdatedAt(selectedSettlerService.updatedAt);
+                            setQualifications(selectedSettlerService.qualifications);
+                            setIsActive(selectedSettlerService.isActive);
+                            setRatingCount(selectedSettlerService.ratingCount || 0);
+                            setAverageRating(selectedSettlerService.averageRating || 0);
+                            setCreatedAt(selectedSettlerService.createdAt);
+                            setUpdatedAt(selectedSettlerService.updatedAt);
+                        }
+                    } catch (error) {
+                        console.error('Failed to fetch settler service details:', error);
                     }
-                } catch (error) {
-                    console.error('Failed to fetch settler service details:', error);
-                }
-            };
+                };
 
-            fetchSettlerService();
-            setIndex(1);
-        }
-        bottomSheetRef.current?.snapToIndex(-1);
+                await fetchSettlerService();
+                setIndex(1);
+            }
+            const catalogueData = await fetchAllCatalogue();
+            setCatalogue(catalogueData);
+        };
+
+        fetchData();
     }, [settlerService]);
 
     const userId = user?.uid;
@@ -149,11 +151,6 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
 
         if (userId) getAddresses();
     }, [userId]);
-
-    const handlePress = useCallback(() => {
-        bottomSheetRef.current?.snapToIndex(1);
-    }, []);
-
 
     const selectImages = async () => {
         const options = {
@@ -277,18 +274,6 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
         },
     ]
 
-
-    const categories = [
-        { name: 'Cleaning', image: IMAGES.cleaning },
-        { name: 'IT & Tech', image: IMAGES.electronics },
-        { name: 'Home Maintenance', image: IMAGES.houseHoldMaintenance },
-        { name: 'Wellness', image: IMAGES.healthcare },
-        { name: 'Events & Celebrations', image: IMAGES.eventDecorations },
-        { name: 'Delivery & Transport', image: IMAGES.delivery },
-        { name: 'Extra Hands', image: IMAGES.helpingHands },
-        { name: 'Others', image: IMAGES.otherItem },
-    ];
-
     const screens = 10;
 
     const nextScreen = async () => {
@@ -315,78 +300,45 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
         try {
             if (user?.uid) {
                 if (settlerService === null) {
-                    await createSettlerService({
-                        id: serviceId,
+                    if (selectedCatalogue) {
+                        await createSettlerService({
+                            id: serviceId,
 
-                        settlerId: settlerId,
-                        settlerFirstName: settlerFirstName,
-                        settlerLastName: settlerLastName,
+                            settlerId: settlerId,
+                            settlerFirstName: settlerFirstName,
+                            settlerLastName: settlerLastName,
 
-                        serviceReferenceId: serviceReferenceId,
-                        serviceReferenceCategory: serviceReferenceCategory,
-                        serviceReferenceTitle: serviceReferenceTitle,
-                        serviceReferenceDescription: serviceReferenceDescription,
-                        isExperienced: isExperienced,
-                        serviceCardImageUrls: serviceCardImageUrls,
-                        serviceCardBrief: serviceCardBrief,
-                        isAvailableImmediately: isAvailableImmediately,
-                        availableDays: availableDays,
-                        serviceStartTime: serviceStartTime,
-                        serviceEndTime: serviceEndTime,
+                            selectedCatalogue: selectedCatalogue,
+                            isExperienced: isExperienced,
+                            serviceCardImageUrls: serviceCardImageUrls,
+                            serviceCardBrief: serviceCardBrief,
+                            isAvailableImmediately: isAvailableImmediately,
+                            availableDays: availableDays,
+                            serviceStartTime: serviceStartTime,
+                            serviceEndTime: serviceEndTime,
 
-                        addressId: addressId,
-                        latitude: latitude,
-                        longitude: longitude,
-                        addressName: addressName,
-                        address: address,
-                        addressAdditionalDetails: addressAdditionalDetails,
-                        postcode: postcode,
+                            addressId: addressId,
+                            latitude: latitude,
+                            longitude: longitude,
+                            addressName: addressName,
+                            address: address,
+                            addressAdditionalDetails: addressAdditionalDetails,
+                            postcode: postcode,
 
-                        qualifications: qualifications ?? [],
-                        isActive: isActive,
-                        ratingCount: ratingCount,
-                        averageRating: averageRating,
-                        createdAt: createdAt ?? new Date(),
-                        updatedAt: updatedAt ?? new Date(),
-                    });
+                            qualifications: qualifications ?? [],
+                            isActive: isActive,
+                            ratingCount: ratingCount,
+                            averageRating: averageRating,
+                            createdAt: createdAt ?? new Date(),
+                            updatedAt: updatedAt ?? new Date(),
+                        });
+                        Alert.alert('Listing created successfully.');
+                    } else {
+                        Alert.alert('Please select a catalogue.');
+                        return;
+                    }
                     Alert.alert('Listing created successfully.');
-                } else {
-                    await updateSettlerService(settlerService.id || 'undefined', {
-                        id: serviceId,
-
-                        settlerId: settlerId,
-                        settlerFirstName: settlerFirstName,
-                        settlerLastName: settlerLastName,
-
-                        serviceReferenceId: serviceReferenceId,
-                        serviceReferenceCategory: serviceReferenceCategory,
-                        serviceReferenceTitle: serviceReferenceTitle,
-                        serviceReferenceDescription: serviceReferenceDescription,
-                        isExperienced: isExperienced,
-                        serviceCardImageUrls: serviceCardImageUrls,
-                        serviceCardBrief: serviceCardBrief,
-                        isAvailableImmediately: isAvailableImmediately,
-                        availableDays: availableDays,
-                        serviceStartTime: serviceStartTime,
-                        serviceEndTime: serviceEndTime,
-
-                        addressId: addressId,
-                        latitude: latitude,
-                        longitude: longitude,
-                        addressName: addressName,
-                        address: address,
-                        addressAdditionalDetails: addressAdditionalDetails,
-                        postcode: postcode,
-
-                        qualifications: qualifications ?? [],
-                        isActive: isActive,
-                        ratingCount: ratingCount,
-                        averageRating: averageRating,
-                        createdAt: createdAt ?? new Date(),
-                        updatedAt: updatedAt ?? new Date(),
-                    });
-                    Alert.alert('Settler service updated successfully.');
-                }
+                } 
             } else {
                 Alert.alert('User ID is missing.');
             }
@@ -437,28 +389,17 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
                                         {[
                                             'Add New Service',
                                             'Service Category',
-                                            `${serviceReferenceCategory} Service`,
-                                            `${serviceReferenceTitle}`,
+                                            `${category} Service`,
+                                            `${selectedCatalogue ? selectedCatalogue.title : 'Service'} Details`,
                                             'Service Availability',
                                             'Service Location',
                                             'Special Qualifications',
-                                            'Publish Listing',
+                                            'Publish Service',
                                         ][index] || ''}
                                     </Text>
-                                    <Text>{index}</Text>
+
                                 </View>
                                 <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                                    <TouchableOpacity
-                                        onPress={handlePress}
-                                        style={{
-                                            height: 45,
-                                            width: 45,
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                        }}
-                                    >
-                                        <Ionicons size={30} color={COLORS.black} name='close' />
-                                    </TouchableOpacity>
                                 </View>
                             </View>
                         </View>
@@ -531,22 +472,22 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
                                     <TouchableOpacity
                                         key={index} style={{ width: '50%', padding: 10 }}
                                         onPress={() => {
-                                            setServiceReferenceCategory(categoryData.name)
+                                            setCategory(categoryData.value)
                                             nextScreen()
                                         }}
                                     >
                                         <View style={{
                                             height: 150,
-                                            borderColor: serviceReferenceCategory.includes(categoryData.name) ? COLORS.primary : COLORS.blackLight,
+                                            borderColor: category.includes(categoryData.value) ? COLORS.primary : COLORS.blackLight,
                                             borderWidth: 1,
                                             borderRadius: 10,
                                             justifyContent: 'center',
                                             alignItems: 'center',
                                             padding: 10,
-                                            backgroundColor: serviceReferenceCategory.includes(categoryData.name) ? COLORS.primaryLight : COLORS.background
+                                            backgroundColor: category.includes(categoryData.value) ? COLORS.primaryLight : COLORS.background
                                         }}>
                                             <Image source={categoryData.image} style={{ width: '100%', height: 70, resizeMode: 'contain' }} />
-                                            <Text style={{ fontSize: 14, color: COLORS.blackLight, textAlign: 'center', marginTop: 10 }}>{categoryData.name}</Text>
+                                            <Text style={{ fontSize: 14, color: COLORS.blackLight, textAlign: 'center', marginTop: 10 }}>{categoryData.value}</Text>
                                         </View>
                                     </TouchableOpacity>
                                 ))}
@@ -555,20 +496,21 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
                         {index === 2 &&
                             <View style={[GlobalStyleSheet.container, { paddingHorizontal: 25, paddingBottom: 100 }]}>
                                 <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 30, paddingBottom: 10 }}>Select tasks that you can offer</Text>
-                                {options.map((option) => (
+                                {catalogue && catalogue
+                                    .filter(option => option.category === category)
+                                    .map((option) => (
                                     <TouchableOpacity
                                         key={option.id}
                                         style={{ flexDirection: "row", alignItems: "center", marginVertical: 10, }}
                                         onPress={() => {
-                                            setServiceReferenceTitle(option.title)
-                                            setServiceReferenceDescription(option.description)
+                                            setSelectedCatalogue(option)
                                             nextScreen()
                                         }}
                                     >
                                         <View>
                                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                                                 <Text style={{ fontSize: 16 }}>{option.title}</Text>
-                                                <Ionicons name={option.specialtyRequired ? 'briefcase' : ''} size={16} />
+                                                <Ionicons name={option.isActive ? 'briefcase' : ''} size={16} />
                                             </View>
                                             <Text style={{ fontSize: 12, color: COLORS.blackLight }}>{option.description}</Text>
                                         </View>
@@ -579,7 +521,7 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
                         }
                         {index === 3 &&
                             <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                                <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 20, paddingBottom: 20 }}>Have you done any {serviceReferenceTitle.toLowerCase()} job before?</Text>
+                                <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 20, paddingBottom: 20 }}>Have you done any {selectedCatalogue?.title.toLowerCase()} job before?</Text>
                                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingBottom: 20, gap: 10 }}>
                                     <TouchableOpacity
                                         style={{
@@ -740,7 +682,7 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
                                 {isExperienced === false &&
                                     <View>
                                         <View style={GlobalStyleSheet.line} />
-                                        <Text style={{ fontSize: 15, color: COLORS.title, marginTop: 15, marginBottom: 5 }}>No worries. Any job completion in this {serviceReferenceTitle.toLocaleLowerCase()} task will be updated in your profile.</Text>
+                                        <Text style={{ fontSize: 15, color: COLORS.title, marginTop: 15, marginBottom: 5 }}>No worries. Any job completion in this {selectedCatalogue?.title.toLocaleLowerCase()} task will be updated in your profile.</Text>
                                     </View>
                                 }
                             </View>
@@ -940,57 +882,17 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
                         }
                         {index === 6 &&
                             <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
-                                <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 30, paddingBottom: 10 }}>Define your service location.</Text>
-                                <Text style={{ fontSize: 14, color: COLORS.black, paddingTop: 10, paddingBottom: 30 }}>This location will be used to provide location-based broadcasting for jobs.</Text>
-                                <View style={{ marginBottom: 15 }}>
-                                    {
-                                        addresses.map((item) => (
-                                            <TouchableOpacity
-                                                key={item.id}
-                                                activeOpacity={0.8}
-                                                style={{
-                                                    marginVertical: 5,
-                                                    backgroundColor: addressId === item.id ? COLORS.primaryLight : COLORS.card,
-                                                    borderRadius: 10,
-                                                    padding: 5,
-                                                    borderWidth: 1,
-                                                    borderColor: addressId === item.id ? COLORS.primary : COLORS.blackLight,
-                                                }}
-                                                onPress={() => {
-                                                    console.log(item);
-                                                    setAddressId(item.id ?? '');
-                                                    setLatitude(item.latitude);
-                                                    setLongitude(item.longitude);
-                                                    setAddressName(item.addressName);
-                                                    setAddress(item.address);
-                                                    setAddressAdditionalDetails(item.additionalDetails);
-                                                    setPostcode(item.postcode);
-                                                }}>
-                                                <View style={[GlobalStyleSheet.flexcenter, { width: '100%', gap: 20, justifyContent: 'space-between', alignItems: 'flex-start' }]}></View>
-                                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20, width: SIZES.width * 0.8 }}>
-                                                    <Ionicons name="location" size={24} color={COLORS.title} />
-                                                    <View style={{ width: SIZES.width * 0.7 }}>
-                                                        <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold' }}>{item.addressName}</Text>
-                                                        <Text style={{ fontSize: 14, color: COLORS.title }}>{item.address}</Text>
-                                                    </View>
-                                                    <TouchableOpacity
-                                                        activeOpacity={0.8}
-                                                        onPress={() => { }}>
-                                                        <Ionicons name="pencil" size={20} color={COLORS.title} />
-                                                    </TouchableOpacity>
-                                                </View>
-                                            </TouchableOpacity>
-                                        ))}
-                                </View>
+                                <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 30, paddingBottom: 10 }}>This job require qualifications</Text>
+                                <Text style={{ fontSize: 14, color: COLORS.black, paddingTop: 10, paddingBottom: 30 }}>Share your qualification here.</Text>
                                 <View style={{ marginBottom: 15 }}>
                                     <TouchableOpacity
                                         activeOpacity={0.8}
-                                        onPress={() => { }}>
+                                        onPress={() => Alert.alert('Later Development')}>
                                         <View style={[GlobalStyleSheet.flexcenter, { width: '100%', gap: 20, justifyContent: 'space-between', marginBottom: 15, alignItems: 'flex-start' }]} >
                                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20, width: SIZES.width * 0.8 }}>
                                                 <Ionicons name="add" size={26} color={COLORS.title} />
                                                 <View>
-                                                    <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold' }}>Add a new address</Text>
+                                                    <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold' }}>Add qualification</Text>
                                                 </View>
                                             </View>
                                         </View>

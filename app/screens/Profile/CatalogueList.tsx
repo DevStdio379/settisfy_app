@@ -10,7 +10,6 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useUser } from '../../context/UserContext';
 import { fetchUserProductListings, Product } from '../../services/ProductServices';
 import { Borrowing, fetchLendingsByUser } from '../../services/BorrowingServices';
-import { fetchUserSettlerServices, SettlerService } from '../../services/SettlerServiceServices';
 import { fetchAllCatalogue, fetchCatalogue } from '../../services/CatalogueServices';
 
 type CatalogueListScreenProps = StackScreenProps<RootStackParamList, 'CatalogueList'>;

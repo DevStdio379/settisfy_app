@@ -1,8 +1,9 @@
 import { db, storage } from './firebaseConfig';  // Import the Firestore instance
-import { collection, addDoc, serverTimestamp, getDocs, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';  // Import Firebase storage functions
 import { doc, getDoc } from 'firebase/firestore';
 import { set } from 'date-fns';
+import { Catalogue } from './CatalogueServices';
 
 export interface SettlerService {
     id?: string;
@@ -10,11 +11,8 @@ export interface SettlerService {
     settlerFirstName: string;
     settlerLastName: string;
 
-    serviceReferenceId: string;  
-    serviceReferenceCategory: string;
-    serviceReferenceTitle: string;
+    selectedCatalogue: Catalogue;
     isExperienced: boolean;
-    serviceReferenceDescription: string;
     serviceCardImageUrls: string[];
     serviceCardBrief: string;
     isAvailableImmediately: boolean;
@@ -48,10 +46,7 @@ const mapDocToSettlerService = (doc: any): SettlerService => {
     settlerFirstName: settlerServiceData.settlerFirstName,
     settlerLastName: settlerServiceData.settlerLastName,
 
-    serviceReferenceId: settlerServiceData.serviceReferenceId, 
-    serviceReferenceCategory: settlerServiceData.serviceReferenceCategory,
-    serviceReferenceTitle: settlerServiceData.serviceReferenceTitle,
-    serviceReferenceDescription: settlerServiceData.serviceReferenceDescription,
+    selectedCatalogue: settlerServiceData.selectedCatalogue,
     isExperienced: settlerServiceData.isExperienced,
     serviceCardImageUrls: settlerServiceData.serviceCardImageUrls,
     serviceCardBrief: settlerServiceData.serviceCardBrief,
@@ -134,7 +129,7 @@ export const createSettlerService = async (serviceData: SettlerService) => {
       }
 }
 
-export const fetchUserSettlerServices = async (userId: string): Promise<SettlerService[]> => {
+export const fetchSettlerServices = async (userId: string): Promise<SettlerService[]> => {
   try {
     const settlerServiceList: SettlerService[] = [];
     const snapshot = await getDocs(collection(db, 'settler_services')); 
@@ -176,5 +171,16 @@ export const updateSettlerService = async (settlerServiceId: string, updatedSett
   } catch (error) {
     console.error('Error updating settler service: ', error);
     throw error;  // Throwing the error to handle it at the call site
+  }
+};
+
+export const deleteSettlerService = async (serviceId: string) => {
+  try {
+    const catalogueRef = doc(db, 'catalogue', serviceId);
+    await deleteDoc(catalogueRef);
+    console.log('Settler service deleted successfully');
+  } catch (error) {
+    console.error('Error deleting settler service: ', error);
+    throw error;
   }
 };

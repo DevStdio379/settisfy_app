@@ -19,6 +19,7 @@ type Props = {
     onBlur?: (e: any) => void,
     type?: string,
     numberOfLines?: any,
+    readOnly?: boolean,
     icon?: any,
     inputSm?: any,
     inputLg?: any,
@@ -43,6 +44,7 @@ const Input = ({
     type,
     numberOfLines,
     multiline,
+    readOnly,
     icon,
     inputSm,
     inputLg,
@@ -88,6 +90,7 @@ const Input = ({
                 </View>
             }
             <TextInput
+                readOnly={readOnly}
                 style={[styles.input, {
                     backgroundColor: backround ? colors.card : colors.input,
                     //borderColor:colors.,

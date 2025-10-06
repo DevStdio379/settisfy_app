@@ -11,7 +11,6 @@ type PaymentSuccessScreenProps = StackScreenProps<RootStackParamList, 'PaymentSu
 const PaymentSuccessScreen = ({ navigation, route }: PaymentSuccessScreenProps) => {
 
     const [index, setIndex] = useState(1);
-    const { borrowingId, collectionCode, latitude, longitude, addressName, address, postcode } = route.params;
 
     return (
         <View style={styles.container}>
@@ -33,25 +32,24 @@ const PaymentSuccessScreen = ({ navigation, route }: PaymentSuccessScreenProps) 
             ) : (
                 < View style={{ justifyContent: 'center', alignItems:'center' }}>
                     {/* Success Icon */}
-                    <Text style={styles.title}>You’ll collect your item at</Text>
-                    <Text style={styles.subtitle}>{addressName}, {address}, {postcode}</Text>
+                    <Text style={styles.title}>Your booking is successful</Text>
+                                        <Text style={styles.subtitle}>Booking ID: {route.params.bookingId}</Text>
                     <Image
                         style={{
                             height: 250,
                             width: SIZES.width,
                             resizeMode: 'contain'
                         }}
-                        source={IMAGES.pickupLocation}
+                        source={{ uri: route.params.image }}
                     />
-                    <Text style={styles.subtitle}>Open in Google Maps</Text>
                     <View style={{ backgroundColor: COLORS.blackLight, height: 1, margin: 10, width: '90%', alignSelf: 'center', }} />
                     <Text style={styles.subtitle}>Remember to treat people kindly upon meetup</Text>
 
                     {/* Button */}
                     <TouchableOpacity
-                        onPress={() => navigation.navigate('BottomNavigation', { screen: 'MyBorrowingsStack' })}
+                        onPress={() => navigation.navigate('BottomNavigation', { screen: 'MyBookingsStack' })}
                         style={{ width: SIZES.width * 0.8, backgroundColor: COLORS.primary, borderRadius: 12, padding: 15 }}>
-                        <Text style={{ color: COLORS.white, textAlign: 'center', fontWeight: 'bold', fontSize: 16 }}>Go to My Borrowing</Text>
+                        <Text style={{ color: COLORS.white, textAlign: 'center', fontWeight: 'bold', fontSize: 16 }}>Go to My Booking</Text>
                     </TouchableOpacity>
                 </View>
             )}

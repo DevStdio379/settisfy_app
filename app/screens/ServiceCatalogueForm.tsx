@@ -13,18 +13,11 @@ import { CategoryDropdown } from '../components/CategoryDropdown';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { createCatalogue, deleteCatalogue, fetchSelectedCatalogue, updateCatalogue } from '../services/CatalogueServices';
 import { set } from 'date-fns';
+import { categories } from '../constants/ServiceCategory';
 
 type ServiceCatalogueFormScreenProps = StackScreenProps<RootStackParamList, 'ServiceCatalogueForm'>
 
 export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueFormScreenProps) => {
-
-  const categories = [
-    { label: "Plumbing", value: "plumbing" },
-    { label: "Electrical", value: "electrical" },
-    { label: "Cleaning", value: "cleaning" },
-    { label: "Delivery", value: "delivery" },
-    { label: "Others", value: "others" },
-  ];
 
   const [catalogue, setCatalogue] = useState(route.params.catalogue);
   const [isFocused2, setisFocused2] = useState(false);
@@ -326,13 +319,13 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
           <View style={{ paddingTop: 20, justifyContent: 'center', alignItems: 'center' }}>
             <View style={{ width: '90%' }}>
               {
-              (catalogue) && (
-                <View style={{ flex: 1, flexDirection: 'row', marginTop: 15, marginBottom: 5 }}>
-                  <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginRight: 10 }}>Catalogue Id:</Text>
-                  <Text>{catalogue.id}</Text>
-                </View>
-              )
-            }
+                (catalogue) && (
+                  <View style={{ flex: 1, flexDirection: 'row', marginTop: 15, marginBottom: 5 }}>
+                    <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginRight: 10 }}>Catalogue Id:</Text>
+                    <Text>{catalogue.id}</Text>
+                  </View>
+                )
+              }
               <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', gap: 10, paddingTop: 10 }}>
                 {/* Large Preview Image */}
                 {selectedServiceCardImageUrls ? (

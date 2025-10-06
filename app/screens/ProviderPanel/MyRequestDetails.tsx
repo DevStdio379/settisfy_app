@@ -607,14 +607,18 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         {/* Borrowing Details */}
                         {
                             booking.status > 0 && booking.settlerId === user?.uid ? (
-                                <View style={{ backgroundColor: COLORS.primaryLight, padding: 10, borderRadius: 20, paddingVertical:10 }}>
+                                <View style={{ backgroundColor: COLORS.primaryLight, padding: 10, borderRadius: 20, paddingVertical: 10 }}>
                                     <Text style={{ textAlign: 'center' }}>You're handling this job</Text>
                                 </View>
-                            ) : (
+                            ) : booking.status === 0 ? (
                                 <View style={{ backgroundColor: '#FFF3E0', padding: 10, borderRadius: 20, marginVertical: 10 }}>
-                                    <Text style={{ textAlign: 'center' }}>Sorry, you're not selected </Text>
+                                    <Text style={{ textAlign: 'center' }}>Sorry, you're not selected</Text>
                                 </View>
-                            )
+                            ) : booking.status > 0 && booking.settlerId !== user?.uid ? (
+                                <View style={{ backgroundColor: '#E0F7FA', padding: 10, borderRadius: 20, marginVertical: 10 }}>
+                                    <Text style={{ textAlign: 'center' }}>Job taken by someone else</Text>
+                                </View>
+                            ) : null
                         }
                         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                             {buttons.map((btn: any, i: number) => (

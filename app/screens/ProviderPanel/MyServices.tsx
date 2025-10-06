@@ -10,7 +10,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useUser } from '../../context/UserContext';
 import { fetchUserProductListings, Product } from '../../services/ProductServices';
 import { Borrowing, fetchLendingsByUser } from '../../services/BorrowingServices';
-import { fetchUserSettlerServices, SettlerService } from '../../services/SettlerServiceServices';
+import { fetchSettlerServices, SettlerService } from '../../services/SettlerServiceServices';
 
 type MyServicesScreenProps = StackScreenProps<RootStackParamList, 'MyServices'>;
 
@@ -30,7 +30,7 @@ const MyServices = ({ navigation, route }: MyServicesScreenProps) => {
     const fetchData = async () => {
         if (user?.uid) {
 
-            const myServicesData = await fetchUserSettlerServices(user.uid);
+            const myServicesData = await fetchSettlerServices(user.uid);
             const activeListings = myServicesData.filter(service => service.isActive);
             const inactiveListings = myServicesData.filter(service => !service.isActive);
             setActiveListings(activeListings);
@@ -133,7 +133,7 @@ const MyServices = ({ navigation, route }: MyServicesScreenProps) => {
                                                     <View style={{ marginVertical: 5, height: 100 }} key={index}>
                                                         <TouchableOpacity
                                                             activeOpacity={0.8}
-                                                            onPress={() => navigation.navigate('SettlerAddService', { settlerService: data })}
+                                                            onPress={() => navigation.navigate('SettlerServiceForm', { settlerService: data })}
                                                             style={{
                                                                 borderRadius: 10,
                                                                 borderWidth: 1,
@@ -154,33 +154,20 @@ const MyServices = ({ navigation, route }: MyServicesScreenProps) => {
                                                                     </View>
                                                                 )}
                                                                 <View style={{ width: '70%', padding: 10 }}>
-                                                                    <Text numberOfLines={1} style={{ fontSize: 13, color: COLORS.black, opacity: 0.7 }}>
-                                                                        {data.address ? data.address : 'No address provided'}
-                                                                    </Text>
-                                                                    <Text numberOfLines={1} style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.black }}>{data.serviceReferenceTitle ? data.serviceReferenceTitle : 'Unlisted title'}</Text>
+                                                                    <Text style={{ fontSize: 12 }}>{data.id}</Text>
+                                                                    <Text numberOfLines={1} style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.black }}>{data.selectedCatalogue.title ? data.selectedCatalogue.title : 'Unlisted title'}</Text>
                                                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                                                         <Text
                                                                             numberOfLines={2}
                                                                             ellipsizeMode="tail"
                                                                             style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}
                                                                         >
-                                                                            {data.serviceReferenceDescription ? data.serviceReferenceDescription : 'Undefined rate'}
+                                                                            {data.selectedCatalogue.description ? data.selectedCatalogue.description : 'Undefined rate'}
                                                                         </Text>
                                                                     </View>
-                                                                    <Text>completed 0 service {data.id}</Text>
-                                                                    {data.activeBorrowing && (
-                                                                        <View
-                                                                            style={{
-                                                                                height: 10,
-                                                                                width: 10,
-                                                                                borderRadius: 5,
-                                                                                backgroundColor: COLORS.primary,
-                                                                                position: 'absolute',
-                                                                                top: 5,
-                                                                                right: 5,
-                                                                            }}
-                                                                        />
-                                                                    )}
+                                                                    <Text numberOfLines={1} style={{ fontSize: 13, color: COLORS.black, opacity: 0.7 }}>
+                                                                        {data.address ? data.address : 'No address provided'}
+                                                                    </Text>
                                                                 </View>
                                                             </View>
                                                         </TouchableOpacity>
@@ -203,7 +190,7 @@ const MyServices = ({ navigation, route }: MyServicesScreenProps) => {
                                                     <View style={{ marginVertical: 5, height: 100 }} key={index}>
                                                         <TouchableOpacity
                                                             activeOpacity={0.8}
-                                                            onPress={() => navigation.navigate('SettlerAddService', { settlerService: data })}
+                                                            onPress={() => navigation.navigate('SettlerServiceForm', { settlerService: data })}
                                                             style={{
                                                                 borderRadius: 10,
                                                                 borderWidth: 1,
@@ -211,11 +198,11 @@ const MyServices = ({ navigation, route }: MyServicesScreenProps) => {
                                                                 backgroundColor: COLORS.card,
                                                             }}>
                                                             <View style={[GlobalStyleSheet.flexcenter, { justifyContent: 'flex-start' }]}>
-                                                                {data.imageUrls && data.imageUrls.length > 0 ? (
+                                                                {data.serviceCardImageUrls && data.serviceCardImageUrls.length > 0 ? (
                                                                     <View style={{ width: '30%' }}>
                                                                         <Image
                                                                             style={{ height: '100%', width: '100%', resizeMode: 'cover', borderTopLeftRadius: 10, borderBottomLeftRadius: 10 }}
-                                                                            source={{ uri: data.imageUrls[0] }}
+                                                                            source={{ uri: data.serviceCardImageUrls[0] }}
                                                                         />
                                                                     </View>
                                                                 ) : (
@@ -224,11 +211,20 @@ const MyServices = ({ navigation, route }: MyServicesScreenProps) => {
                                                                     </View>
                                                                 )}
                                                                 <View style={{ width: '70%', padding: 10 }}>
-                                                                    <Text numberOfLines={1} style={{ fontSize: 16, color: COLORS.black }}>{data.title ? data.serviceReference : 'Unlisted title'}</Text>
+                                                                    <Text style={{ fontSize: 12 }}>{data.id}</Text>
+                                                                    <Text numberOfLines={1} style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.black }}>{data.selectedCatalogue.title ? data.selectedCatalogue.title : 'Unlisted title'}</Text>
                                                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                                        <Text style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}>{data.lendingRate ? data.lendingRate : 'Undefined rate'}</Text>
+                                                                        <Text
+                                                                            numberOfLines={2}
+                                                                            ellipsizeMode="tail"
+                                                                            style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}
+                                                                        >
+                                                                            {data.selectedCatalogue.description ? data.selectedCatalogue.description : 'Undefined rate'}
+                                                                        </Text>
                                                                     </View>
-                                                                    <Text style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}>{data.isActive === true ? 'active' : 'inactive'}</Text>
+                                                                    <Text numberOfLines={1} style={{ fontSize: 13, color: COLORS.black, opacity: 0.7 }}>
+                                                                        {data.address ? data.address : 'No address provided'}
+                                                                    </Text>
                                                                 </View>
                                                             </View>
                                                         </TouchableOpacity>

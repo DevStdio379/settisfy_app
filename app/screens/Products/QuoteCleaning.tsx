@@ -142,33 +142,33 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
     setIndex((prev) => (prev - 1 + screens) % screens);
 
   function toggleAddon(category: AddonCategory, option: AddonOption) {
-  setSelectedAddons((prev) => {
-    const prevOptions = prev[category.name] || [];
+    setSelectedAddons((prev) => {
+      const prevOptions = prev[category.name] || [];
 
-    let newOptions: AddonOption[];
+      let newOptions: AddonOption[];
 
-    if (category.multipleSelect) {
-      // ✅ Single selection: replace entire list
-      newOptions = prevOptions[0]?.label === option.label ? [] : [option];
-    } else {
-      // ✅ Multiple selection: toggle
-      const exists = prevOptions.some((o) => o.label === option.label);
-      newOptions = exists
-        ? prevOptions.filter((o) => o.label !== option.label)
-        : [...prevOptions, option];
-    }
+      if (category.multipleSelect) {
+        // ✅ Single selection: replace entire list
+        newOptions = prevOptions[0]?.label === option.label ? [] : [option];
+      } else {
+        // ✅ Multiple selection: toggle
+        const exists = prevOptions.some((o) => o.label === option.label);
+        newOptions = exists
+          ? prevOptions.filter((o) => o.label !== option.label)
+          : [...prevOptions, option];
+      }
 
-    const newSelections = { ...prev, [category.name]: newOptions };
+      const newSelections = { ...prev, [category.name]: newOptions };
 
-    // Recalculate total
-    const addonsTotal = Object.values(newSelections)
-      .flat()
-      .reduce((sum, o) => sum + Number(o.additionalPrice), 0);
+      // Recalculate total
+      const addonsTotal = Object.values(newSelections)
+        .flat()
+        .reduce((sum, o) => sum + Number(o.additionalPrice), 0);
 
-    setTotalQuote(Number(basePrice) + Number(addonsTotal));
-    return newSelections;
-  });
-}
+      setTotalQuote(Number(basePrice) + Number(addonsTotal));
+      return newSelections;
+    });
+  }
 
 
 
@@ -227,9 +227,10 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
 
     const bookingId = await createBooking(bookingData);
     if (bookingId) {
-      Alert.alert('Success', `Borrowings created successfully with ID: ${bookingId}`);
+      Alert.alert('Success', `Booking created successfully with ID: ${bookingId}`);
       navigation.navigate('PaymentSuccess', {
         bookingId: bookingId,
+        image: service.imageUrls[0],
       });
     }
   };
@@ -394,7 +395,8 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
                 scrollX={scrollX}
               />
             </View>
-            <ScrollView
+            <View style={{ height: SIZES.height * 1 }}>
+              <Animated.ScrollView
               ref={scrollViewHome}
               horizontal
               pagingEnabled
@@ -406,200 +408,195 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
                 [{ nativeEvent: { contentOffset: { x: scrollX } } }],
                 { useNativeDriver: false },
               )}
-            >
-              {buttons.map((button, index) => (
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  style={{ width: SIZES.width, paddingTop: 10, paddingHorizontal: 10 }}
-                  key={index}
+              >
+              {buttons.map((button, tabIndex) => (
+                <View
+                style={{ width: SIZES.width, paddingTop: 10, paddingHorizontal: 10 }}
+                key={tabIndex}
                 >
-                  <View style={{}}>
-                    {index === 0 && (
-                      <View>
-                        {service.dynamicOptions.map((cat) => (
-  <View key={cat.name} style={{ marginVertical: 10 }}>
-    <Text style={{ fontWeight: "bold", fontSize: 16 }}>
-      {cat.name} {cat.multipleSelect && "(Select one)"}
-    </Text>
-    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 5 }}>
-      {cat.subOptions.map((option) => {
-        const isSelected = selectedAddons[cat.name]?.some((o) => o.label === option.label);
-        return (
-          <TouchableOpacity
-            key={option.label}
-            style={{
-              padding: 10,
-              borderWidth: 1,
-              borderColor: isSelected ? "blue" : "#ccc",
-              backgroundColor: isSelected ? "#e0f0ff" : "white",
-              borderRadius: 8,
-              minWidth: 100,
-            }}
-            onPress={() => toggleAddon(cat, option)}
-          >
-            <Text>{option.label}</Text>
-            <Text style={{ fontSize: 12, color: "#555" }}>+${option.additionalPrice}</Text>
-            {option.notes && <Text style={{ fontSize: 10, color: "#888" }}>{option.notes}</Text>}
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  </View>
-))}
-
-
-                      </View>
-                    )}
-                    {index === 1 && (
-                      <View style={{ paddingTop: 10, paddingRight: 40 }}>
-                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Description</Text>
-                        <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>{service.description}</Text>
-                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>What's Included</Text>
-                        <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>{service.includedServices}</Text>
-                      </View>
-                    )}
-                    {index === 2 && (
-                      <View style={{ paddingRight: 40 }}>
-                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Deposit Policy</Text>
-                        <View style={GlobalStyleSheet.line} />
-                        <View style={{ paddingHorizontal: 10 }}>
-                          <TouchableOpacity
-                            onPress={() => setAccordionOpen((prev) => ({ ...prev, insurance: !prev.insurance }))}
-                            style={{
-                              flexDirection: 'row',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              paddingVertical: 10,
-                            }}
-                          >
-                            <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>
-                              Insurance/Liability
-                            </Text>
-                            <Ionicons
-                              name={accordionOpen.insurance ? 'chevron-up-outline' : 'chevron-down-outline'}
-                              size={24}
-                              color={COLORS.blackLight}
-                            />
-                          </TouchableOpacity>
-                          {accordionOpen.insurance && (
-                            <View style={{ paddingLeft: 10 }}>
-                              <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
-                                The borrower is responsible for any damages or loss during the borrowing period. Insurance coverage is not included. Please ensure proper care of the item.
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                        <View style={{ paddingHorizontal: 10 }}>
-                          <TouchableOpacity
-                            onPress={() => setAccordionOpen((prev) => ({ ...prev, handover: !prev.handover }))}
-                            style={{
-                              flexDirection: 'row',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              paddingVertical: 10,
-                            }}
-                          >
-                            <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>
-                              Handover Instructions
-                            </Text>
-                            <Ionicons
-                              name={accordionOpen.handover ? 'chevron-up-outline' : 'chevron-down-outline'}
-                              size={24}
-                              color={COLORS.blackLight}
-                            />
-                          </TouchableOpacity>
-                          {accordionOpen.handover && (
-                            <View style={{ paddingLeft: 10 }}>
-                              <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
-                                Please ensure to meet at the agreed location and time for the handover. Verify the condition of the product before accepting it.
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-
-                        <View style={{ paddingHorizontal: 10 }}>
-                          <TouchableOpacity
-                            onPress={() => setAccordionOpen((prev) => ({ ...prev, faqs: !prev.faqs }))}
-                            style={{
-                              flexDirection: 'row',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              paddingVertical: 10,
-                            }}
-                          >
-                            <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>
-                              Product FAQs
-                            </Text>
-                            <Ionicons
-                              name={accordionOpen.faqs ? 'chevron-up-outline' : 'chevron-down-outline'}
-                              size={24}
-                              color={COLORS.blackLight}
-                            />
-                          </TouchableOpacity>
-                          {accordionOpen.faqs && (
-                            <View style={{ paddingLeft: 10 }}>
-                              <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
-                                Q: Is the product fully functional?{'\n'}
-                                A: Yes, the product is tested and fully functional.{'\n\n'}
-                                Q: Are there any additional accessories included?{'\n'}
-                                A: Please refer to the "What's Included" section for details.
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                      </View>
-                    )}
-                    {index === 3 && (
-                      <View style={{ paddingRight: 40 }}>
-                        {/* Static reviews */}
-                        {reviews.map((review, index) => (
-                          <View
-                            key={index}
-                            style={{
-                              borderRadius: 10,
-                              width: '100%',
-                              marginTop: 15,
-                            }}
-                          >
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                              <Image
-                                source={{ uri: review.borrowerProfilePicture }}
-                                style={{ width: 40, height: 40, borderRadius: 40, marginRight: 10 }}
-                              />
-                              <View>
-                                <Text style={{ fontSize: 16, fontWeight: 'bold', color: COLORS.title }}>
-                                  {`${review.borrowerFirstName} ${review.borrowerLastName}`}
-                                </Text>
-                                <Text style={{ fontSize: 14, color: COLORS.blackLight }}>
-                                  {new Date(review.borrowerUpdatedAt).toLocaleDateString()}
-                                </Text>
-                              </View>
-                            </View>
-                            <Text style={{ fontSize: 14, color: COLORS.black, marginVertical: 10 }}>
-                              {review.borrowerPublicReview}
-                            </Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                              {Array.from({ length: 5 }, (_, i) => (
-                                <Ionicons
-                                  key={i}
-                                  name="star"
-                                  size={16}
-                                  color={i < review.borrowerOverallRating ? COLORS.primary : COLORS.blackLight}
-                                />
-                              ))}
-                              <Text style={{ fontSize: 14, color: COLORS.black, marginLeft: 5 }}>
-                                {review.borrowerOverallRating}
-                              </Text>
-                            </View>
-                            <View style={{ height: 1, backgroundColor: COLORS.blackLight, marginVertical: 10 }} />
-                          </View>
-                        ))}
-                      </View>
+                {tabIndex === 0 && (
+                  <View>
+                  {service.dynamicOptions.map((cat) => (
+                    <View key={cat.name} style={{ marginVertical: 10 }}>
+                    <Text style={{ fontWeight: "bold", fontSize: 16 }}>
+                      {cat.name} {cat.multipleSelect && "(Select one)"}
+                    </Text>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 5 }}>
+                      {cat.subOptions.map((option) => {
+                      const isSelected = selectedAddons[cat.name]?.some((o) => o.label === option.label);
+                      return (
+                        <TouchableOpacity
+                        key={option.label}
+                        style={{
+                          padding: 10,
+                          borderWidth: 1,
+                          borderColor: isSelected ? "blue" : "#ccc",
+                          backgroundColor: isSelected ? "#e0f0ff" : "white",
+                          borderRadius: 8,
+                          minWidth: 100,
+                        }}
+                        onPress={() => toggleAddon(cat, option)}
+                        >
+                        <Text>{option.label}</Text>
+                        <Text style={{ fontSize: 12, color: "#555" }}>+${option.additionalPrice}</Text>
+                        {option.notes && <Text style={{ fontSize: 10, color: "#888" }}>{option.notes}</Text>}
+                        </TouchableOpacity>
+                      );
+                      })}
+                    </View>
+                    </View>
+                  ))}
+                  </View>
+                )}
+                {tabIndex === 1 && (
+                  <View style={{ paddingTop: 10, paddingRight: 40 }}>
+                  <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Description</Text>
+                  <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>{service.description}</Text>
+                  <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>What's Included</Text>
+                  <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>{service.includedServices}</Text>
+                  </View>
+                )}
+                {tabIndex === 2 && (
+                  <View style={{ paddingRight: 40 }}>
+                  <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Deposit Policy</Text>
+                  <View style={GlobalStyleSheet.line} />
+                  <View style={{ paddingHorizontal: 10 }}>
+                    <TouchableOpacity
+                    onPress={() => setAccordionOpen((prev) => ({ ...prev, insurance: !prev.insurance }))}
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      paddingVertical: 10,
+                    }}
+                    >
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>
+                      Insurance/Liability
+                    </Text>
+                    <Ionicons
+                      name={accordionOpen.insurance ? 'chevron-up-outline' : 'chevron-down-outline'}
+                      size={24}
+                      color={COLORS.blackLight}
+                    />
+                    </TouchableOpacity>
+                    {accordionOpen.insurance && (
+                    <View style={{ paddingLeft: 10 }}>
+                      <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
+                      The borrower is responsible for any damages or loss during the borrowing period. Insurance coverage is not included. Please ensure proper care of the item.
+                      </Text>
+                    </View>
                     )}
                   </View>
-                </ScrollView>
+                  <View style={{ paddingHorizontal: 10 }}>
+                    <TouchableOpacity
+                    onPress={() => setAccordionOpen((prev) => ({ ...prev, handover: !prev.handover }))}
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      paddingVertical: 10,
+                    }}
+                    >
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>
+                      Handover Instructions
+                    </Text>
+                    <Ionicons
+                      name={accordionOpen.handover ? 'chevron-up-outline' : 'chevron-down-outline'}
+                      size={24}
+                      color={COLORS.blackLight}
+                    />
+                    </TouchableOpacity>
+                    {accordionOpen.handover && (
+                    <View style={{ paddingLeft: 10 }}>
+                      <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
+                      Please ensure to meet at the agreed location and time for the handover. Verify the condition of the product before accepting it.
+                      </Text>
+                    </View>
+                    )}
+                  </View>
+                  <View style={{ paddingHorizontal: 10 }}>
+                    <TouchableOpacity
+                    onPress={() => setAccordionOpen((prev) => ({ ...prev, faqs: !prev.faqs }))}
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      paddingVertical: 10,
+                    }}
+                    >
+                    <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>
+                      Product FAQs
+                    </Text>
+                    <Ionicons
+                      name={accordionOpen.faqs ? 'chevron-up-outline' : 'chevron-down-outline'}
+                      size={24}
+                      color={COLORS.blackLight}
+                    />
+                    </TouchableOpacity>
+                    {accordionOpen.faqs && (
+                    <View style={{ paddingLeft: 10 }}>
+                      <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
+                      Q: Is the product fully functional?{'\n'}
+                      A: Yes, the product is tested and fully functional.{'\n\n'}
+                      Q: Are there any additional accessories included?{'\n'}
+                      A: Please refer to the "What's Included" section for details.
+                      </Text>
+                    </View>
+                    )}
+                  </View>
+                  </View>
+                )}
+                {tabIndex === 3 && (
+                  <View style={{ paddingRight: 40 }}>
+                  {/* Static reviews */}
+                  {reviews.map((review, reviewIndex) => (
+                    <View
+                    key={reviewIndex}
+                    style={{
+                      borderRadius: 10,
+                      width: '100%',
+                      marginTop: 15,
+                    }}
+                    >
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Image
+                      source={{ uri: review.borrowerProfilePicture }}
+                      style={{ width: 40, height: 40, borderRadius: 40, marginRight: 10 }}
+                      />
+                      <View>
+                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: COLORS.title }}>
+                        {`${review.borrowerFirstName} ${review.borrowerLastName}`}
+                      </Text>
+                      <Text style={{ fontSize: 14, color: COLORS.blackLight }}>
+                        {new Date(review.borrowerUpdatedAt).toLocaleDateString()}
+                      </Text>
+                      </View>
+                    </View>
+                    <Text style={{ fontSize: 14, color: COLORS.black, marginVertical: 10 }}>
+                      {review.borrowerPublicReview}
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      {Array.from({ length: 5 }, (_, i) => (
+                      <Ionicons
+                        key={i}
+                        name="star"
+                        size={16}
+                        color={i < review.borrowerOverallRating ? COLORS.primary : COLORS.blackLight}
+                      />
+                      ))}
+                      <Text style={{ fontSize: 14, color: COLORS.black, marginLeft: 5 }}>
+                      {review.borrowerOverallRating}
+                      </Text>
+                    </View>
+                    <View style={{ height: 1, backgroundColor: COLORS.blackLight, marginVertical: 10 }} />
+                    </View>
+                  ))}
+                  </View>
+                )}
+                </View>
               ))}
-            </ScrollView>
+              </Animated.ScrollView>
+            </View>
           </View>
         )}
         {index === 1 && (

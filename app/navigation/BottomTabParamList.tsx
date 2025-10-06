@@ -12,7 +12,7 @@ export type BottomTabParamList = {
     ProfileStack: undefined;
 
     ProviderDashboard: undefined;
-    MyServices: undefined;
+    MyServicesStack: undefined;
     MyRequestsStack: undefined;
     MyRequestDetails: { lending: Borrowing };
     // ChatList: undefined;

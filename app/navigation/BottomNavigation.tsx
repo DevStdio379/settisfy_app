@@ -11,6 +11,7 @@ import ProfileStack from './ProfileStack';
 import FavouriteStack from './FavouriteStack';
 import MyRequestsStack from './MyRequestsStack';
 import MyBookingsStack from './MyBookingsStack';
+import MyServicesStack from './MyServicesStack';
 
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
@@ -66,8 +67,8 @@ const BottomNavigation = () => {
                     component={ProviderDashboard}
                 />
                 <Tab.Screen
-                    name='MyServices'
-                    component={MyServicesScreen}
+                    name='MyServicesStack'
+                    component={MyServicesStack}
                 />
                 <Tab.Screen
                     name='MyRequestsStack'
