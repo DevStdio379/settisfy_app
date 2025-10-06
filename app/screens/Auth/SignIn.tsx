@@ -31,42 +31,43 @@ const SignIn = ({ navigation }: SignInScreenProps) => {
     const handleSignIn = async () => {
         setLoading(true);
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
             const user = userCredential.user;
+            if (!user) throw new Error("Sign-in failed. Please try again.");
 
-            // Fetch user data and update global state
+            // Ensure user data is fetched & updated before navigation
             await fetchUser(user.uid);
-            updateUserData(user.uid, { 'isActive': true });
+            await updateUserData(user.uid, { isActive: true });
 
-            if (!user) {
-                throw new Error("An error occurred. Please try again.");
-            } else {
-                await AsyncStorage.setItem('userUID', user.uid);
-                navigation.reset({
-                    index: 0,
-                    routes: [{ name: 'BottomNavigation', params: { screen: 'Home' } }],
-                });
-            }
+            await AsyncStorage.setItem('userUID', user.uid);
 
+            // Small delay helps React Navigation handle async stack changes smoothly
+            setTimeout(() => {
             Alert.alert("Success!", "Signed in successfully.");
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'BottomNavigation', params: { screen: 'Home' } }],
+            });
+            }, 300);
         } catch (error: any) {
             switch (error.code) {
-                case "auth/invalid-email":
-                    Alert.alert("Error", "The email address is invalid.");
-                    break;
-                case "auth/user-not-found":
-                    Alert.alert("Error", "No user found with this email.");
-                    break;
-                case "auth/wrong-password":
-                    Alert.alert("Error", "Incorrect password.");
-                    break;
-                default:
-                    Alert.alert("Error", error.message || "An error occurred.");
+            case "auth/invalid-email":
+                Alert.alert("Error", "The email address is invalid.");
+                break;
+            case "auth/user-not-found":
+                Alert.alert("Error", "No user found with this email.");
+                break;
+            case "auth/wrong-password":
+                Alert.alert("Error", "Incorrect password.");
+                break;
+            default:
+                Alert.alert("Error", error.message || "An error occurred.");
             }
         } finally {
             setLoading(false);
         }
-    };
+        };
+
 
     return (
         <ScrollView style={{ backgroundColor: COLORS.background }} showsVerticalScrollIndicator={false}>
@@ -80,6 +81,7 @@ const SignIn = ({ navigation }: SignInScreenProps) => {
                         onFocus={() => setisFocused(true)}
                         onBlur={() => setisFocused(false)}
                         onChangeText={setEmail}
+                        value={email ? email : ''}
                         isFocused={isFocused}
                     />
                 </View>
@@ -91,6 +93,7 @@ const SignIn = ({ navigation }: SignInScreenProps) => {
                         backround={colors.card}
                         onChangeText={setPassword}
                         isFocused={isFocused2}
+                        value={password ? password : ''}
                         type={'password'}
                     />
                 </View>
@@ -161,7 +164,7 @@ const SignIn = ({ navigation }: SignInScreenProps) => {
                 </View>
             </View>
             {loading && (
-                <View style={[GlobalStyleSheet.loadingOverlay, {height: SIZES.height}]}>
+                <View style={[GlobalStyleSheet.loadingOverlay, { height: SIZES.height }]}>
                     <ActivityIndicator size="large" color={COLORS.primary} />
                 </View>
             )}
