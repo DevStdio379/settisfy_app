@@ -7,12 +7,14 @@ interface CategoryDropdownProps {
   options: { label: string; value: string }[];
   selectedOption: string;
   setSelectedOption: (value: string) => void;
+  placeholder?: string;
 }
 
 export const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
   options,
   selectedOption,
   setSelectedOption,
+  placeholder
 }) => {
   return (
     <View style={styles.container}>
@@ -20,7 +22,7 @@ export const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
         data={options}
         labelField="label"
         valueField="value"
-        placeholder="Select a category"
+        placeholder= {placeholder ? placeholder : "Select an option"}
         value={selectedOption}
         onChange={(item) => setSelectedOption(item.value)}
         style={styles.dropdown}
@@ -34,7 +36,6 @@ export const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 10,
   },
   dropdown: {
     height: 50,

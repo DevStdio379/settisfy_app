@@ -62,7 +62,7 @@ const Map = ({ navigation }: FavouriteCollectionScreenProps) => {
     <View style={{ backgroundColor: COLORS.background, flex: 1 }}>
       <View style={{ height: 60, borderBottomColor: COLORS.card, borderBottomWidth: 1 }}>
         <View
-          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, paddingHorizontal: 5 }}>
+          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8 }}>
           <View style={{ flex: 1, alignItems: 'flex-start' }}>
             {/* left header element */}
           </View>
