@@ -33,7 +33,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
 
     const [booking, setBooking] = useState<Booking>(route.params.booking);
     const [accordionOpen, setAccordionOpen] = useState<{ [key: string]: boolean }>({});
-    const [owner, setOwner] = useState<User>();
+    const [customer, setCustomer] = useState<User>();
     const [images, setImages] = useState<string[]>([]);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [status, setStatus] = useState<number>(booking.status);
@@ -105,9 +105,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                     setBooking(selectedBooking);
                     setStatus(selectedBooking.status);
 
-                    const fetchedOwner = await fetchSelectedUser(selectedBooking.userId);
-                    if (fetchedOwner) {
-                        setOwner(fetchedOwner);
+                    const fetchedCustomer = await fetchSelectedUser(selectedBooking.userId);
+                    if (fetchedCustomer) {
+                        setCustomer(fetchedCustomer);
                     }
 
                     const fetchedReview = await getReviewByBookingId(selectedBooking.id || '', booking.id || '');
@@ -136,9 +136,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
 
                 const selectedBooking = await fetchSelectedBorrowing(booking.id || 'undefined');
                 if (selectedBooking) {
-                    const fetchedOwner = await fetchSelectedUser(selectedBooking.userId);
-                    if (fetchedOwner) {
-                        setOwner(fetchedOwner);
+                    const fetchedCustomer = await fetchSelectedUser(selectedBooking.userId);
+                    if (fetchedCustomer) {
+                        setCustomer(fetchedCustomer);
                     }
 
                     const fetchedReview = await getReviewByBookingId(selectedBooking.product.id || 'undefined', selectedBooking.id || 'undefined');
@@ -251,6 +251,21 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                 >
                     <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40 }]}>
                         {/* Progress Section */}
+                        {
+                            booking.status > 0 && booking.settlerId === user?.uid ? (
+                                <View style={{ backgroundColor: COLORS.primaryLight, padding: 10, borderRadius: 20, paddingVertical: 10 }}>
+                                    <Text style={{ textAlign: 'center' }}>You're handling this job</Text>
+                                </View>
+                            ) : booking.status === 0 && booking.settlerId === '' ? (
+                                <View style={{ backgroundColor: '#FFF3E0', padding: 10, borderRadius: 20, marginVertical: 10 }}>
+                                    <Text style={{ textAlign: 'center' }}>Awaiting for customer response</Text>
+                                </View>
+                            ) : booking.status > 0 && booking.settlerId !== user?.uid ? (
+                                <View style={{ backgroundColor: '#FFF3E0', padding: 10, borderRadius: 20, marginVertical: 10 }}>
+                                    <Text style={{ textAlign: 'center' }}>Sorry, you're not selected</Text>
+                                </View>
+                            ) : null
+                        }
                         <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", height: 50 }}>
                             {steps.map((step, index) => (
                                 <View key={index} style={{ flexDirection: "row", alignItems: "center" }}>
@@ -337,28 +352,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 </View>
                             ) : status === 1 && booking.settlerId === user?.uid ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: "500" }}>Enter Service-Start Code</Text>
-                                    <Text style={{ fontSize: 13, marginBottom: 10, color: COLORS.blackLight2 }}>Kindly ask customer for the service-start code</Text>
-                                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
-                                        {collectionCode.map((digit, index) => (
-                                            <TextInput
-                                                key={index}
-                                                ref={(el) => { inputs.current[index] = el; }}
-                                                style={{ width: 35, height: 50, borderWidth: 2, borderColor: COLORS.blackLight, textAlign: "center", fontSize: 20, borderRadius: 10 }}
-                                                keyboardType="numeric"
-                                                maxLength={1}
-                                                value={digit}
-                                                onChangeText={(text) => handleChange(text, index)}
-                                                onKeyPress={(e) => handleKeyPress(e, index)}
-                                                returnKeyType="done"
-                                            />
-                                        ))}
-                                    </View>
-                                    <Text style={{ fontSize: 12, marginBottom: 4, marginTop: 10, color: COLORS.danger }}>{validationMessage}</Text>
-                                </View>
-                            ) : status === 2 && booking.settlerId === user?.uid ? (
-                                <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4, textAlign: 'center' }}>You can start your service now.</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Your reference number is</Text>
+                                    <Text style={{ fontSize: 24, fontWeight: "bold", color: "indigo" }}>{booking.serviceStartCode}</Text>
+                                    <Text style={{ fontSize: 10, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Please check the code with your customer. The code must match between you and customer.</Text>
+                                    <View style={[GlobalStyleSheet.line]} />
                                     <TouchableOpacity
                                         style={{
                                             backgroundColor: COLORS.primary,
@@ -368,14 +365,17 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             width: '80%',
                                             alignItems: 'center',
                                         }}
-                                        onPress={() => { handleChat(user?.uid || '', booking.userId || ''); }}
+                                        onPress={() => { if (user && customer) handleChat(user.uid, customer.uid) }}
                                     >
-                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Message customer</Text>
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Customer</Text>
                                     </TouchableOpacity>
                                 </View>
-                            ) : status === 3 ? (
+                            ) : status === 2 && booking.settlerId === user?.uid ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                     <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4, textAlign: 'center' }}>Service in progress</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>
+                                        {booking?.selectedDate ? `${Math.ceil((new Date(booking.selectedDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left` : "N/A"}
+                                    </Text>
                                     <TouchableOpacity
                                         style={{
                                             backgroundColor: COLORS.primary,
@@ -394,6 +394,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                     >
                                         <Text style={{ color: 'white', fontWeight: 'bold' }}>Complete Job</Text>
                                     </TouchableOpacity>
+                                </View>
+                            ) : status === 3 ? (
+                                <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Awaiting for customer response</Text>
                                     <TouchableOpacity
                                         style={{
                                             backgroundColor: COLORS.primary,
@@ -403,14 +407,14 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             width: '80%',
                                             alignItems: 'center',
                                         }}
-                                        onPress={async () => { }}
+                                        onPress={() => { if (user && customer) handleChat(user.uid, customer.uid) }}
                                     >
                                         <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Customer</Text>
                                     </TouchableOpacity>
                                 </View>
-                            ) : status === 3 ? (
+                            ) : status === 4 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text>Active Borrowing</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>You're in cooldown period</Text>
                                     <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>
                                         {booking?.selectedDate ? `${Math.ceil((new Date(booking.selectedDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left` : "N/A"}
                                     </Text>
@@ -423,57 +427,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             width: '80%',
                                             alignItems: 'center',
                                         }}
-                                        onPress={async () => {
-                                            if (booking.id) {
-                                                await updateBorrowing(booking.id, { status: status! + 1, returnCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
-                                            }
-                                            setStatus(status! + 1);
-                                        }}
+                                        onPress={() => { if (user && customer) handleChat(user.uid, customer.uid) }}
                                     >
-                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Borrower</Text>
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Customer</Text>
                                     </TouchableOpacity>
-                                </View>
-                            ) : status === 4 ? (
-                                <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Your service-end code is</Text>
-                                    <Text style={{ fontSize: 24, fontWeight: "bold", color: "indigo" }}>{booking.serviceEndCode}</Text>
-                                </View>
-                            ) : status === 5 ? (
-                                <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontWeight: 'bold' }}>Please confirm your job completion</Text>
-                                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
-                                        <TouchableOpacity
-                                            style={{
-                                                backgroundColor: COLORS.primary,
-                                                padding: 10,
-                                                borderRadius: 10,
-                                                marginVertical: 10,
-                                                width: '40%',
-                                                alignItems: 'center',
-                                            }}
-                                            onPress={() => { }}
-                                        >
-                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>No</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={{
-                                                backgroundColor: COLORS.primary,
-                                                padding: 10,
-                                                borderRadius: 10,
-                                                marginVertical: 10,
-                                                width: '40%',
-                                                alignItems: 'center',
-                                            }}
-                                            onPress={async () => {
-                                                if (booking.id) {
-                                                    await updateBooking(booking.id, { status: status! + 1 });
-                                                }
-                                                setStatus(status! + 1);
-                                            }}
-                                        >
-                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
-                                        </TouchableOpacity>
-                                    </View>
                                 </View>
                             ) : (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
@@ -605,21 +562,55 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             </Swiper>
                         </View> */}
                         {/* Borrowing Details */}
-                        {
-                            booking.status > 0 && booking.settlerId === user?.uid ? (
-                                <View style={{ backgroundColor: COLORS.primaryLight, padding: 10, borderRadius: 20, paddingVertical: 10 }}>
-                                    <Text style={{ textAlign: 'center' }}>You're handling this job</Text>
+                        <View style={{ width: '100%', paddingHorizontal: 15, borderRadius: 20, borderColor: COLORS.blackLight, borderWidth: 1, marginBottom: 20 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', marginVertical: 10 }}>
+                                <View style={{ flex: 1, alignItems: 'center', paddingLeft: 10 }}>
+                                    {
+                                        customer?.profileImageUrl ? (
+                                            <Image
+                                                source={{ uri: customer.profileImageUrl }}
+                                                style={{
+                                                    width: 60,
+                                                    height: 60,
+                                                    borderRadius: 20,
+                                                }}
+                                            />
+                                        ) : (
+                                            <View
+                                                style={{
+                                                    width: 60,
+                                                    height: 60,
+                                                    borderRadius: 20,
+                                                    backgroundColor: COLORS.card,
+                                                    justifyContent: 'center',
+                                                    alignItems: 'center',
+                                                }}
+                                            >
+                                                <Ionicons name="person" size={30} color={COLORS.blackLight} />
+                                            </View>
+                                        )
+                                    }
                                 </View>
-                            ) : booking.status === 0 ? (
-                                <View style={{ backgroundColor: '#FFF3E0', padding: 10, borderRadius: 20, marginVertical: 10 }}>
-                                    <Text style={{ textAlign: 'center' }}>Sorry, you're not selected</Text>
+                                <View style={{ flex: 7, paddingLeft: 20 }}>
+                                    <TouchableOpacity onPress={() => navigation.navigate('QuoteCleaning', { service: booking.catalogueService })}>
+                                        <View style={{ width: SIZES.width * 0.63 }}>
+                                            <Text style={{ fontSize: 17, fontWeight: 'bold', color: COLORS.black }} numberOfLines={1} ellipsizeMode="tail">Settling for: {booking.firstName} {booking.lastName}</Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                    <Text style={{ fontSize: 14, color: COLORS.black }}>4.5 ratings</Text>
                                 </View>
-                            ) : booking.status > 0 && booking.settlerId !== user?.uid ? (
-                                <View style={{ backgroundColor: '#E0F7FA', padding: 10, borderRadius: 20, marginVertical: 10 }}>
-                                    <Text style={{ textAlign: 'center' }}>Job taken by someone else</Text>
-                                </View>
-                            ) : null
-                        }
+                                <TouchableOpacity
+                                    onPress={() => { if (user && customer) handleChat(user.uid, customer.uid) }}
+                                    style={{
+                                        backgroundColor: COLORS.borderColor,
+                                        padding: 15,
+                                        borderRadius: 10,
+                                    }}
+                                >
+                                    <Ionicons name="chatbubble-ellipses-outline" size={24} color={COLORS.blackLight2} />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                             {buttons.map((btn: any, i: number) => (
                                 <View key={i} style={{ flexDirection: 'row', width: SIZES.width * 0.5, paddingHorizontal: 10, paddingTop: 20, justifyContent: 'space-between', alignItems: 'center' }}>
@@ -789,7 +780,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     </Text>
                                                 </TouchableOpacity>
                                                 <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Borrowing Notes</Text>
-                                                <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>{booking.notes}</Text>
+                                                <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>{booking.notesToSettler}</Text>
                                                 <View style={GlobalStyleSheet.line} />
                                                 <View style={{ paddingHorizontal: 10 }}>
                                                     <TouchableOpacity
@@ -813,7 +804,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     {accordionOpen.insurance && (
                                                         <View style={{ paddingLeft: 10 }}>
                                                             <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
-                                                                {booking.notes}
+                                                                {booking.notesToSettler}
                                                             </Text>
                                                         </View>
                                                     )}
@@ -840,7 +831,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     {accordionOpen.handover && (
                                                         <View style={{ paddingLeft: 10 }}>
                                                             <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
-                                                                {booking.notes}
+                                                                {booking.notesToSettler}
                                                             </Text>
                                                         </View>
                                                     )}

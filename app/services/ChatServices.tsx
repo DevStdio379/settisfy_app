@@ -1,51 +1,49 @@
-// services/chatService.ts
-import { User } from "../context/UserContext";
+import { collection, addDoc, getDocs, query, where, serverTimestamp } from "firebase/firestore";
+import { db } from "./firebaseConfig";
 import { Booking } from "./BookingServices";
-import { db, auth } from "./firebaseConfig";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  serverTimestamp,
-} from "firebase/firestore";
 
-/**
- * Get or create a chat between the logged-in user and another user.
- */
-export const getOrCreateChat = async (userId: string, otherUserId: string, booking?: Booking ) => {
-
+export const getOrCreateChat = async (
+  userId: string,
+  otherUserId: string,
+  booking?: Booking
+) => {
   const chatRef = collection(db, "chats");
 
-  // Check if chat already exists
-  const chatQuery = query(
-    chatRef,
-    where("participants", "array-contains", userId)
-  );
-
   try {
+    // 1️⃣ Find chats that include *either* participant
+    const chatQuery = query(chatRef, where("participants", "array-contains", userId));
     const snapshot = await getDocs(chatQuery);
-    for (const chat of snapshot.docs) {
-      const data = chat.data();
-      if (
-        data.participants.includes(otherUserId) &&
+
+    // 2️⃣ Check manually for the correct pair + booking
+    for (const docSnap of snapshot.docs) {
+      const data = docSnap.data();
+
+      const sameParticipants =
+        data.participants.includes(userId) &&
+        data.participants.includes(otherUserId);
+
+      const sameBooking =
         booking &&
-        data.id === booking.id
-      ) {
-        return chat.id; // Return existing chat ID
+        (data.booking?.id === booking.id ||
+         data.bookingId === booking.id);
+
+      if (sameParticipants && sameBooking) {
+        // ✅ Chat already exists
+        return docSnap.id;
       }
     }
 
-    // Create a new chat
-    const newChatRef = await addDoc(chatRef, {
+    // 3️⃣ Otherwise, create new chat
+    const newChat = {
       participants: [userId, otherUserId],
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
       lastMessage: "",
-      booking: booking || null
-    });
+      booking: booking || null,
+      bookingId: booking?.id || null,
+    };
 
+    const newChatRef = await addDoc(chatRef, newChat);
     return newChatRef.id;
   } catch (error) {
     console.error("Error creating or fetching chat: ", error);
