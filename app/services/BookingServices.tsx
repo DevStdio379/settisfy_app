@@ -3,7 +3,6 @@ import { collection, addDoc, query, where, getDocs, doc, getDoc, updateDoc, Coll
 import { Address } from './AddressServices';
 import { Catalogue } from './CatalogueServices';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
-import { nanoid } from '@reduxjs/toolkit';
 
 export interface Acceptor {
   settlerId: string;
@@ -56,6 +55,7 @@ export interface Booking {
   // collection and return code
   serviceStartCode: string;
   serviceEndCode: string;
+
   createAt: any;
   updatedAt: any;
 }
@@ -101,43 +101,20 @@ export const uploadImages = async (imageName: string, imagesUrl: string[]) => {
     return urls; // Return all uploaded image URLs
 };
 
-
 export const createBooking = async (bookingData: Booking) => {
   try {
-    // 🆕 Generate short custom ID
-    const bookingId = nanoid(8); // e.g., "Ab12Cd34"
+    const bookingRef = collection(db, 'bookings');
+    const docRef = await addDoc(bookingRef, bookingData);
+    console.log('Booking created with ID:', docRef.id);
 
-    // Create reference manually instead of using addDoc()
-    const bookingRef = doc(collection(db, 'bookings'), bookingId);
-
-    // 🕒 Add timestamps and ID field
-    const bookingWithMeta = {
-      ...bookingData,
-      id: bookingId,
-      createAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    // Create the document
-    await setDoc(bookingRef, bookingWithMeta);
-    console.log('✅ Booking created with ID:', bookingId);
-
-    // 🖼 If there are images, upload and update doc
-    if (
-      bookingData.notesToSettlerImageUrls &&
-      bookingData.notesToSettlerImageUrls.length > 0
-    ) {
-      const uploadedUrls = await uploadImages(
-        bookingId,
-        bookingData.notesToSettlerImageUrls
-      );
-
-      await updateDoc(bookingRef, { imageUrls: uploadedUrls });
+    if (bookingData.notesToSettlerImageUrls && bookingData.notesToSettlerImageUrls.length > 0) {
+      const uploadedUrls = await uploadImages(docRef.id, bookingData.notesToSettlerImageUrls);
+      await updateDoc(doc(db, 'bookings', docRef.id), { notesToSettlerImageUrls: uploadedUrls });
     }
 
-    return bookingId;
+    return docRef.id;
   } catch (error) {
-    console.error('❌ Error creating booking: ', error);
+    console.error('Error creating booking: ', error);
     throw error;
   }
 };
