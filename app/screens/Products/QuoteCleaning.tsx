@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   View, Text, TouchableOpacity, FlatList, Animated, StyleSheet, Platform, Image, ScrollView,
   Alert,
+  ActionSheetIOS,
 } from "react-native";
 import { COLORS, SIZES } from "../../constants/theme";
 import { StackScreenProps } from "@react-navigation/stack";
@@ -100,14 +101,41 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
   const [selectedAddress, setSelectedAddress] = useState<Address | undefined>(user?.currentAddress);
   const [accordionOpen, setAccordionOpen] = useState<{ [key: string]: boolean }>({});
   const [isFocused, setisFocused] = useState(false);
-  const [selectedServiceCardImageUrls, setSelectedServiceCardImageUrls] = useState<string | null>(null);
-  const [serviceCardImageUrls, setServiceCardImageUrls] = useState<string[]>([]);
-  const [notesForSettler, setnotesForSettler] = useState<string>('');
+  const [selectedNotesToSettlerImageUrl, setSelectedNotesToSettlerImageUrl] = useState<string | null>(null);
+  const [notesToSettlerImageUrls, setNotesToSettlerImageUrls] = useState<string[]>([]);
+  const [notesToSettler, setNotesToSettler] = useState<string>('');
   const [grandTotal, setGrandTotal] = useState<number>(0);
   const [selectedAddons, setSelectedAddons] = useState<{ [key: string]: AddonOption[] }>({});
   const basePrice = service ? service.basePrice : 0;
   const [totalQuote, setTotalQuote] = useState(basePrice);
   const platformFee = 2; // Fixed platform fee
+
+  const handleImageSelect = () => {
+    if (notesToSettlerImageUrls.length >= 5) {
+      Alert.alert('Limit Reached', 'You can only select up to 5 images.');
+      return;
+    }
+
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Cancel', 'Choose from Gallery', 'Use Camera'],
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) selectImages();
+          else if (buttonIndex === 2) cameraImage();
+        }
+      );
+    } else {
+      Alert.alert('Add Photo', 'Choose an option', [
+        { text: 'Choose from Gallery', onPress: selectImages },
+        { text: 'Use Camera', onPress: cameraImage },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    }
+  };
+
 
   // camera tools
   const selectImages = async () => {
@@ -116,7 +144,7 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
       includeBase64: false,
       maxHeight: 2000,
       maxWidth: 2000,
-      selectionLimit: 5 - serviceCardImageUrls.length, // Limit the selection to the remaining slots
+      selectionLimit: 5 - notesToSettlerImageUrls.length, // Limit the selection to the remaining slots
     };
 
     launchImageLibrary(options, async (response) => {
@@ -126,9 +154,9 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
         console.log('Image picker error: ', response.errorMessage);
       } else {
         const selectedImages = response.assets?.map(asset => asset.uri).filter(uri => uri !== undefined) as string[] || [];
-        setServiceCardImageUrls((prevImages) => {
+        setNotesToSettlerImageUrls((prevImages) => {
           const updatedImages = [...prevImages, ...selectedImages];
-          setSelectedServiceCardImageUrls(updatedImages[0]);
+          setSelectedNotesToSettlerImageUrl(updatedImages[0]);
           return updatedImages;
         });
       }
@@ -144,7 +172,7 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
       maxWidth: 2000,
     };
 
-    if (serviceCardImageUrls.length >= 5) {
+    if (notesToSettlerImageUrls.length >= 5) {
       Alert.alert('You can only select up to 5 images.');
       return;
     }
@@ -157,9 +185,9 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
       } else {
         let newImageUri = response.assets?.[0]?.uri;
         if (newImageUri) {
-          setServiceCardImageUrls((prevImages) => {
+          setNotesToSettlerImageUrls((prevImages) => {
             const updatedImages = [...prevImages, newImageUri];
-            setSelectedServiceCardImageUrls(updatedImages[0]);
+            setSelectedNotesToSettlerImageUrl(updatedImages[0]);
             return updatedImages;
           });
         }
@@ -168,11 +196,11 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
   };
 
   const deleteImage = () => {
-    if (!selectedServiceCardImageUrls) return;
+    if (!selectedNotesToSettlerImageUrl) return;
 
-    const updatedImages = serviceCardImageUrls.filter((img) => img !== selectedServiceCardImageUrls);
-    setServiceCardImageUrls(updatedImages);
-    setSelectedServiceCardImageUrls(updatedImages.length > 0 ? updatedImages[0] : null);
+    const updatedImages = notesToSettlerImageUrls.filter((img) => img !== selectedNotesToSettlerImageUrl);
+    setNotesToSettlerImageUrls(updatedImages);
+    setSelectedNotesToSettlerImageUrl(updatedImages.length > 0 ? updatedImages[0] : null);
   };
 
 
@@ -186,13 +214,21 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
   // changing state screen
   const nextScreen = async () => {
     if (index === 0) {
+      if (Object.keys(selectedAddons).length === 0) {
+        Alert.alert(`Select at least 1 ${service.category} components`)
+        return
+      }
       let grandTotal = Number(totalQuote) + Number(platformFee); // Adding platform fee of $2
       setGrandTotal(grandTotal);
       setIndex(1);
     }
     if (index === 1) {
-      Alert.alert(grandTotal.toString())
-      // handleCheckout('borrowingRef1', 'paymentIntentId1');
+      if (!selectedAddress) {
+        Alert.alert('Select service address')
+        return
+      }
+      Alert.alert(notesToSettler)
+      handleCheckout('borrowingRef1', 'paymentIntentId1');
     }
   }
 
@@ -229,11 +265,6 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
 
   // checkout
   const handleCheckout = async (borrowingRef: any, paymentIntentId: string) => {
-    if (totalPrice === undefined) {
-      Alert.alert('Error', 'Total amount is not calculated.');
-      return;
-    }
-
     if (!selectedAddress || !paymentMethod) {
       Alert.alert('Error', 'Please select delivery and payment methods.');
       return;
@@ -261,6 +292,8 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
 
       // booking details
       addons: addonsArray,
+      notesToSettlerImageUrls: notesToSettlerImageUrls,
+      notesToSettler: notesToSettler,
       total: grandTotal || 0,
       paymentMethod: paymentMethod,
       paymentIntentId: paymentIntentId,
@@ -275,9 +308,6 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
       serviceEndCode: '',
       updatedAt: new Date(),
       createAt: new Date(),
-
-      // Required Booking fields
-      notes: notesForSettler,
     };
 
     const bookingId = await createBooking(bookingData);
@@ -290,14 +320,7 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
     }
   };
 
-  // Calculate total price and time dynamically
-  const { totalPrice, totalTime } = useMemo(() => {
-    let price = 0;
-    let time = 0;
 
-
-    return { totalPrice: price, totalTime: time };
-  }, [selectedArea, selectedTidiness, selectedExtras]);
 
   // Get user addresses when component mounts
   const getAddresses = async () => {
@@ -311,30 +334,6 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
   useEffect(() => {
     getAddresses();
   }, []);
-
-  // Card Component
-  const Card = ({
-    item,
-    isSelected,
-    onPress,
-  }: {
-    item: any;
-    isSelected: boolean;
-    onPress: () => void;
-  }) => (
-    <TouchableOpacity
-      style={[
-        styles.card,
-        { borderColor: isSelected ? COLORS.primary : COLORS.black },
-      ]}
-      onPress={onPress}
-    >
-      <Text style={{ fontSize: 16, color: COLORS.text }}>{item.label}</Text>
-      <Text style={{ fontSize: 14, color: COLORS.black }}>
-        +${item.price} | {item.time}h
-      </Text>
-    </TouchableOpacity>
-  );
 
   // Toggle extras selection
   const toggleExtra = (id: number) => {
@@ -497,8 +496,6 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
                     )}
                     {tabIndex === 2 && (
                       <View style={{ paddingRight: 40 }}>
-                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Deposit Policy</Text>
-                        <View style={GlobalStyleSheet.line} />
                         <View style={{ paddingHorizontal: 10 }}>
                           <TouchableOpacity
                             onPress={() => setAccordionOpen((prev) => ({ ...prev, insurance: !prev.insurance }))}
@@ -715,12 +712,27 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
               <View style={GlobalStyleSheet.line} />
               <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Notes to Settler</Text>
               <Text style={{ fontSize: 14, color: COLORS.black }}>This is optional but very helpful to our settler.</Text>
-              <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', gap: 10, paddingTop: 10 }}>
+              <View
+                style={{
+                  width: '100%',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 10,
+                  paddingTop: 0,
+                }}
+              >
                 {/* Large Preview Image */}
-                {selectedServiceCardImageUrls ? (
-                  <View style={{ flex: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
+                {selectedNotesToSettlerImageUrl ? (
+                  <View
+                    style={{
+                      flex: 1,
+                      width: '100%',
+                      justifyContent: 'flex-start',
+                      alignItems: 'flex-start',
+                    }}
+                  >
                     <Image
-                      source={{ uri: selectedServiceCardImageUrls }}
+                      source={{ uri: selectedNotesToSettlerImageUrl }}
                       style={{
                         width: '100%',
                         height: 300,
@@ -729,6 +741,7 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
                       }}
                       resizeMode="cover"
                     />
+
                     {/* Delete Button */}
                     <TouchableOpacity
                       onPress={() => deleteImage()}
@@ -743,10 +756,14 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
                     >
                       <Ionicons name="trash-outline" size={24} color={COLORS.white} />
                     </TouchableOpacity>
+
                     {/* Thumbnail List */}
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      {serviceCardImageUrls.map((imageUri, index) => (
-                        <TouchableOpacity key={index} onPress={() => setSelectedServiceCardImageUrls(imageUri)}>
+                      {notesToSettlerImageUrls.map((imageUri, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          onPress={() => setSelectedNotesToSettlerImageUrl(imageUri)}
+                        >
                           <Image
                             source={{ uri: imageUri }}
                             style={{
@@ -754,70 +771,71 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
                               height: 80,
                               marginRight: 10,
                               borderRadius: 10,
-                              borderWidth: selectedServiceCardImageUrls === imageUri ? 3 : 0,
-                              borderColor: selectedServiceCardImageUrls === imageUri ? '#007bff' : 'transparent',
+                              borderWidth: selectedNotesToSettlerImageUrl === imageUri ? 3 : 0,
+                              borderColor:
+                                selectedNotesToSettlerImageUrl === imageUri
+                                  ? COLORS.primary
+                                  : 'transparent',
                             }}
                           />
                         </TouchableOpacity>
                       ))}
+
+                      {/* Small "+" box — only visible if less than 5 images */}
+                      {notesToSettlerImageUrls.length < 5 && (
+                        <TouchableOpacity
+                          onPress={handleImageSelect}
+                          activeOpacity={0.8}
+                          style={{
+                            width: 80,
+                            height: 80,
+                            borderRadius: 10,
+                            borderWidth: 1,
+                            borderColor: COLORS.blackLight,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            backgroundColor: COLORS.card,
+                          }}
+                        >
+                          <Ionicons name="add-outline" size={28} color={COLORS.blackLight} />
+                        </TouchableOpacity>
+                      )}
                     </ScrollView>
+
                   </View>
                 ) : (
-                  <View
+                  // Placeholder when no image is selected
+                  <TouchableOpacity
+                    onPress={() => handleImageSelect()}
+                    activeOpacity={0.8}
                     style={{
                       width: '100%',
-                      height: 300,
+                      height: 100,
                       borderRadius: 10,
                       marginBottom: 10,
                       backgroundColor: COLORS.card,
                       justifyContent: 'center',
                       alignItems: 'center',
+                      borderWidth: 1,
+                      borderColor: COLORS.blackLight,
                     }}
                   >
-                    <Text style={{ color: COLORS.blackLight }}>No image selected</Text>
-                  </View>
+                    <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
+                    <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>
+                      Add photos here
+                    </Text>
+                  </TouchableOpacity>
                 )}
-                <View style={{ width: '100%', gap: 10, justifyContent: 'center', alignItems: 'center' }}>
-                  <TouchableOpacity
-                    style={{
-                      padding: 15,
-                      width: '100%',
-                      borderRadius: 10,
-                      borderWidth: 1,
-                      borderColor: COLORS.black,
-                    }}
-                    onPress={() => selectImages()}
-                  >
-                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-                      <Ionicons name="image-outline" size={24} color={COLORS.black} style={{ marginRight: 10 }} />
-                      <Text style={{ color: COLORS.black, fontSize: 16, fontWeight: 'bold' }}>Add photos</Text>
-                    </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{
-                      padding: 15,
-                      width: '100%',
-                      borderRadius: 10,
-                      borderWidth: 1,
-                      borderColor: COLORS.black,
-                    }}
-                    onPress={() => cameraImage()}
-                  >
-                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
-                      <Ionicons name="image-outline" size={24} color={COLORS.black} style={{ marginRight: 10 }} />
-                      <Text style={{ color: COLORS.black, fontSize: 16, fontWeight: 'bold' }}>Use Camera</Text>
-                    </View>
-                  </TouchableOpacity>
-                </View>
               </View>
-              {selectedServiceCardImageUrls && (
+
+              {selectedNotesToSettlerImageUrl && (
                 <View>
                   <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Add what do you want the settler to know here</Text>
                   <Input
                     onFocus={() => setisFocused(true)}
                     onBlur={() => setisFocused(false)}
                     isFocused={isFocused}
-                    onChangeText={setnotesForSettler}
+                    onChangeText={setNotesToSettler}
                     backround={COLORS.card}
                     style={{
                       fontSize: 12,
@@ -831,7 +849,7 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
                     placeholder={`e.g. Got a grassy platform.`}
                     multiline={true}  // Enable multi-line input
                     numberOfLines={10} // Suggest the input area size
-                    value={notesForSettler ? notesForSettler : ''}
+                    value={notesToSettler ? notesToSettler : ''}
                   />
                 </View>
               )}

@@ -1,7 +1,9 @@
-import { db } from './firebaseConfig';
+import { db, storage } from './firebaseConfig';
 import { collection, addDoc, query, where, getDocs, doc, getDoc, updateDoc, CollectionReference, DocumentReference, setDoc, onSnapshot } from 'firebase/firestore';
 import { Address } from './AddressServices';
 import { Catalogue } from './CatalogueServices';
+import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
+import { nanoid } from '@reduxjs/toolkit';
 
 export interface Acceptor {
   settlerId: string;
@@ -12,15 +14,15 @@ export interface Acceptor {
 
 
 export interface SubOption {
-    label: string;        // e.g. "10 sqft"
-    additionalPrice: number; // e.g. 15 (store as number for calculations)
-    notes?: string;       // optional: "measure carefully"
+  label: string;        // e.g. "10 sqft"
+  additionalPrice: number; // e.g. 15 (store as number for calculations)
+  notes?: string;       // optional: "measure carefully"
 }
 
 export interface DynamicOption {
-    name: string;          // e.g. "sqft", "extras"
-    subOptions: SubOption[];
-    multipleSelect: boolean;
+  name: string;          // e.g. "sqft", "extras"
+  subOptions: SubOption[];
+  multipleSelect: boolean;
 }
 
 export interface Booking {
@@ -40,6 +42,8 @@ export interface Booking {
   // booking details
   total: number;
   addons?: DynamicOption[];
+  notesToSettlerImageUrls?: string[];
+  notesToSettler?: string;
   paymentMethod: string;
   paymentIntentId?: string;
 
@@ -54,19 +58,86 @@ export interface Booking {
   serviceEndCode: string;
   createAt: any;
   updatedAt: any;
-
-  // for cleaning service
-  notes?: string;
 }
+
+export const uploadImages = async (imageName: string, imagesUrl: string[]) => {
+    const urls: string[] = [];
+
+    for (const uri of imagesUrl) {
+        try {
+            // Convert to Blob
+            const response = await fetch(uri);
+            const blob = await response.blob();
+
+            // Generate unique filename
+            const filename = `bookings/${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
+            const storageRef = ref(storage, filename);
+
+            // Upload file
+            const uploadTask = uploadBytesResumable(storageRef, blob);
+
+            await new Promise<void>((resolve, reject) => {
+                uploadTask.on(
+                    "state_changed",
+                    snapshot => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        console.log(`Upload ${filename}: ${progress.toFixed(2)}% done`);
+                    },
+                    reject, // Handle error
+                    async () => {
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        urls.push(downloadURL);
+                        resolve();
+                    }
+                );
+            });
+
+        } catch (error) {
+            console.error("Upload failed:", error);
+        }
+    }
+
+    console.log("All images uploaded:", urls);
+    return urls; // Return all uploaded image URLs
+};
+
 
 export const createBooking = async (bookingData: Booking) => {
   try {
-    const bookingRef = collection(db, 'bookings');
-    const docRef = await addDoc(bookingRef, bookingData);
-    console.log('Booking created with ID:', docRef.id);
-    return docRef.id;
+    // 🆕 Generate short custom ID
+    const bookingId = nanoid(8); // e.g., "Ab12Cd34"
+
+    // Create reference manually instead of using addDoc()
+    const bookingRef = doc(collection(db, 'bookings'), bookingId);
+
+    // 🕒 Add timestamps and ID field
+    const bookingWithMeta = {
+      ...bookingData,
+      id: bookingId,
+      createAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    // Create the document
+    await setDoc(bookingRef, bookingWithMeta);
+    console.log('✅ Booking created with ID:', bookingId);
+
+    // 🖼 If there are images, upload and update doc
+    if (
+      bookingData.notesToSettlerImageUrls &&
+      bookingData.notesToSettlerImageUrls.length > 0
+    ) {
+      const uploadedUrls = await uploadImages(
+        bookingId,
+        bookingData.notesToSettlerImageUrls
+      );
+
+      await updateDoc(bookingRef, { imageUrls: uploadedUrls });
+    }
+
+    return bookingId;
   } catch (error) {
-    console.error('Error creating booking: ', error);
+    console.error('❌ Error creating booking: ', error);
     throw error;
   }
 };
@@ -90,6 +161,8 @@ const mapBorrowingData = (doc: any): Booking => {
     // booking details
     total: data.total,
     addons: data.addons,
+    notesToSettlerImageUrls: data.notesToSettlerImageUrls,
+    notesToSettler: data.notesToSettler,
     paymentMethod: data.paymentMethod,
     paymentIntentId: data.paymentIntentId || '',  // Ensure paymentIntentId is always a string
 
