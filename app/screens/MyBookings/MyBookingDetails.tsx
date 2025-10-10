@@ -60,48 +60,6 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
         }
     };
 
-
-
-    const handleChange = (text: string, index: number) => {
-        if (/^\d?$/.test(text)) {
-            const newPin = [...returnCode];
-            newPin[index] = text;
-            setCollectionCode(newPin);
-
-            // Move focus to the next input if a digit is entered
-            if (text && index < CODE_LENGTH - 1) {
-                inputs.current[index + 1]?.focus();
-            }
-
-            // Validate when full PIN is entered
-            if (newPin.every((digit) => digit !== "")) {
-                validatePin(newPin.join(""));
-            }
-        }
-    };
-
-    const validatePin = async (enteredPin: string) => {
-        const correctPin = booking.serviceEndCode; // Replace with actual validation logic
-        if (enteredPin === correctPin) {
-            await updateBooking(booking.id || 'undefined', { status: status! + 1 });
-            setStatus(status! + 1);
-            setCollectionCode(Array(CODE_LENGTH).fill("")); // Reset input
-            inputs.current[0]?.focus(); // Focus back to first input
-            setValidationMessage("Success. PIN is correct!");
-        } else {
-            Alert.alert("Error", "Invalid PIN. Try again.");
-            setCollectionCode(Array(CODE_LENGTH).fill("")); // Reset input
-            inputs.current[0]?.focus(); // Focus back to first input
-            setValidationMessage("Invalid PIN. Try again.");
-        }
-    };
-
-    const handleKeyPress = (e: any, index: number) => {
-        if (e.nativeEvent.key === "Backspace" && returnCode[index] === "" && index > 0) {
-            inputs.current[index - 1]?.focus();
-        }
-    };
-
     const fetchSelectedBookingData = async () => {
         if (booking) {
             // Alert.alert('1 Borrowing found');
@@ -167,6 +125,11 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                         setReview(fetchedReview);
                     }
                 }
+
+                if (selectedBooking?.notesToSettlerImageUrls) {
+                    setSelectedNotesToSettlerImageUrl(selectedBooking.notesToSettlerImageUrls[0])
+                }
+
             } else {
                 // Alert.alert('B Borrowing not found');
             }
@@ -189,11 +152,11 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
     };
 
     const steps = [
-        { label: "Booking\nCreated", date: `${formatDate(booking.selectedDate)}`, completed: (status ?? 0) >= 0 },
-        { label: "Service\nInitiated", date: "Show start\ncode", completed: (status ?? 0) > 2 },
-        { label: "Active\nService", date: "\n", completed: (status ?? 0) > 2 },
-        { label: "Service\nCompletion", date: "Enter complete\ncode", completed: (status ?? 0) > 3 },
-        { label: "Booking\nCompleted", date: `${formatDate(booking?.selectedDate)}`, completed: (status ?? 0) > 5 },
+        { label: "Booking\nCreated", date: 'Job\nbroadcast', completed: (status ?? 0) >= 0 },
+        { label: "Settler\nSelected", date: "Check\nservice code", completed: (status ?? 0) >= 1 },
+        { label: "Active\nService", date: "\n", completed: (status ?? 0) >= 2 },
+        { label: "Service\nCompleted", date: "Evaluate\ncompletion", completed: (status ?? 0) >= 3 },
+        { label: "Booking\nCompleted", date: 'Release\npayment', completed: (status ?? 0) >= 5 },
     ];
 
     const actions = [
@@ -273,35 +236,80 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                 >
                     <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40 }]}>
                         {/* Progress Section */}
-                        <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", height: 50 }}>
-                            {steps.map((step, index) => (
-                                <View key={index} style={{ flexDirection: "row", alignItems: "center" }}>
-                                    {/* Line Connector */}
-                                    {index > 0 && <View style={{ width: 45, height: 2, backgroundColor: step.completed ? COLORS.primary : "#f3f3f3" }} />}
-                                    {/* Circle or X */}
-                                    <View style={{ alignItems: "center", justifyContent: "center" }}>
-                                        {step.completed ? (
-                                            <View style={{ height: 32, width: 32, backgroundColor: COLORS.primary, borderRadius: 16, alignItems: "center", justifyContent: "center" }}>
-                                                <Text style={{ color: "white", fontSize: 18, fontWeight: "bold" }}>✓</Text>
-                                            </View>
-                                        ) : (
-                                            <View style={{ backgroundColor: "#f3f3f3", height: 32, width: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" }}>
-                                                <Text style={{ color: "gray", fontSize: 18 }}>X</Text>
-                                            </View>
+                        <View style={{ alignItems: "center", marginVertical: 20 }}>
+                            <View
+                                style={{
+                                    flexDirection: "row",
+                                    justifyContent: "space-between",
+                                    alignItems: "flex-start",
+                                    width: "100%",
+                                }}
+                            >
+                                {steps.map((step, index) => (
+                                    <View key={index} style={{ flex: 1, alignItems: "center" }}>
+                                        {/* Connector line to previous step */}
+                                        {index > 0 && (
+                                            <View
+                                                style={{
+                                                    position: "absolute",
+                                                    left: -((SIZES.width / steps.length) / 2 - 16), // half distance minus circle radius
+                                                    top: 16, // vertical center of circle
+                                                    width: (SIZES.width / steps.length) - 32, // width between circles
+                                                    height: 2,
+                                                    backgroundColor: step.completed ? COLORS.primary : "#f3f3f3",
+                                                    zIndex: -1,
+                                                }}
+                                            />
+                                        )}
+
+                                        {/* Step Circle */}
+                                        <View
+                                            style={{
+                                                height: 32,
+                                                width: 32,
+                                                borderRadius: 16,
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                backgroundColor: step.completed ? COLORS.primary : "#f3f3f3",
+                                            }}
+                                        >
+                                            <Text
+                                                style={{
+                                                    color: step.completed ? "white" : "gray",
+                                                    fontSize: 18,
+                                                    fontWeight: "bold",
+                                                }}
+                                            >
+                                                {step.completed ? "✓" : "X"}
+                                            </Text>
+                                        </View>
+
+                                        {/* Step Label + Date */}
+                                        <Text
+                                            style={{
+                                                textAlign: "center",
+                                                fontSize: 12,
+                                                fontWeight: "600",
+                                                marginTop: 8,
+                                                color: COLORS.title,
+                                            }}
+                                        >
+                                            {step.label}
+                                        </Text>
+                                        {step.date && (
+                                            <Text
+                                                style={{
+                                                    textAlign: "center",
+                                                    fontSize: 10,
+                                                    color: "gray",
+                                                }}
+                                            >
+                                                {step.date}
+                                            </Text>
                                         )}
                                     </View>
-                                </View>
-                            ))}
-                        </View>
-                        {/* Progress Section */}
-                        <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", height: 60 }}>
-                            {steps.map((step, index) => (
-                                <View key={index} style={{ alignItems: "center", paddingHorizontal: 10 }}>
-                                    {/* Label */}
-                                    <Text style={{ textAlign: "center", fontSize: 12, fontWeight: "600", marginTop: 8 }}>{step.label}</Text>
-                                    {step.date && <Text style={{ textAlign: "center", fontSize: 10, color: "gray" }}>{step.date}</Text>}
-                                </View>
-                            ))}
+                                ))}
+                            </View>
                         </View>
                         {/* Collection Code Card */}
                         <View style={{ backgroundColor: "#f3f3f3", padding: 16, borderRadius: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, marginVertical: 20, marginHorizontal: 10 }}>
@@ -458,7 +466,13 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                 </View>
                             ) : status === 4 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontWeight: 'bold' }}>Release payment to settler?</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>You're in cooldown period.</Text>
+                                    <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Take this time to review the service and let us know if something doesn’t look right.</Text>
+                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>
+                                        {booking?.selectedDate ? `${Math.ceil((new Date(booking.selectedDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left` : "N/A"}
+                                    </Text>
+                                    <View style={[GlobalStyleSheet.line, {marginVertical: 10}]} />
+                                    <Text style={{ fontWeight: 'bold'}}>Release payment to settler?</Text>
                                     <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                         <TouchableOpacity
                                             style={{
@@ -686,7 +700,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                 <View key={index} style={{ width: SIZES.width }}>
                                     <View style={{}}>
                                         {index === 0 && (
-                                            <View style={{ width: '90%', paddingTop: 20, gap: 10 }}>
+                                            <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
                                                 {/* Product Info */}
                                                 <View style={{ flexDirection: "row", marginBottom: 20 }}>
                                                     <Image
@@ -699,33 +713,47 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                             {/* <Text style={styles.originalPrice}>£40.20</Text> */}
                                                         </Text>
                                                         <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }}>Cleaning Service</Text>
-                                                        <Text style={{ fontSize: 14, color: COLORS.black }}>Payment Method: {booking.paymentMethod}</Text>
+                                                        <Text style={{ fontSize: 12, color: COLORS.black }}>Product ID: {booking.catalogueService.id}</Text>
                                                     </View>
                                                 </View>
                                                 <View style={GlobalStyleSheet.line} />
                                                 {/* Borrowing Period and Delivery Method */}
-                                                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                                                    <View style={{ paddingVertical: 10 }}>
-                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Start at</Text>
-                                                        <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>{new Date(booking.selectedDate).toLocaleDateString('en-GB')}</Text>
-                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>From:</Text>
-                                                        <Text style={{ fontSize: 14, color: COLORS.title }}>09:00 AM OR Now</Text>
-                                                    </View>
-                                                    <View style={{ marginHorizontal: 40, paddingTop: 60 }}>
-                                                        <Ionicons name="arrow-forward" size={30} color={COLORS.title} />
-                                                    </View>
-                                                    <View style={{ paddingVertical: 10 }}>
-                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Location</Text>
+                                                <View
+                                                    style={{
+                                                        flexDirection: "row",
+                                                        justifyContent: "space-between",
+                                                        alignItems: "flex-start",
+                                                        marginBottom: 10,
+                                                        width: "100%",
+                                                        gap: 10, // optional, for small spacing between columns
+                                                    }}
+                                                >
+                                                    {/* Left Column */}
+                                                    <View style={{ flex: 1, paddingVertical: 10 }}>
+                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Booking ID:</Text>
                                                         <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
-                                                            {booking.selectedAddress ? booking.selectedAddress.addressName : ''}
+                                                            {booking.id}
                                                         </Text>
-                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>Estimated Duration:</Text>
-                                                        <Text style={{ fontSize: 14, color: COLORS.title }}>3 Hours</Text>
+
+                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Location:</Text>
+                                                        <Text style={{ fontSize: 14, color: "#666" }}>
+                                                            {booking.selectedAddress?.addressName || ""}
+                                                        </Text>
+                                                    </View>
+
+                                                    {/* Right Column */}
+                                                    <View style={{ flex: 1, paddingVertical: 10 }}>
+                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Reference Number:</Text>
+                                                        <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
+                                                            {booking.serviceStartCode || "N/A"}
+                                                        </Text>
+
+                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Date:</Text>
+                                                        <Text style={{ fontSize: 14, color: COLORS.title }}>
+                                                            {booking.selectedDate}
+                                                        </Text>
                                                     </View>
                                                 </View>
-                                                <Text style={{ fontSize: 12, color: "#666", textAlign: "center", marginBottom: 5 }}>
-                                                    The service duration may vary based on the actual cleaning requirements.
-                                                </Text>
                                                 <View style={GlobalStyleSheet.line} />
                                                 {/* Borrowing Rate Breakdown */}
                                                 <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Service Pricing Breakdown</Text>
@@ -788,7 +816,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                             }}
                                                         >
                                                             <Image
-                                                                source={{ uri: selectedNotesToSettlerImageUrl || '' }}
+                                                                source={{ uri: selectedNotesToSettlerImageUrl || booking.notesToSettlerImageUrls[0] }}
                                                                 style={{
                                                                     width: '100%',
                                                                     height: 300,

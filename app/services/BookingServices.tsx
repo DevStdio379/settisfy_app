@@ -51,6 +51,8 @@ export interface Booking {
   settlerId?: string;
   settlerFirstName?: string;
   settlerLastName?: string;
+  settlerEvidenceImageUrls: string[];
+  settlerEvidenceRemark: string;
 
   // collection and return code
   serviceStartCode: string;
@@ -61,44 +63,85 @@ export interface Booking {
 }
 
 export const uploadImages = async (imageName: string, imagesUrl: string[]) => {
-    const urls: string[] = [];
+  const urls: string[] = [];
 
-    for (const uri of imagesUrl) {
-        try {
-            // Convert to Blob
-            const response = await fetch(uri);
-            const blob = await response.blob();
+  for (const uri of imagesUrl) {
+    try {
+      // Convert to Blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
 
-            // Generate unique filename
-            const filename = `bookings/${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
-            const storageRef = ref(storage, filename);
+      // Generate unique filename
+      const filename = `bookings/${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
+      const storageRef = ref(storage, filename);
 
-            // Upload file
-            const uploadTask = uploadBytesResumable(storageRef, blob);
+      // Upload file
+      const uploadTask = uploadBytesResumable(storageRef, blob);
 
-            await new Promise<void>((resolve, reject) => {
-                uploadTask.on(
-                    "state_changed",
-                    snapshot => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        console.log(`Upload ${filename}: ${progress.toFixed(2)}% done`);
-                    },
-                    reject, // Handle error
-                    async () => {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        urls.push(downloadURL);
-                        resolve();
-                    }
-                );
-            });
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          snapshot => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Upload ${filename}: ${progress.toFixed(2)}% done`);
+          },
+          reject, // Handle error
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            urls.push(downloadURL);
+            resolve();
+          }
+        );
+      });
 
-        } catch (error) {
-            console.error("Upload failed:", error);
-        }
+    } catch (error) {
+      console.error("Upload failed:", error);
     }
+  }
 
-    console.log("All images uploaded:", urls);
-    return urls; // Return all uploaded image URLs
+  console.log("All images uploaded:", urls);
+  return urls; // Return all uploaded image URLs
+};
+
+export const uploadImagesEvidence = async (imageName: string, imagesUrl: string[]) => {
+  const urls: string[] = [];
+
+  for (const uri of imagesUrl) {
+    try {
+      // Convert to Blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // Generate unique filename
+      const filename = `bookings/evidence_${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
+      const storageRef = ref(storage, filename);
+
+      // Upload file
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          snapshot => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Upload ${filename}: ${progress.toFixed(2)}% done`);
+          },
+          reject, // Handle error
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            urls.push(downloadURL);
+            resolve();
+          }
+        );
+      });
+
+    } catch (error) {
+      console.error("Upload failed:", error);
+    }
+  }
+
+  console.log("All images uploaded:", urls);
+  return urls; // Return all uploaded image URLs
 };
 
 export const createBooking = async (bookingData: Booking) => {
@@ -148,6 +191,8 @@ const mapBorrowingData = (doc: any): Booking => {
     settlerId: data.settlerId || '',
     settlerFirstName: data.settlerFirstName || '',
     settlerLastName: data.settlerLastName || '',
+    settlerEvidenceImageUrls: data.settlerEvidenceImageUrls,
+    settlerEvidenceRemark: data.settlerEvidenceRemark,
 
     // collection and return code
     serviceStartCode: data.serviceStartCode,
@@ -249,8 +294,17 @@ export const fetchLendingsByUser = async (userID: string): Promise<Booking[]> =>
 
 export const updateBooking = async (bookingId: string, updatedData: Partial<any>) => {
   try {
-    const borrowingRef = doc(db, 'bookings', bookingId);
-    await updateDoc(borrowingRef, updatedData);
+    const bookingRef = doc(db, 'bookings', bookingId);
+
+    if (updatedData.settlerEvidenceImageUrls && updatedData.settlerEvidenceImageUrls.length > 0) {
+      const uploadedUrls = await uploadImagesEvidence(bookingRef.id, updatedData.settlerEvidenceImageUrls);
+      await updateDoc(bookingRef, { 
+        ...updatedData,
+        settlerEvidenceImageUrls: uploadedUrls 
+      });
+    } else {
+      await updateDoc(bookingRef, updatedData);
+    }
     console.log('Booking updated with ID: ', bookingId);
   } catch (error) {
     console.error('Error updating booking: ', error);

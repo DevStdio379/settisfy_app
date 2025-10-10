@@ -302,6 +302,8 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
       settlerId: '',
       settlerFirstName: '',
       settlerLastName: '',
+      settlerEvidenceImageUrls: [],
+      settlerEvidenceRemark: '',
 
       //generate random collection and return codes
       serviceStartCode: '',
@@ -335,12 +337,6 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
     getAddresses();
   }, []);
 
-  // Toggle extras selection
-  const toggleExtra = (id: number) => {
-    setSelectedExtras((prev) =>
-      prev.includes(id) ? prev.filter((e) => e !== id) : [...prev, id]
-    );
-  };
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -827,7 +823,6 @@ const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
                   </TouchableOpacity>
                 )}
               </View>
-
               {selectedNotesToSettlerImageUrl && (
                 <View>
                   <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Add what do you want the settler to know here</Text>

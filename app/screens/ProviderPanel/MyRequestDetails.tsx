@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { View, Text, Image, TouchableOpacity, StyleSheet, Platform, Alert, Animated, Easing, FlatList, Dimensions, ScrollView, RefreshControl, ActivityIndicator, TextInput, Linking } from 'react-native'
+import { View, Text, Image, TouchableOpacity, StyleSheet, Platform, Alert, Animated, Easing, FlatList, Dimensions, ScrollView, RefreshControl, ActivityIndicator, TextInput, Linking, ActionSheetIOS } from 'react-native'
 import { COLORS, SIZES } from '../../constants/theme';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../../navigation/RootStackParamList';
@@ -15,6 +15,7 @@ import { Booking, fetchSelectedBooking, updateBooking } from '../../services/Boo
 import { arrayUnion } from 'firebase/firestore';
 import { getOrCreateChat } from '../../services/ChatServices';
 import Input from '../../components/Input/Input';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 
 type MyRequestDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyRequestDetails'>;
 
@@ -26,11 +27,14 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
-    const scrollViewHome = useRef<any>(null);
-    const buttons = ['Transaction Summary', 'Service Notes'];
+    const scrollViewTabHeader = useRef<any>(null);
+    const scrollViewTabContent = useRef<any>(null);
+    const buttons = ['Transaction Summary', 'Service Notes', 'Service Evidence'];
     const scrollX = useRef(new Animated.Value(0)).current;
-    const onCLick = (i: any) => scrollViewHome.current.scrollTo({ x: i * SIZES.width });
+    const onClickHeader = (i: any) => scrollViewTabHeader.current.scrollTo({ x: i * SIZES.width });
+    const onClick = (i: any) => scrollViewTabContent.current.scrollTo({ x: i * SIZES.width });
     const [activeIndex, setActiveIndex] = useState(0);
+    const [isFocused, setisFocused] = useState(false);
 
     const [booking, setBooking] = useState<Booking>(route.params.booking);
     const [accordionOpen, setAccordionOpen] = useState<{ [key: string]: boolean }>({});
@@ -48,6 +52,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     const [selectedNotesToSettlerImageUrl, setSelectedNotesToSettlerImageUrl] = useState<string | null>(null);
     const [notesToSettlerImageUrls, setNotesToSettlerImageUrls] = useState<string[]>([]);
 
+    const [selectedSettlerEvidenceImageUrl, setSelectedSettlerEvidenceImageUrl] = useState<string | null>(null);
+    const [settlerEvidenceImageUrls, setSettlerEvidenceImageUrls] = useState<string[]>([]);
+    const [settlerEvidenceRemark, setSettlerEvidenceRemark] = useState<string>('');
+
     const userAlreadyAccepted = booking.acceptors?.some(
         (acceptor) => acceptor.settlerId === user?.uid
     );
@@ -59,46 +67,97 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
         }
     };
 
-    const handleChange = (text: string, index: number) => {
-        if (/^\d?$/.test(text)) {
-            const newPin = [...collectionCode];
-            newPin[index] = text;
-            setCollectionCode(newPin);
-
-            // Move focus to the next input if a digit is entered
-            if (text && index < CODE_LENGTH - 1) {
-                inputs.current[index + 1]?.focus();
-            }
-
-            // Validate when full PIN is entered
-            if (newPin.every((digit) => digit !== "")) {
-                validatePin(newPin.join(""));
-            }
+    const handleImageSelect = () => {
+        if (settlerEvidenceImageUrls.length >= 5) {
+            Alert.alert('Limit Reached', 'You can only select up to 5 images.');
+            return;
         }
-    };
 
-    const validatePin = async (enteredPin: string) => {
-        const correctPin = booking?.serviceStartCode; // Replace with actual validation logic
-        if (enteredPin === correctPin) {
-            if (booking.id) {
-                await updateBooking(booking.id, { status: status! + 1 });
-            }
-            setStatus(status! + 1);
-            setCollectionCode(Array(CODE_LENGTH).fill("")); // Reset input
-            inputs.current[0]?.focus(); // Focus back to first input
-            setValidationMessage("Success. PIN is correct!");
+        if (Platform.OS === 'ios') {
+            ActionSheetIOS.showActionSheetWithOptions(
+                {
+                    options: ['Cancel', 'Choose from Gallery', 'Use Camera'],
+                    cancelButtonIndex: 0,
+                },
+                (buttonIndex) => {
+                    if (buttonIndex === 1) selectImages();
+                    else if (buttonIndex === 2) cameraImage();
+                }
+            );
         } else {
-            Alert.alert("Error", "Invalid PIN. Try again.");
-            setCollectionCode(Array(CODE_LENGTH).fill("")); // Reset input
-            inputs.current[0]?.focus(); // Focus back to first input
-            setValidationMessage("Invalid PIN. Try again.");
+            Alert.alert('Add Photo', 'Choose an option', [
+                { text: 'Choose from Gallery', onPress: selectImages },
+                { text: 'Use Camera', onPress: cameraImage },
+                { text: 'Cancel', style: 'cancel' },
+            ]);
         }
     };
 
-    const handleKeyPress = (e: any, index: number) => {
-        if (e.nativeEvent.key === "Backspace" && collectionCode[index] === "" && index > 0) {
-            inputs.current[index - 1]?.focus();
+
+    // camera tools
+    const selectImages = async () => {
+        const options = {
+            mediaType: 'photo' as const,
+            includeBase64: false,
+            maxHeight: 2000,
+            maxWidth: 2000,
+            selectionLimit: 5 - settlerEvidenceImageUrls.length, // Limit the selection to the remaining slots
+        };
+
+        launchImageLibrary(options, async (response) => {
+            if (response.didCancel) {
+                console.log('User cancelled image picker');
+            } else if (response.errorMessage) {
+                console.log('Image picker error: ', response.errorMessage);
+            } else {
+                const selectedImages = response.assets?.map(asset => asset.uri).filter(uri => uri !== undefined) as string[] || [];
+                setSettlerEvidenceImageUrls((prevImages) => {
+                    const updatedImages = [...prevImages, ...selectedImages];
+                    setSelectedSettlerEvidenceImageUrl(updatedImages[0]);
+                    return updatedImages;
+                });
+            }
+        });
+    };
+
+    // Function to handle image selection (Gallery & Camera)
+    const cameraImage = async () => {
+        const options = {
+            mediaType: 'photo' as const,
+            includeBase64: false,
+            maxHeight: 2000,
+            maxWidth: 2000,
+        };
+
+        if (settlerEvidenceImageUrls.length >= 5) {
+            Alert.alert('You can only select up to 5 images.');
+            return;
         }
+
+        launchCamera(options, async (response: any) => {
+            if (response.didCancel) {
+                console.log('User cancelled camera');
+            } else if (response.errorCode) {
+                console.log('Camera Error: ', response.errorMessage);
+            } else {
+                let newImageUri = response.assets?.[0]?.uri;
+                if (newImageUri) {
+                    setSettlerEvidenceImageUrls((prevImages) => {
+                        const updatedImages = [...prevImages, newImageUri];
+                        setSelectedSettlerEvidenceImageUrl(updatedImages[0]);
+                        return updatedImages;
+                    });
+                }
+            }
+        });
+    };
+
+    const deleteImage = () => {
+        if (!selectedNotesToSettlerImageUrl) return;
+
+        const updatedImages = settlerEvidenceImageUrls.filter((img) => img !== selectedSettlerEvidenceImageUrl);
+        setSettlerEvidenceImageUrls(updatedImages);
+        setSelectedSettlerEvidenceImageUrl(updatedImages.length > 0 ? updatedImages[0] : null);
     };
 
     const fetchSelectedBookingData = async () => {
@@ -138,6 +197,12 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                 setSelectedImage(booking.catalogueService.imageUrls[0]);
                 setBooking(booking);
 
+                if (booking.settlerEvidenceImageUrls.length !== 0) {
+                    setSettlerEvidenceImageUrls(booking.settlerEvidenceImageUrls);
+                    setSelectedSettlerEvidenceImageUrl(booking.settlerEvidenceImageUrls[0])
+                    setSettlerEvidenceRemark(booking.settlerEvidenceRemark)
+                }
+
                 if (booking.notesToSettlerImageUrls) {
                     setSelectedNotesToSettlerImageUrl(booking.notesToSettlerImageUrls[0])
                 }
@@ -165,19 +230,12 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
         fetchSelectedBookingData().then(() => setRefreshing(false));
     }, []);
 
-    const formatDate = (dateString: string | undefined) => {
-        if (!dateString) return "";
-        const date = new Date(dateString);
-        const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', weekday: 'short' };
-        return date.toLocaleDateString('en-GB', options);
-    };
-
     const steps = [
-        { label: "Booking\nCreated", date: `${formatDate(booking?.selectedDate)}`, completed: (status ?? 0) >= 0 },
-        { label: "Service\nStarted", date: "Enter start\ncode", completed: (status ?? 0) > 2 },
-        { label: "Service\nOn-Going", date: "\n", completed: (status ?? 0) > 2 },
-        { label: "Service\nEnded", date: "Show end\ncode", completed: (status ?? 0) > 3 },
-        { label: "Booking\nCompleted", date: `${formatDate(booking?.selectedDate)}`, completed: (status ?? 0) > 5 },
+        { label: "Booking\nCreated", date: 'Job\nbroadcast', completed: (status ?? 0) >= 0 },
+        { label: "Settler\nSelected", date: "Check\nservice code", completed: (status ?? 0) >= 1 },
+        { label: "Active\nService", date: "\n", completed: (status ?? 0) >= 2 },
+        { label: "Service\nCompleted", date: "Evaluate\ncompletion", completed: (status ?? 0) >= 3 },
+        { label: "Booking\nCompleted", date: 'Release\npayment', completed: (status ?? 0) >= 5 },
     ];
 
     const actions = [
@@ -259,51 +317,82 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                 >
                     <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40 }]}>
                         {/* Progress Section */}
-                        {
-                            booking.status > 0 && booking.settlerId === user?.uid ? (
-                                <View style={{ backgroundColor: COLORS.primaryLight, padding: 10, borderRadius: 20, paddingVertical: 10 }}>
-                                    <Text style={{ textAlign: 'center' }}>You're handling this job</Text>
-                                </View>
-                            ) : booking.status === 0 && booking.settlerId === '' ? (
-                                <View style={{ backgroundColor: '#FFF3E0', padding: 10, borderRadius: 20, marginVertical: 10 }}>
-                                    <Text style={{ textAlign: 'center' }}>Awaiting for customer response</Text>
-                                </View>
-                            ) : booking.status > 0 && booking.settlerId !== user?.uid ? (
-                                <View style={{ backgroundColor: '#FFF3E0', padding: 10, borderRadius: 20, marginVertical: 10 }}>
-                                    <Text style={{ textAlign: 'center' }}>Sorry, you're not selected</Text>
-                                </View>
-                            ) : null
-                        }
-                        <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", height: 50 }}>
-                            {steps.map((step, index) => (
-                                <View key={index} style={{ flexDirection: "row", alignItems: "center" }}>
-                                    {/* Line Connector */}
-                                    {index > 0 && <View style={{ width: 45, height: 2, backgroundColor: step.completed ? COLORS.primary : "#f3f3f3" }} />}
-                                    {/* Circle or X */}
-                                    <View style={{ alignItems: "center", justifyContent: "center" }}>
-                                        {step.completed ? (
-                                            <View style={{ height: 32, width: 32, backgroundColor: COLORS.primary, borderRadius: 16, alignItems: "center", justifyContent: "center" }}>
-                                                <Text style={{ color: "white", fontSize: 18, fontWeight: "bold" }}>✓</Text>
-                                            </View>
-                                        ) : (
-                                            <View style={{ backgroundColor: "#f3f3f3", height: 32, width: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" }}>
-                                                <Text style={{ color: "gray", fontSize: 18 }}>X</Text>
-                                            </View>
+                        <View style={{ alignItems: "center", marginVertical: 20 }}>
+                            <View
+                                style={{
+                                    flexDirection: "row",
+                                    justifyContent: "space-between",
+                                    alignItems: "flex-start",
+                                    width: "100%",
+                                }}
+                            >
+                                {steps.map((step, index) => (
+                                    <View key={index} style={{ flex: 1, alignItems: "center" }}>
+                                        {/* Connector line to previous step */}
+                                        {index > 0 && (
+                                            <View
+                                                style={{
+                                                    position: "absolute",
+                                                    left: -((SIZES.width / steps.length) / 2 - 16), // half distance minus circle radius
+                                                    top: 16, // vertical center of circle
+                                                    width: (SIZES.width / steps.length) - 32, // width between circles
+                                                    height: 2,
+                                                    backgroundColor: step.completed ? COLORS.primary : "#f3f3f3",
+                                                    zIndex: -1,
+                                                }}
+                                            />
+                                        )}
+
+                                        {/* Step Circle */}
+                                        <View
+                                            style={{
+                                                height: 32,
+                                                width: 32,
+                                                borderRadius: 16,
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                backgroundColor: step.completed ? COLORS.primary : "#f3f3f3",
+                                            }}
+                                        >
+                                            <Text
+                                                style={{
+                                                    color: step.completed ? "white" : "gray",
+                                                    fontSize: 18,
+                                                    fontWeight: "bold",
+                                                }}
+                                            >
+                                                {step.completed ? "✓" : "X"}
+                                            </Text>
+                                        </View>
+
+                                        {/* Step Label + Date */}
+                                        <Text
+                                            style={{
+                                                textAlign: "center",
+                                                fontSize: 12,
+                                                fontWeight: "600",
+                                                marginTop: 8,
+                                                color: COLORS.title,
+                                            }}
+                                        >
+                                            {step.label}
+                                        </Text>
+                                        {step.date && (
+                                            <Text
+                                                style={{
+                                                    textAlign: "center",
+                                                    fontSize: 10,
+                                                    color: "gray",
+                                                }}
+                                            >
+                                                {step.date}
+                                            </Text>
                                         )}
                                     </View>
-                                </View>
-                            ))}
+                                ))}
+                            </View>
                         </View>
-                        {/* Progress Section */}
-                        <View style={{ flexDirection: "row", justifyContent: "center", alignItems: "center", height: 60 }}>
-                            {steps.map((step, index) => (
-                                <View key={index} style={{ alignItems: "center", paddingHorizontal: 10 }}>
-                                    {/* Label */}
-                                    <Text style={{ textAlign: "center", fontSize: 12, fontWeight: "600", marginTop: 8 }}>{step.label}</Text>
-                                    {step.date && <Text style={{ textAlign: "center", fontSize: 10, color: "gray" }}>{step.date}</Text>}
-                                </View>
-                            ))}
-                        </View>
+
                         {/* Action Card */}
                         <View style={{ backgroundColor: "#f3f3f3", padding: 16, borderRadius: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, marginVertical: 10, marginHorizontal: 10 }}>
                             {status === 0 ? (
@@ -394,13 +483,16 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             alignItems: 'center',
                                         }}
                                         onPress={async () => {
-                                            if (booking.id) {
-                                                await updateBooking(booking.id, { status: status! + 1, serviceEndCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
-                                            }
-                                            setStatus(status! + 1);
+                                            // if (booking.id) {
+                                            //     await updateBooking(booking.id, { status: status! + 1, serviceEndCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
+                                            // }
+                                            // setStatus(status! + 1);
+                                            onClick(2);
+                                            onClickHeader(2);
+                                            setActiveIndex(2);
                                         }}
                                     >
-                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Complete Job</Text>
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Upload Service Evidence</Text>
                                     </TouchableOpacity>
                                 </View>
                             ) : status === 3 ? (
@@ -594,16 +686,20 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             </View>
                         </View>
                         <View style={[GlobalStyleSheet.line]} />
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        <ScrollView
+                            ref={scrollViewTabHeader}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                        >
                             {buttons.map((btn: any, i: number) => (
-                                <View key={i} style={{ flexDirection: 'row', width: SIZES.width * 0.5, paddingHorizontal: 10, paddingTop: 20, justifyContent: 'space-between', alignItems: 'center' }}>
+                                <View key={i} style={{ flexDirection: 'row', width: SIZES.width * 0.4, paddingHorizontal: 5, paddingTop: 20, justifyContent: 'space-between', alignItems: 'center' }}>
                                     <TouchableOpacity
                                         key={btn}
                                         style={{ width: '100%', justifyContent: 'center', alignItems: 'center', }}
                                         onPress={() => {
                                             setActiveIndex(i);
-                                            if (onCLick) {
-                                                onCLick(i);
+                                            if (onClick) {
+                                                onClick(i);
                                             }
                                         }}
                                     >
@@ -614,7 +710,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             ))}
                         </ScrollView>
                         <ScrollView
-                            ref={scrollViewHome}
+                            ref={scrollViewTabContent}
                             horizontal
                             pagingEnabled
                             scrollEventThrottle={16}
@@ -643,33 +739,47 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                             {/* <Text style={styles.originalPrice}>£40.20</Text> */}
                                                         </Text>
                                                         <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }}>Cleaning Service</Text>
-                                                        <Text style={{ fontSize: 14, color: COLORS.black }}>Payment Method: {booking.paymentMethod}</Text>
+                                                        <Text style={{ fontSize: 12, color: COLORS.black }}>Product ID: {booking.catalogueService.id}</Text>
                                                     </View>
                                                 </View>
                                                 <View style={GlobalStyleSheet.line} />
                                                 {/* Borrowing Period and Delivery Method */}
-                                                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                                                    <View style={{ paddingVertical: 10 }}>
-                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Start at</Text>
-                                                        <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>{new Date(booking.selectedDate).toLocaleDateString('en-GB')}</Text>
-                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>From:</Text>
-                                                        <Text style={{ fontSize: 14, color: COLORS.title }}>09:00 AM OR Now</Text>
-                                                    </View>
-                                                    <View style={{ marginHorizontal: 40, paddingTop: 60 }}>
-                                                        <Ionicons name="arrow-forward" size={30} color={COLORS.title} />
-                                                    </View>
-                                                    <View style={{ paddingVertical: 10 }}>
-                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Location</Text>
+                                                <View
+                                                    style={{
+                                                        flexDirection: "row",
+                                                        justifyContent: "space-between",
+                                                        alignItems: "flex-start",
+                                                        marginBottom: 10,
+                                                        width: "100%",
+                                                        gap: 10, // optional, for small spacing between columns
+                                                    }}
+                                                >
+                                                    {/* Left Column */}
+                                                    <View style={{ flex: 1, paddingVertical: 10 }}>
+                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Booking ID:</Text>
                                                         <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
-                                                            {booking.selectedAddress ? booking.selectedAddress.addressName : ''}
+                                                            {booking.id}
                                                         </Text>
-                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>Estimated Duration:</Text>
-                                                        <Text style={{ fontSize: 14, color: COLORS.title }}>3 Hours</Text>
+
+                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Location:</Text>
+                                                        <Text style={{ fontSize: 14, color: "#666" }}>
+                                                            {booking.selectedAddress?.addressName || ""}
+                                                        </Text>
+                                                    </View>
+
+                                                    {/* Right Column */}
+                                                    <View style={{ flex: 1, paddingVertical: 10 }}>
+                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Reference Number:</Text>
+                                                        <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
+                                                            {booking.serviceStartCode || "N/A"}
+                                                        </Text>
+
+                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Date:</Text>
+                                                        <Text style={{ fontSize: 14, color: COLORS.title }}>
+                                                            {booking.selectedDate}
+                                                        </Text>
                                                     </View>
                                                 </View>
-                                                <Text style={{ fontSize: 12, color: "#666", textAlign: "center", marginBottom: 5 }}>
-                                                    The service duration may vary based on the actual cleaning requirements.
-                                                </Text>
                                                 <View style={GlobalStyleSheet.line} />
                                                 {/* Borrowing Rate Breakdown */}
                                                 <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Service Pricing Breakdown</Text>
@@ -732,7 +842,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                             }}
                                                         >
                                                             <Image
-                                                                source={{ uri: selectedNotesToSettlerImageUrl || '' }}
+                                                                source={{ uri: selectedNotesToSettlerImageUrl || booking.notesToSettlerImageUrls[0] }}
                                                                 style={{
                                                                     width: '100%',
                                                                     height: 300,
@@ -815,11 +925,186 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 </View>
                                             </View>
                                         )}
+                                        {index === 2 && (
+                                            <View style={{ width: '90%', paddingTop: 20, gap: 10 }}>
+                                                <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Service Completion Evidence</Text>
+                                                <Text style={{ fontSize: 13, color: COLORS.blackLight2 }}>This helps verify your service completion in case of disputes. Complete this part before submitting your job completion.</Text>
+                                                <View
+                                                    style={{
+                                                        width: '100%',
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                        gap: 10,
+                                                        paddingTop: 0,
+                                                    }}
+                                                >
+                                                    {/* Large Preview Image */}
+                                                    {selectedSettlerEvidenceImageUrl ? (
+                                                        <View
+                                                            style={{
+                                                                flex: 1,
+                                                                width: '100%',
+                                                                justifyContent: 'flex-start',
+                                                                alignItems: 'flex-start',
+                                                            }}
+                                                        >
+                                                            <Image
+                                                                source={{ uri: selectedSettlerEvidenceImageUrl }}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    height: 300,
+                                                                    borderRadius: 10,
+                                                                    marginBottom: 10,
+                                                                }}
+                                                                resizeMode="cover"
+                                                            />
+
+                                                            {/* Delete Button */}
+                                                            <TouchableOpacity
+                                                                onPress={() => deleteImage()}
+                                                                style={{
+                                                                    position: 'absolute',
+                                                                    top: 10,
+                                                                    right: 10,
+                                                                    backgroundColor: 'rgba(0,0,0,0.6)',
+                                                                    padding: 8,
+                                                                    borderRadius: 20,
+                                                                }}
+                                                            >
+                                                                <Ionicons name="trash-outline" size={24} color={COLORS.white} />
+                                                            </TouchableOpacity>
+
+                                                            {/* Thumbnail List */}
+                                                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                                                {settlerEvidenceImageUrls.map((imageUri, index) => (
+                                                                    <TouchableOpacity
+                                                                        key={index}
+                                                                        onPress={() => setSelectedSettlerEvidenceImageUrl(imageUri)}
+                                                                    >
+                                                                        <Image
+                                                                            source={{ uri: imageUri }}
+                                                                            style={{
+                                                                                width: 80,
+                                                                                height: 80,
+                                                                                marginRight: 10,
+                                                                                borderRadius: 10,
+                                                                                borderWidth: selectedNotesToSettlerImageUrl === imageUri ? 3 : 0,
+                                                                                borderColor:
+                                                                                    selectedNotesToSettlerImageUrl === imageUri
+                                                                                        ? COLORS.primary
+                                                                                        : 'transparent',
+                                                                            }}
+                                                                        />
+                                                                    </TouchableOpacity>
+                                                                ))}
+
+                                                                {/* Small "+" box — only visible if less than 5 images */}
+                                                                {notesToSettlerImageUrls.length < 5 && (
+                                                                    <TouchableOpacity
+                                                                        onPress={handleImageSelect}
+                                                                        activeOpacity={0.8}
+                                                                        style={{
+                                                                            width: 80,
+                                                                            height: 80,
+                                                                            borderRadius: 10,
+                                                                            borderWidth: 1,
+                                                                            borderColor: COLORS.blackLight,
+                                                                            justifyContent: 'center',
+                                                                            alignItems: 'center',
+                                                                            backgroundColor: COLORS.card,
+                                                                        }}
+                                                                    >
+                                                                        <Ionicons name="add-outline" size={28} color={COLORS.blackLight} />
+                                                                    </TouchableOpacity>
+                                                                )}
+                                                            </ScrollView>
+
+                                                        </View>
+                                                    ) : (
+                                                        // Placeholder when no image is selected
+                                                        <TouchableOpacity
+                                                            onPress={() => handleImageSelect()}
+                                                            activeOpacity={0.8}
+                                                            style={{
+                                                                width: '100%',
+                                                                height: 100,
+                                                                borderRadius: 10,
+                                                                marginBottom: 10,
+                                                                backgroundColor: COLORS.card,
+                                                                justifyContent: 'center',
+                                                                alignItems: 'center',
+                                                                borderWidth: 1,
+                                                                borderColor: COLORS.blackLight,
+                                                            }}
+                                                        >
+                                                            <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
+                                                            <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>
+                                                                Add photos here
+                                                            </Text>
+                                                        </TouchableOpacity>
+                                                    )}
+                                                </View>
+                                                <View>
+                                                    <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Settler Remarks</Text>
+                                                    <Input
+                                                        onFocus={() => setisFocused(true)}
+                                                        onBlur={() => setisFocused(false)}
+                                                        isFocused={isFocused}
+                                                        onChangeText={setSettlerEvidenceRemark}
+                                                        backround={COLORS.card}
+                                                        style={{
+                                                            fontSize: 12,
+                                                            borderRadius: 12,
+                                                            backgroundColor: COLORS.input,
+                                                            borderColor: COLORS.inputBorder,
+                                                            borderWidth: 1,
+                                                            height: 150,
+                                                        }}
+                                                        inputicon
+                                                        placeholder={`e.g. All in good conditions.`}
+                                                        multiline={true}  // Enable multi-line input
+                                                        numberOfLines={10} // Suggest the input area size
+                                                        value={settlerEvidenceRemark ? settlerEvidenceRemark : ''}
+                                                    />
+                                                </View>
+
+                                                <TouchableOpacity
+                                                    style={{
+                                                        backgroundColor: COLORS.primary,
+                                                        padding: 15,
+                                                        borderRadius: 10,
+                                                        marginVertical: 10,
+                                                        width: '100%',
+                                                        alignItems: 'center',
+                                                    }}
+                                                    onPress={async () => {
+                                                        if (status === 2) {
+                                                            if (settlerEvidenceImageUrls.length === 0 || !settlerEvidenceRemark) {
+                                                                Alert.alert('Evidence & Remarks are Required');
+                                                                return
+                                                            }
+
+                                                            if (booking.id) {
+                                                                await updateBooking(booking.id, {
+                                                                    status: status! + 1,
+                                                                    settlerEvidenceImageUrls: settlerEvidenceImageUrls,
+                                                                    settlerEvidenceRemark: settlerEvidenceRemark
+                                                                });
+                                                            }
+                                                            setStatus(status! + 1);
+                                                            onRefresh()
+                                                        } else { }
+                                                    }}
+                                                >
+                                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>{status === 2 ? 'Submit Evidence' : 'Evidence Submitted'}</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        )}
                                     </View>
                                 </View>
                             ))}
                         </ScrollView>
-                        <View style={GlobalStyleSheet.line} />
+                        <View style={[GlobalStyleSheet.line, { marginTop: 20 }]} />
                         <View style={{ width: '100%', }}>
                             <Text style={{ fontSize: 18, fontWeight: 'bold', marginTop: 20 }}>Additional Information</Text>
                             <FlatList
