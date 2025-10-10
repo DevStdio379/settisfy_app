@@ -15,6 +15,7 @@ import { createReview, getReviewByBookingId, Review } from '../../services/Revie
 import axios from 'axios';
 import { Booking, fetchSelectedBooking, subscribeToBookings, subscribeToOneBooking, updateBooking } from '../../services/BookingServices';
 import { getOrCreateChat } from '../../services/ChatServices';
+import Input from '../../components/Input/Input';
 
 type MyBookingDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyBookingDetails'>;
 
@@ -32,7 +33,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
     const [status, setStatus] = useState<number>(booking.status);
 
     const scrollViewHome = useRef<any>(null);
-    const buttons = ['Transaction Summary', 'Instructions'];
+    const buttons = ['Transaction Summary', 'Service Notes'];
     const scrollX = useRef(new Animated.Value(0)).current;
     const onCLick = (i: any) => scrollViewHome.current.scrollTo({ x: i * SIZES.width });
     const [activeIndex, setActiveIndex] = useState(0);
@@ -47,6 +48,10 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
     const [selectedSettlerId, setSelectedSettlerId] = useState<string>('');
     const [selectedSettlerFirstName, setSelectedSettlerFirstName] = useState<string>('');
     const [selectedSettlerLastName, setSelectedSettlerLastName] = useState<string>('');
+
+    const [selectedNotesToSettlerImageUrl, setSelectedNotesToSettlerImageUrl] = useState<string | null>(null);
+    const [notesToSettlerImageUrls, setNotesToSettlerImageUrls] = useState<string[]>([]);
+    const [notesToSettler, setNotesToSettler] = useState<string>('');
 
     const handleChat = async (userId: string, otherUserId: string) => {
         const chatId = await getOrCreateChat(userId, otherUserId, booking);
@@ -105,6 +110,10 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                 if (selectedBooking) {
                     setBooking(selectedBooking)
                     setStatus(selectedBooking.status);
+
+                    if (booking.notesToSettlerImageUrls) {
+                        setSelectedNotesToSettlerImageUrl(booking.notesToSettlerImageUrls[0])
+                    }
 
                     const fetchedSettler = await fetchSelectedUser(selectedBooking.settlerId || 'undefined');
                     if (fetchedSettler) {
@@ -757,14 +766,116 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                             </View>
                                         )}
                                         {index === 1 && (
-                                            <View style={{ paddingRight: 40 }}>
+                                            <View style={{ width: '90%', paddingTop: 20, gap: 10 }}>
+                                                <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Notes to Settler</Text>
+                                                <View
+                                                    style={{
+                                                        width: '100%',
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                        gap: 10,
+                                                        paddingTop: 0,
+                                                    }}
+                                                >
+                                                    {/* Large Preview Image */}
+                                                    {booking.notesToSettlerImageUrls ? (
+                                                        <View
+                                                            style={{
+                                                                flex: 1,
+                                                                width: '100%',
+                                                                justifyContent: 'flex-start',
+                                                                alignItems: 'flex-start',
+                                                            }}
+                                                        >
+                                                            <Image
+                                                                source={{ uri: selectedNotesToSettlerImageUrl || '' }}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    height: 300,
+                                                                    borderRadius: 10,
+                                                                    marginBottom: 10,
+                                                                }}
+                                                                resizeMode="cover"
+                                                            />
+
+                                                            {/* Thumbnail List */}
+                                                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                                                {booking.notesToSettlerImageUrls.map((imageUri, index) => (
+                                                                    <TouchableOpacity
+                                                                        key={index}
+                                                                        onPress={() => setSelectedNotesToSettlerImageUrl(imageUri)}
+                                                                    >
+                                                                        <Image
+                                                                            source={{ uri: imageUri }}
+                                                                            style={{
+                                                                                width: 80,
+                                                                                height: 80,
+                                                                                marginRight: 10,
+                                                                                borderRadius: 10,
+                                                                                borderWidth: selectedNotesToSettlerImageUrl === imageUri ? 3 : 0,
+                                                                                borderColor:
+                                                                                    selectedNotesToSettlerImageUrl === imageUri
+                                                                                        ? COLORS.primary
+                                                                                        : 'transparent',
+                                                                            }}
+                                                                        />
+                                                                    </TouchableOpacity>
+                                                                ))}
+                                                            </ScrollView>
+                                                            {selectedNotesToSettlerImageUrl && (
+                                                                <View style={{ width: '100%' }}>
+                                                                    <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Add what do you want the settler to know here</Text>
+                                                                    <Input
+                                                                        readOnly={true}
+                                                                        backround={COLORS.card}
+                                                                        style={{
+                                                                            fontSize: 12,
+                                                                            borderRadius: 12,
+                                                                            backgroundColor: COLORS.input,
+                                                                            borderColor: COLORS.inputBorder,
+                                                                            borderWidth: 1,
+                                                                            height: 150,
+                                                                        }}
+                                                                        inputicon
+                                                                        placeholder={`e.g. Got a grassy platform.`}
+                                                                        multiline={true}  // Enable multi-line input
+                                                                        numberOfLines={10} // Suggest the input area size
+                                                                        value={booking.notesToSettler ? booking.notesToSettler : ''}
+                                                                    />
+                                                                </View>
+                                                            )}
+                                                        </View>
+                                                    ) : (
+                                                        // Placeholder when no image is selected
+                                                        <TouchableOpacity
+                                                            onPress={() => { }}
+                                                            activeOpacity={0.8}
+                                                            style={{
+                                                                width: '100%',
+                                                                height: 100,
+                                                                borderRadius: 10,
+                                                                marginBottom: 10,
+                                                                backgroundColor: COLORS.card,
+                                                                justifyContent: 'center',
+                                                                alignItems: 'center',
+                                                                borderWidth: 1,
+                                                                borderColor: COLORS.blackLight,
+                                                            }}
+                                                        >
+                                                            <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
+                                                            <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>
+                                                                No photos
+                                                            </Text>
+                                                        </TouchableOpacity>
+                                                    )}
+                                                </View>
                                             </View>
                                         )}
                                     </View>
                                 </View>
                             ))}
                         </ScrollView>
-                        <View style={GlobalStyleSheet.line} />
+                        <View style={[GlobalStyleSheet.line, { marginTop: 15 }]} />
                         <View style={{ width: '100%', }}>
                             <Text style={{ fontSize: 18, fontWeight: 'bold', marginTop: 20 }}>Additional Information</Text>
                             <FlatList

@@ -14,6 +14,7 @@ import axios from 'axios';
 import { Booking, fetchSelectedBooking, updateBooking } from '../../services/BookingServices';
 import { arrayUnion } from 'firebase/firestore';
 import { getOrCreateChat } from '../../services/ChatServices';
+import Input from '../../components/Input/Input';
 
 type MyRequestDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyRequestDetails'>;
 
@@ -26,7 +27,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     const [refreshing, setRefreshing] = useState(false);
 
     const scrollViewHome = useRef<any>(null);
-    const buttons = ['Transaction Summary', 'Instructions'];
+    const buttons = ['Transaction Summary', 'Service Notes'];
     const scrollX = useRef(new Animated.Value(0)).current;
     const onCLick = (i: any) => scrollViewHome.current.scrollTo({ x: i * SIZES.width });
     const [activeIndex, setActiveIndex] = useState(0);
@@ -43,6 +44,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     const [collectionCode, setCollectionCode] = useState<string[]>(Array(CODE_LENGTH).fill(""));
     const [validationMessage, setValidationMessage] = useState<string | null>(null);
     const inputs = useRef<Array<TextInput | null>>(Array(CODE_LENGTH).fill(null));
+
+    const [selectedNotesToSettlerImageUrl, setSelectedNotesToSettlerImageUrl] = useState<string | null>(null);
+    const [notesToSettlerImageUrls, setNotesToSettlerImageUrls] = useState<string[]>([]);
 
     const userAlreadyAccepted = booking.acceptors?.some(
         (acceptor) => acceptor.settlerId === user?.uid
@@ -134,14 +138,18 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                 setSelectedImage(booking.catalogueService.imageUrls[0]);
                 setBooking(booking);
 
-                const selectedBooking = await fetchSelectedBorrowing(booking.id || 'undefined');
+                if (booking.notesToSettlerImageUrls) {
+                    setSelectedNotesToSettlerImageUrl(booking.notesToSettlerImageUrls[0])
+                }
+
+                const selectedBooking = await fetchSelectedBooking(booking.id || 'undefined');
                 if (selectedBooking) {
                     const fetchedCustomer = await fetchSelectedUser(selectedBooking.userId);
                     if (fetchedCustomer) {
                         setCustomer(fetchedCustomer);
                     }
 
-                    const fetchedReview = await getReviewByBookingId(selectedBooking.product.id || 'undefined', selectedBooking.id || 'undefined');
+                    const fetchedReview = await getReviewByBookingId(selectedBooking.catalogueService.id || 'undefined', selectedBooking.id || 'undefined');
                     if (fetchedReview && fetchedReview.id) {
                         setReview(fetchedReview);
                     }
@@ -622,7 +630,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 <View key={index} style={{ width: SIZES.width }}>
                                     <View style={{}}>
                                         {index === 0 && (
-                                            <View style={{ width: '93%', paddingTop: 20, paddingHorizontal: 15, gap: 10 }}>
+                                            <View style={{ width: '90%', paddingTop: 20, paddingHorizontal: 15, gap: 10 }}>
                                                 {/* Product Info */}
                                                 <View style={{ flexDirection: "row", marginBottom: 20 }}>
                                                     <Image
@@ -702,132 +710,107 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             </View>
                                         )}
                                         {index === 1 && (
-                                            <View style={{ paddingRight: 40 }}>
-                                                <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Meetup Location</Text>
-                                                <View style={{ marginTop: 10, borderRadius: 50, backgroundColor: '#8ABE12', }}>
-                                                    <View style={{ height: 200, borderRadius: 20, overflow: 'hidden', borderColor: COLORS.blackLight, borderWidth: 1 }}>
-                                                        <MapView
-                                                            ref={mapRef}
-                                                            style={{ ...StyleSheet.absoluteFillObject, }}
-                                                            initialRegion={{
-                                                                latitude: booking.selectedAddress.latitude,
-                                                                longitude: booking.selectedAddress.longitude,
-                                                                latitudeDelta: 0.0005,
-                                                                longitudeDelta: 0.0005,
-                                                            }}
-                                                            scrollEnabled={false}
-                                                            zoomEnabled={false}
-                                                            rotateEnabled={false}
-                                                            pitchEnabled={false}
-                                                            toolbarEnabled={false}
-                                                        >
-                                                            <Marker
-                                                                coordinate={{
-                                                                    latitude: booking.selectedAddress.latitude,
-                                                                    longitude: booking.selectedAddress.longitude,
-                                                                }}
-                                                                title="house"
-                                                            />
-
-                                                        </MapView>
-                                                    </View>
-                                                </View>
-                                                <Text style={{ fontSize: 14, color: COLORS.title, marginBottom: 0 }}><Text style={{ fontSize: 14, color: COLORS.title, fontWeight: 'bold' }}>{booking.selectedAddress.addressName}, </Text>{booking.selectedAddress.address}</Text>
-                                                <TouchableOpacity
-                                                    onPress={() => {
-                                                        const url = `https://www.google.com/maps?q=${booking.selectedAddress.latitude},${booking.selectedAddress.longitude}`;
-                                                        Linking.openURL(url);
+                                            <View style={{ width: '90%', paddingTop: 20, gap: 10 }}>
+                                                <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Notes to Settler</Text>
+                                                <View
+                                                    style={{
+                                                        width: '100%',
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                        gap: 10,
+                                                        paddingTop: 0,
                                                     }}
                                                 >
-                                                    <Text
-                                                        style={{ fontSize: 14, color: COLORS.primary, textDecorationLine: 'underline', marginBottom: 10 }}
-                                                    >
-                                                        Open in Google Maps
-                                                    </Text>
-                                                </TouchableOpacity>
-                                                <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Borrowing Notes</Text>
-                                                <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>{booking.notesToSettler}</Text>
-                                                <View style={GlobalStyleSheet.line} />
-                                                <View style={{ paddingHorizontal: 10 }}>
-                                                    <TouchableOpacity
-                                                        onPress={() => setAccordionOpen((prev) => ({ ...prev, insurance: !prev.insurance }))}
-                                                        style={{
-                                                            flexDirection: 'row',
-                                                            justifyContent: 'space-between',
-                                                            alignItems: 'center',
-                                                            paddingVertical: 10,
-                                                        }}
-                                                    >
-                                                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>
-                                                            Your Pickup Instructions
-                                                        </Text>
-                                                        <Ionicons
-                                                            name={accordionOpen.insurance ? 'chevron-up-outline' : 'chevron-down-outline'}
-                                                            size={24}
-                                                            color={COLORS.blackLight}
-                                                        />
-                                                    </TouchableOpacity>
-                                                    {accordionOpen.insurance && (
-                                                        <View style={{ paddingLeft: 10 }}>
-                                                            <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
-                                                                {booking.notesToSettler}
-                                                            </Text>
-                                                        </View>
-                                                    )}
-                                                </View>
-                                                <View style={{ paddingHorizontal: 10 }}>
-                                                    <TouchableOpacity
-                                                        onPress={() => setAccordionOpen((prev) => ({ ...prev, handover: !prev.handover }))}
-                                                        style={{
-                                                            flexDirection: 'row',
-                                                            justifyContent: 'space-between',
-                                                            alignItems: 'center',
-                                                            paddingVertical: 10,
-                                                        }}
-                                                    >
-                                                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>
-                                                            Your Return Instructions
-                                                        </Text>
-                                                        <Ionicons
-                                                            name={accordionOpen.handover ? 'chevron-up-outline' : 'chevron-down-outline'}
-                                                            size={24}
-                                                            color={COLORS.blackLight}
-                                                        />
-                                                    </TouchableOpacity>
-                                                    {accordionOpen.handover && (
-                                                        <View style={{ paddingLeft: 10 }}>
-                                                            <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
-                                                                {booking.notesToSettler}
-                                                            </Text>
-                                                        </View>
-                                                    )}
-                                                </View>
+                                                    {/* Large Preview Image */}
+                                                    {booking.notesToSettlerImageUrls ? (
+                                                        <View
+                                                            style={{
+                                                                flex: 1,
+                                                                width: '100%',
+                                                                justifyContent: 'flex-start',
+                                                                alignItems: 'flex-start',
+                                                            }}
+                                                        >
+                                                            <Image
+                                                                source={{ uri: selectedNotesToSettlerImageUrl || '' }}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    height: 300,
+                                                                    borderRadius: 10,
+                                                                    marginBottom: 10,
+                                                                }}
+                                                                resizeMode="cover"
+                                                            />
 
-                                                <View style={{ paddingHorizontal: 10 }}>
-                                                    <TouchableOpacity
-                                                        onPress={() => setAccordionOpen((prev) => ({ ...prev, faqs: !prev.faqs }))}
-                                                        style={{
-                                                            flexDirection: 'row',
-                                                            justifyContent: 'space-between',
-                                                            alignItems: 'center',
-                                                            paddingVertical: 10,
-                                                        }}
-                                                    >
-                                                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>
-                                                            Deposit Release
-                                                        </Text>
-                                                        <Ionicons
-                                                            name={accordionOpen.faqs ? 'chevron-up-outline' : 'chevron-down-outline'}
-                                                            size={24}
-                                                            color={COLORS.blackLight}
-                                                        />
-                                                    </TouchableOpacity>
-                                                    {accordionOpen.faqs && (
-                                                        <View style={{ paddingLeft: 10 }}>
-                                                            <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>
-                                                                £{Number(booking.total).toFixed(2)} will be released within 3-5 working days after the product is returned and checked.
-                                                            </Text>
+                                                            {/* Thumbnail List */}
+                                                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                                                {booking.notesToSettlerImageUrls.map((imageUri, index) => (
+                                                                    <TouchableOpacity
+                                                                        key={index}
+                                                                        onPress={() => setSelectedNotesToSettlerImageUrl(imageUri)}
+                                                                    >
+                                                                        <Image
+                                                                            source={{ uri: imageUri }}
+                                                                            style={{
+                                                                                width: 80,
+                                                                                height: 80,
+                                                                                marginRight: 10,
+                                                                                borderRadius: 10,
+                                                                                borderWidth: selectedNotesToSettlerImageUrl === imageUri ? 3 : 0,
+                                                                                borderColor:
+                                                                                    selectedNotesToSettlerImageUrl === imageUri
+                                                                                        ? COLORS.primary
+                                                                                        : 'transparent',
+                                                                            }}
+                                                                        />
+                                                                    </TouchableOpacity>
+                                                                ))}
+                                                            </ScrollView>
+                                                            {selectedNotesToSettlerImageUrl && (
+                                                                <View style={{ width: '100%' }}>
+                                                                    <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Add what do you want the settler to know here</Text>
+                                                                    <Input
+                                                                        readOnly={true}
+                                                                        backround={COLORS.card}
+                                                                        style={{
+                                                                            fontSize: 12,
+                                                                            borderRadius: 12,
+                                                                            backgroundColor: COLORS.input,
+                                                                            borderColor: COLORS.inputBorder,
+                                                                            borderWidth: 1,
+                                                                            height: 150,
+                                                                        }}
+                                                                        inputicon
+                                                                        placeholder={`e.g. Got a grassy platform.`}
+                                                                        multiline={true}  // Enable multi-line input
+                                                                        numberOfLines={10} // Suggest the input area size
+                                                                        value={booking.notesToSettler ? booking.notesToSettler : ''}
+                                                                    />
+                                                                </View>
+                                                            )}
                                                         </View>
+                                                    ) : (
+                                                        // Placeholder when no image is selected
+                                                        <TouchableOpacity
+                                                            onPress={() => { }}
+                                                            activeOpacity={0.8}
+                                                            style={{
+                                                                width: '100%',
+                                                                height: 100,
+                                                                borderRadius: 10,
+                                                                marginBottom: 10,
+                                                                backgroundColor: COLORS.card,
+                                                                justifyContent: 'center',
+                                                                alignItems: 'center',
+                                                                borderWidth: 1,
+                                                                borderColor: COLORS.blackLight,
+                                                            }}
+                                                        >
+                                                            <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
+                                                            <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>
+                                                                No photos
+                                                            </Text>
+                                                        </TouchableOpacity>
                                                     )}
                                                 </View>
                                             </View>
