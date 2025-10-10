@@ -535,33 +535,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             )
                             }
                         </View>
-                        {/* Images View */}
-                        {/* <View style={{ height: 250 }}>
-                            <Swiper
-                                dotColor={COLORS.primaryLight}
-                                activeDotColor={COLORS.primary}
-                                autoplay={false}
-                                autoplayTimeout={2}
-                                showsPagination={Platform.OS === "android" ? true : false}
-                                loop={false}
-                            >
-                                {images.map((data, index) => (
-                                    <View key={index}>
-                                        <Image
-                                            style={{
-                                                backgroundColor: COLORS.placeholder,
-                                                height: 250,
-                                                width: '100%',
-                                                resizeMode: 'cover',
-                                                borderRadius: 20,
-                                            }}
-                                            source={{ uri: data }}
-                                        />
-                                    </View>
-                                ))}
-                            </Swiper>
-                        </View> */}
-                        {/* Borrowing Details */}
+                        {/* Customer Details Card */}
                         <View style={{ width: '100%', paddingHorizontal: 15, borderRadius: 20, borderColor: COLORS.blackLight, borderWidth: 1, marginBottom: 20 }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', marginVertical: 10 }}>
                                 <View style={{ flex: 1, alignItems: 'center', paddingLeft: 10 }}>
@@ -611,6 +585,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 </TouchableOpacity>
                             </View>
                         </View>
+                        <View style={[GlobalStyleSheet.line]} />
                         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                             {buttons.map((btn: any, i: number) => (
                                 <View key={i} style={{ flexDirection: 'row', width: SIZES.width * 0.5, paddingHorizontal: 10, paddingTop: 20, justifyContent: 'space-between', alignItems: 'center' }}>
@@ -644,96 +619,87 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             )}
                         >
                             {buttons.map((button, index) => (
-                                <ScrollView
-                                    showsVerticalScrollIndicator={false}
-                                    style={{ width: SIZES.width, paddingTop: 10 }}
-                                    key={index}
-                                >
+                                <View key={index} style={{ width: SIZES.width }}>
                                     <View style={{}}>
                                         {index === 0 && (
-                                            <ScrollView
-                                                showsVerticalScrollIndicator={false}
-                                                contentContainerStyle={{ flexGrow: 1, paddingBottom: 20, alignItems: 'flex-start' }}
-                                            >
-                                                <View style={{ width: '93%', paddingTop: 20, paddingHorizontal: 15, gap: 10 }}>
-                                                    {/* Product Info */}
-                                                    <View style={{ flexDirection: "row", marginBottom: 20 }}>
-                                                        <Image
-                                                            source={{ uri: booking.catalogueService.imageUrls[0] }}
-                                                            style={{ width: 100, height: 100, borderRadius: 8, marginRight: 16 }}
-                                                        />
-                                                        <View style={{ flex: 1, marginTop: 5 }}>
-                                                            <Text style={{ fontSize: 16, marginBottom: 5 }}>
-                                                                <Text style={{ color: "#E63946", fontWeight: "bold" }}>£{booking.total}</Text> / Session {" "}
-                                                                {/* <Text style={styles.originalPrice}>£40.20</Text> */}
-                                                            </Text>
-                                                            <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }}>Cleaning Service</Text>
-                                                            <Text style={{ fontSize: 14, color: COLORS.black }}>Payment Method: {booking.paymentMethod}</Text>
-                                                        </View>
-                                                    </View>
-                                                    <View style={GlobalStyleSheet.line} />
-                                                    {/* Borrowing Period and Delivery Method */}
-                                                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                                                        <View style={{ paddingVertical: 10 }}>
-                                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Start at</Text>
-                                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>{new Date(booking.selectedDate).toLocaleDateString('en-GB')}</Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>From:</Text>
-                                                            <Text style={{ fontSize: 14, color: COLORS.title }}>09:00 AM OR Now</Text>
-                                                        </View>
-                                                        <View style={{ marginHorizontal: 40, paddingTop: 60 }}>
-                                                            <Ionicons name="arrow-forward" size={30} color={COLORS.title} />
-                                                        </View>
-                                                        <View style={{ paddingVertical: 10 }}>
-                                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Location</Text>
-                                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
-                                                                {booking.selectedAddress ? booking.selectedAddress.addressName : ''}
-                                                            </Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>Estimated Duration:</Text>
-                                                            <Text style={{ fontSize: 14, color: COLORS.title }}>3 Hours</Text>
-                                                        </View>
-                                                    </View>
-                                                    <Text style={{ fontSize: 12, color: "#666", textAlign: "center", marginBottom: 5 }}>
-                                                        The service duration may vary based on the actual cleaning requirements.
-                                                    </Text>
-                                                    <View style={GlobalStyleSheet.line} />
-                                                    {/* Borrowing Rate Breakdown */}
-                                                    <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Service Pricing Breakdown</Text>
-                                                    <View style={{ marginBottom: 20 }}>
-                                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>1 x session</Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.catalogueService.basePrice}</Text>
-                                                        </View>
-                                                        {booking.addons && booking.addons.map((addon) => (
-                                                            <View key={addon.name} style={{ flexDirection: "column" }}>
-                                                                {addon.subOptions.map((opt) => (
-                                                                    <View key={opt.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                                                                        <Text style={{ fontSize: 14, color: "#333" }}>
-                                                                            {addon.name}: {opt.label}
-                                                                        </Text>
-                                                                        <Text style={{ fontSize: 14, color: "#333", fontWeight: 'bold' }}>£{opt.additionalPrice}</Text>
-                                                                    </View>
-                                                                ))}
-                                                            </View>
-                                                        ))}
-                                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}></Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£2.00</Text>
-                                                        </View>
-                                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}>Delivery Charge</Text>
-                                                            <Text style={{ fontSize: 14, color: "#333" }}> N/A</Text>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£0.00</Text>
-                                                        </View>
-                                                        <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '90%', alignSelf: 'center' },]} />
-                                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
-                                                            <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>£{booking.total}</Text>
-                                                        </View>
+                                            <View style={{ width: '93%', paddingTop: 20, paddingHorizontal: 15, gap: 10 }}>
+                                                {/* Product Info */}
+                                                <View style={{ flexDirection: "row", marginBottom: 20 }}>
+                                                    <Image
+                                                        source={{ uri: booking.catalogueService.imageUrls[0] }}
+                                                        style={{ width: 100, height: 100, borderRadius: 8, marginRight: 16 }}
+                                                    />
+                                                    <View style={{ flex: 1, marginTop: 5 }}>
+                                                        <Text style={{ fontSize: 16, marginBottom: 5 }}>
+                                                            <Text style={{ color: "#E63946", fontWeight: "bold" }}>£{booking.total}</Text> / Session {" "}
+                                                            {/* <Text style={styles.originalPrice}>£40.20</Text> */}
+                                                        </Text>
+                                                        <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }}>Cleaning Service</Text>
+                                                        <Text style={{ fontSize: 14, color: COLORS.black }}>Payment Method: {booking.paymentMethod}</Text>
                                                     </View>
                                                 </View>
-                                            </ScrollView>
+                                                <View style={GlobalStyleSheet.line} />
+                                                {/* Borrowing Period and Delivery Method */}
+                                                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
+                                                    <View style={{ paddingVertical: 10 }}>
+                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Start at</Text>
+                                                        <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>{new Date(booking.selectedDate).toLocaleDateString('en-GB')}</Text>
+                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>From:</Text>
+                                                        <Text style={{ fontSize: 14, color: COLORS.title }}>09:00 AM OR Now</Text>
+                                                    </View>
+                                                    <View style={{ marginHorizontal: 40, paddingTop: 60 }}>
+                                                        <Ionicons name="arrow-forward" size={30} color={COLORS.title} />
+                                                    </View>
+                                                    <View style={{ paddingVertical: 10 }}>
+                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Location</Text>
+                                                        <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
+                                                            {booking.selectedAddress ? booking.selectedAddress.addressName : ''}
+                                                        </Text>
+                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>Estimated Duration:</Text>
+                                                        <Text style={{ fontSize: 14, color: COLORS.title }}>3 Hours</Text>
+                                                    </View>
+                                                </View>
+                                                <Text style={{ fontSize: 12, color: "#666", textAlign: "center", marginBottom: 5 }}>
+                                                    The service duration may vary based on the actual cleaning requirements.
+                                                </Text>
+                                                <View style={GlobalStyleSheet.line} />
+                                                {/* Borrowing Rate Breakdown */}
+                                                <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Service Pricing Breakdown</Text>
+                                                <View style={{ marginBottom: 20 }}>
+                                                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                                        <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
+                                                        <Text style={{ fontSize: 14, color: "#333" }}>1 x session</Text>
+                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.catalogueService.basePrice}</Text>
+                                                    </View>
+                                                    {booking.addons && booking.addons.map((addon) => (
+                                                        <View key={addon.name} style={{ flexDirection: "column" }}>
+                                                            {addon.subOptions.map((opt) => (
+                                                                <View key={opt.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                                                                    <Text style={{ fontSize: 14, color: "#333" }}>
+                                                                        {addon.name}: {opt.label}
+                                                                    </Text>
+                                                                    <Text style={{ fontSize: 14, color: "#333", fontWeight: 'bold' }}>£{opt.additionalPrice}</Text>
+                                                                </View>
+                                                            ))}
+                                                        </View>
+                                                    ))}
+                                                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                                        <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
+                                                        <Text style={{ fontSize: 14, color: "#333" }}></Text>
+                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>£2.00</Text>
+                                                    </View>
+                                                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                                        <Text style={{ fontSize: 14, color: "#333" }}>Delivery Charge</Text>
+                                                        <Text style={{ fontSize: 14, color: "#333" }}> N/A</Text>
+                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>£0.00</Text>
+                                                    </View>
+                                                    <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '90%', alignSelf: 'center' },]} />
+                                                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
+                                                        <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>£{booking.total}</Text>
+                                                    </View>
+                                                </View>
+                                            </View>
                                         )}
                                         {index === 1 && (
                                             <View style={{ paddingRight: 40 }}>
@@ -867,7 +833,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             </View>
                                         )}
                                     </View>
-                                </ScrollView>
+                                </View>
                             ))}
                         </ScrollView>
                         <View style={GlobalStyleSheet.line} />

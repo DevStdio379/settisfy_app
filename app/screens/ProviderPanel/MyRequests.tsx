@@ -32,7 +32,7 @@ const MyRequests = ({ navigation, route }: MyRequestsScreenProps) => {
     if (user?.uid) {
       const setRequestsData = await fetchBookingsAsSettler(user.uid);
       const activeJobs = setRequestsData.filter(booking => booking.status < 5);
-      const inactiveJobs = setRequestsData.filter(booking => booking.status == 6 && booking.settlerId === user.uid);
+      const inactiveJobs = setRequestsData.filter(booking => booking.status == 5 && booking.settlerId === user.uid);
       setActiveJobs(activeJobs);
       setInactiveJobs(inactiveJobs);
     }
@@ -257,7 +257,7 @@ const MyRequests = ({ navigation, route }: MyRequestsScreenProps) => {
                                   <Text numberOfLines={1} style={{ fontSize: 16, color: COLORS.black, fontWeight: 'bold' }}>{data.catalogueService.title}</Text>
                                   <Text style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}>requested by {data.firstName} {data.lastName}</Text>
                                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <Text style={{ fontSize: 14 }}>{new Date(data.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.startDate).toLocaleDateString('en-GB', { weekday: 'short' })} to {new Date(data.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.endDate).toLocaleDateString('en-GB', { weekday: 'short' })}</Text>
+                                    <Text style={{ fontSize: 14 }}>{new Date(data.selectedDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}, {new Date(data.selectedDate).toLocaleDateString('en-GB', { weekday: 'long' })}</Text>
                                   </View>
                                 </View>
                               </View>
