@@ -1047,6 +1047,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 <View>
                                                     <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Settler Remarks</Text>
                                                     <Input
+                                                        readOnly={booking.settlerEvidenceRemark !== '' ? true : false}
                                                         onFocus={() => setisFocused(true)}
                                                         onBlur={() => setisFocused(false)}
                                                         isFocused={isFocused}
