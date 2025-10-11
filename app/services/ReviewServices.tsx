@@ -8,8 +8,8 @@ import { Alert } from 'react-native';
 export interface Review {
   id?: string;  // Add an optional id field
   bookingId: string;
-  customerReviewerId?: string;
-  settlerReviewerId?: string;
+  customerId: string;
+  settlerId: string;
   catalogueServiceId: string;
 
   // borrowerReview

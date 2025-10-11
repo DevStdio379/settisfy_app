@@ -160,7 +160,8 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
         try {
             await createReview({
                 bookingId: booking.id || '',
-                customerReviewerId: user?.uid,
+                customerId: user?.uid || '',
+                settlerId: booking.settlerId || '',
                 customerOverallRating: overallRating || 0,
                 catalogueServiceId: booking.catalogueService.id || '',
 
@@ -195,7 +196,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                         <View style={{ flex: 1, alignItems: 'flex-start' }}>
                         </View>
                         <View style={{ flex: 1, alignItems: 'center' }}>
-                            <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center' }}>Add Review</Text>
+                            <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center' }}>{booking.status !== 6  ? 'Add Review': 'Your Review'}</Text>
                         </View>
                         <View style={{ flex: 1, alignItems: 'flex-end' }}>
                             <TouchableOpacity
@@ -394,7 +395,8 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                 </TouchableOpacity>
                             )}
                         </View>
-                        <View style={{ paddingTop: 20 }}>
+                        { booking.status !== 6 && (
+                            <View style={{ paddingTop: 20 }}>
                             <TouchableOpacity
                                 style={{
                                     backgroundColor: COLORS.primary,
@@ -416,6 +418,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                 <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>Submit Review</Text>
                             </TouchableOpacity>
                         </View>
+                        )} 
                     </View>
                 </ScrollView >
             </View >

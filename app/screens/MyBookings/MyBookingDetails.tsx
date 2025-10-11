@@ -509,7 +509,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                 </View>
                             ) : (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontWeight: 'bold' }}>Your feedback matters for this platform</Text>
+                                    <Text style={{ fontWeight: 'bold' }}>{booking.status === 5 ? 'Your feedback matters for this platform' : 'This job is completed'}</Text>
                                     {booking.status === 6 ? (
                                         <TouchableOpacity
                                             style={{
