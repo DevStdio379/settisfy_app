@@ -6,6 +6,7 @@ import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 
 export interface Acceptor {
   settlerId: string;
+  settlerServiceId: string;
   firstName: string;
   lastName: string;
   acceptedAt: string; // store as ISO string, or use Firestore Timestamp if needed
@@ -49,6 +50,7 @@ export interface Booking {
   // after broadcast
   acceptors?: Acceptor[];
   settlerId?: string;
+  settlerServiceId: string;
   settlerFirstName?: string;
   settlerLastName?: string;
   settlerEvidenceImageUrls: string[];
@@ -189,6 +191,7 @@ const mapBorrowingData = (doc: any): Booking => {
     // after broadcast
     acceptors: data.acceptors,
     settlerId: data.settlerId || '',
+    settlerServiceId: data.settlerServiceId || '',
     settlerFirstName: data.settlerFirstName || '',
     settlerLastName: data.settlerLastName || '',
     settlerEvidenceImageUrls: data.settlerEvidenceImageUrls,

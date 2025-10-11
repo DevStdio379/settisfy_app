@@ -45,7 +45,12 @@ const MyRequests = ({ navigation, route }: MyRequestsScreenProps) => {
 
     const q = query(collection(db, "bookings"), where("status", "==", 0));
     const unsubJobs = onSnapshot(q, (snap) => {
-      setJobs(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Booking)));
+      const allBookings = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Booking));
+      const filtered = allBookings.filter(job =>
+        user?.activeJobs?.some(active => active.catalogueId === job.catalogueService.id)
+      );
+
+      setJobs(filtered);
     });
 
     return () => {

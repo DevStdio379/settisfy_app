@@ -16,6 +16,8 @@ import axios from 'axios';
 import { Booking, fetchSelectedBooking, subscribeToBookings, subscribeToOneBooking, updateBooking } from '../../services/BookingServices';
 import { getOrCreateChat } from '../../services/ChatServices';
 import Input from '../../components/Input/Input';
+import { fetchSelectedSettlerService, updateSettlerService } from '../../services/SettlerServiceServices';
+import { fetchSelectedCatalogue, updateCatalogue } from '../../services/CatalogueServices';
 
 type MyBookingDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyBookingDetails'>;
 
@@ -73,9 +75,11 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                         setSelectedNotesToSettlerImageUrl(booking.notesToSettlerImageUrls[0])
                     }
 
-                    const fetchedSettler = await fetchSelectedUser(selectedBooking.settlerId || 'undefined');
-                    if (fetchedSettler) {
-                        setSettler(fetchedSettler);
+                    if (booking.settlerId) {
+                        const fetchedSettler = await fetchSelectedUser(selectedBooking.settlerId || 'undefined');
+                        if (fetchedSettler) {
+                            setSettler(fetchedSettler);
+                        }
                     }
 
                     const fetchedReview = await getReviewByBookingId(selectedBooking.catalogueService.id || 'undefined', selectedBooking.id || 'unefined');
@@ -317,6 +321,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                     <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>Broadcasting your service request</Text>
                                     <Text style={{ fontSize: 12, color: COLORS.blackLight2, textAlign: 'center' }}>This usually takes about 1-2 hours waiting</Text>
+                                    <View style={[GlobalStyleSheet.line, { marginVertical: 10 }]} />
                                     {
                                         booking.acceptors && booking.acceptors.length === 0 ? (
                                             <Text style={{ fontSize: 14, color: COLORS.danger, marginBottom: 8 }}>
@@ -337,6 +342,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                 await updateBooking(booking.id || 'undefined', {
                                                                     status: status! + 1,
                                                                     settlerId: acceptor.settlerId,
+                                                                    settlerServiceId: acceptor.settlerServiceId,
                                                                     settlerFirstName: acceptor.firstName,
                                                                     settlerLastName: acceptor.lastName,
                                                                     serviceStartCode: Math.floor(1000000 + Math.random() * 9000000).toString()
@@ -456,6 +462,13 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                             onPress={async () => {
                                                 if (booking.id) {
                                                     await updateBooking(booking.id, { status: status! + 1 });
+
+                                                    const selectedSettlerService = await fetchSelectedSettlerService(booking.settlerServiceId)
+
+                                                    if (selectedSettlerService) {
+                                                        const updatedJobsCount = selectedSettlerService?.jobsCount + 1
+                                                        await updateSettlerService(booking.settlerServiceId, { jobsCount: updatedJobsCount})
+                                                    }
                                                 }
                                                 setStatus(status! + 1);
                                             }}

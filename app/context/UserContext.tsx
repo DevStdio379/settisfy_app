@@ -6,6 +6,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { format, formatDistanceToNow } from "date-fns";
 import { Address } from "../services/AddressServices";
 
+interface ActiveJob {
+  settlerServiceId: string;
+  catalogueId: string;
+}
+
 export interface User {
   uid: string;
   email: string;
@@ -21,6 +26,7 @@ export interface User {
   updatedAt: any;
   memberFor: string;
   currentAddress?: Address;
+  activeJobs?: ActiveJob[];
 }
 
 export interface UserContextType {
@@ -139,6 +145,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           updatedAt: userData.updatedAt || '',
           memberFor: formatDistanceToNow(userData.createdAt.toDate(), { addSuffix: false }),
           currentAddress: userData.currentAddress ? (userData.currentAddress as Address) : undefined,
+          activeJobs: userData.activeJobs || undefined,
         };
         setUser(updatedUser);
         console.log("User updated in context:", updatedUser);
@@ -231,6 +238,7 @@ export const fetchSelectedUser = async (userId: string): Promise<User | null> =>
         updatedAt: userData.updatedAt || '',
         memberFor: formatDistanceToNow(userData.createdAt.toDate(), { addSuffix: false }),
         currentAddress: userData.currentAddress || undefined,
+        activeJobs: userData.activeJobs || undefined
       };
       return userInfo;
     } else {
@@ -264,6 +272,7 @@ export const fetchAllUsers = async (): Promise<User[]> => {
         updatedAt: userData.updatedAt || '',
         memberFor: formatDistanceToNow(userData.createdAt.toDate(), { addSuffix: false }),
         currentAddress: userData.currentAddress || undefined,
+        activeJobs: userData.activeJobs || undefined
       };
     });
     return usersList;

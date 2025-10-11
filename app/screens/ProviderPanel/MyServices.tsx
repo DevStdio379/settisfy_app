@@ -154,13 +154,13 @@ const MyServices = ({ navigation, route }: MyServicesScreenProps) => {
                                                                     </View>
                                                                 )}
                                                                 <View style={{ width: '70%', padding: 10 }}>
-                                                                    <Text style={{ fontSize: 12 }}>{data.id}</Text>
                                                                     <Text numberOfLines={1} style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.black }}>{data.selectedCatalogue.title ? data.selectedCatalogue.title : 'Unlisted title'}</Text>
                                                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                                                     </View>
                                                                     <Text numberOfLines={1} style={{ fontSize: 13, color: COLORS.black, opacity: 0.7 }}>
                                                                         {data.serviceLocation ? data.serviceLocation : 'No address provided'}
                                                                     </Text>
+                                                                    <Text style={{ fontSize: 12 }}>{data.averageRatings === 0 && data.jobsCount === 0 ? 'No rating' : `★${data.averageRatings} (${data.jobsCount})`}</Text>
                                                                 </View>
                                                             </View>
                                                         </TouchableOpacity>

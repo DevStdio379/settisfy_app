@@ -11,6 +11,7 @@ export interface Review {
   customerId: string;
   settlerId: string;
   catalogueServiceId: string;
+  settlerServiceId: string;
 
   // borrowerReview
   customerOverallRating?: number;

@@ -22,7 +22,7 @@ import { serviceLocation } from '../../constants/ServiceLocation';
 type SettlerServiceFormScreenProps = StackScreenProps<RootStackParamList, 'SettlerServiceForm'>
 
 export const SettlerServiceForm = ({ navigation, route }: SettlerServiceFormScreenProps) => {
-  const { user } = useUser();
+  const { user, updateUserData } = useUser();
 
   const [settlerService, setSettlerService] = useState(route.params.settlerService);
   const [selectedServiceCardImageUrls, setSelectedServiceCardImageUrls] = useState<string | null>(null);
@@ -64,7 +64,7 @@ export const SettlerServiceForm = ({ navigation, route }: SettlerServiceFormScre
         isActive: isActive,
       })
       Alert.alert('Settler service updated successfully.');
-    } 
+    }
     if (settlerService === null) {
       if (selectedCatalogue && selectedLocation) {
         await createSettlerService({
@@ -91,7 +91,49 @@ export const SettlerServiceForm = ({ navigation, route }: SettlerServiceFormScre
         });
       }
     }
+
+    if (!user?.uid || !selectedCatalogue?.id || !settlerService?.id) return;
+
+    const newJob = {
+      settlerServiceId: settlerService.id,
+      catalogueId: selectedCatalogue.id,
+    };
+
+    // 🧹 Clean up old data (remove strings or invalid entries)
+    const currentJobs = (user.activeJobs || []).filter(
+      job => typeof job === "object" && job.settlerServiceId && job.catalogueId
+    );
+
+    // 🧠 Check if job already exists
+    const exists = currentJobs.some(
+      job =>
+        job.settlerServiceId === newJob.settlerServiceId &&
+        job.catalogueId === newJob.catalogueId
+    );
+
+    let updatedJobs;
+
+    if (isActive && !exists) {
+      updatedJobs = [...currentJobs, newJob]; // ✅ Add
+    } else if (!isActive && exists) {
+      updatedJobs = currentJobs.filter(
+        job =>
+          !(
+            job.settlerServiceId === newJob.settlerServiceId &&
+            job.catalogueId === newJob.catalogueId
+          )
+      ); // 🗑️ Remove
+    } else {
+      return; // No changes
+    }
+
+    await updateUserData(user.uid, { activeJobs: updatedJobs });
   }
+
+  // Remove a job ID if it exists
+  const removeJobId = (jobIds: string[], jobIdToRemove: string): string[] => {
+    return jobIds.filter(id => id !== jobIdToRemove);
+  };
 
   const toggleDaySelection = (day: string) => {
     setAvailableDays((prevSelectedDays) =>
@@ -532,17 +574,17 @@ export const SettlerServiceForm = ({ navigation, route }: SettlerServiceFormScre
                     placeholder='e.g. Cleaning service'
                     readOnly={true}
                   />
-                  <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Job still active?</Text>
+                  <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Job active status:</Text>
                   <CategoryDropdown
                     options={[
-                      { label: 'Yes', value: 'Yes' },
-                      { label: 'No', value: 'No' }
+                      { label: 'Active', value: 'Yes' },
+                      { label: 'Inactive', value: 'No' }
                     ]}
                     selectedOption={isActive ? 'Yes' : 'No'}
                     setSelectedOption={(value: string) => setIsActive(value === 'Yes')}
                   />
                 </View>
-                <View style={[GlobalStyleSheet.container, { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 15, paddingVertical: 10 }]}>
+                <View style={[GlobalStyleSheet.container, { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 15, paddingTop: 30 }]}>
                   <TouchableOpacity
                     style={{
                       backgroundColor: COLORS.primary,
@@ -558,7 +600,7 @@ export const SettlerServiceForm = ({ navigation, route }: SettlerServiceFormScre
                     }}
                   >
                     <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
-                      {settlerService ? 'Update' : 'Submit'}
+                      {settlerService ? 'Update Service Info' : 'Submit Service'}
                     </Text>
                   </TouchableOpacity>
                 </View>

@@ -301,6 +301,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
 
       // after broadcast
       settlerId: '',
+      settlerServiceId: '',
       settlerFirstName: '',
       settlerLastName: '',
       settlerEvidenceImageUrls: [],

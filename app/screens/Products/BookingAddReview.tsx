@@ -13,6 +13,7 @@ import { updateProduct } from '../../services/ProductServices';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { updateBooking } from '../../services/BookingServices';
 import { fetchSelectedCatalogue, updateCatalogue } from '../../services/CatalogueServices';
+import { fetchSelectedSettlerService, updateSettlerService } from '../../services/SettlerServiceServices';
 
 type BookingAddReviewScreenProps = StackScreenProps<RootStackParamList, 'BookingAddReview'>;
 
@@ -165,6 +166,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                 settlerId: booking.settlerId || '',
                 customerOverallRating: overallRating || 0,
                 catalogueServiceId: booking.catalogueService.id || '',
+                settlerServiceId: booking.settlerServiceId || '',
 
                 customerFeedback: customerFeedback || [''],
                 customerOtherComment: customerOtherComment,
@@ -181,7 +183,14 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
             if (selectedCatalogue) {
                 await updateCatalogue(booking.catalogueService.id || '', {
                 averageRatings: (selectedCatalogue.averageRatings + overallRating) / selectedCatalogue.bookingsCount,
-            });
+            })}
+
+            const selectedSettlerService = await fetchSelectedSettlerService(booking.settlerServiceId);
+
+            if (selectedSettlerService) {
+                await updateSettlerService(booking.settlerServiceId, {
+                    averageRatings: (selectedSettlerService.averageRatings + overallRating) / selectedSettlerService.jobsCount,
+                })
             }
 
             Alert.alert('Review created successfully.');

@@ -426,10 +426,19 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         alignItems: 'center',
                                                     }}
                                                     onPress={async () => {
+                                                        // Make sure user.activeJobs is an array
+                                                        const matchedJob = user?.activeJobs?.find(
+                                                            job => job.catalogueId === booking.catalogueService.id
+                                                        );
+
+                                                        // Extract the correct settlerServiceId (if found)
+                                                        const settlerServiceId = matchedJob?.settlerServiceId || null;
+
                                                         if (booking.id) {
                                                             await updateBooking(booking.id, {
                                                                 acceptors: arrayUnion({
                                                                     settlerId: user?.uid,
+                                                                    settlerServiceId: settlerServiceId,
                                                                     firstName: user?.firstName,
                                                                     lastName: user?.lastName,
                                                                     acceptedAt: new Date() // cleaner than Date.toISOString
