@@ -515,6 +515,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             ) : status === 4 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                     <Text style={{ fontSize: 16, fontWeight: 'bold' }}>You're in cooldown period</Text>
+                                    <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Customer will review your job completion and wait for the latecoming issues if exist.</Text>
                                     <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>
                                         {booking?.selectedDate ? `${Math.ceil((new Date(booking.selectedDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left` : "N/A"}
                                     </Text>
@@ -534,103 +535,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 </View>
                             ) : (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ fontWeight: 'bold' }}>Your feedback matters for this platform</Text>
-                                    {review ? (
-                                        review.settlerStatus === 0 ? (
-                                            <TouchableOpacity
-                                                style={{
-                                                    backgroundColor: COLORS.primary,
-                                                    padding: 10,
-                                                    borderRadius: 10,
-                                                    marginVertical: 10,
-                                                    width: '80%',
-                                                    alignItems: 'center',
-                                                }}
-                                                onPress={() => {
-                                                    console.log('Review found');
-                                                    navigation.navigate('SettlerAddReview', { reviewId: review.id || 'newReview', booking: booking });
-                                                }}
-                                            >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Edit Review</Text>
-                                            </TouchableOpacity>
-                                        ) : review.settlerStatus ? (
-                                            <TouchableOpacity
-                                                style={{
-                                                    backgroundColor: COLORS.primary,
-                                                    padding: 10,
-                                                    borderRadius: 10,
-                                                    marginVertical: 10,
-                                                    width: '80%',
-                                                    alignItems: 'center',
-                                                }}
-                                                onPress={() => { }}
-                                            >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Review Completed</Text>
-                                            </TouchableOpacity>
-                                        ) : (
-                                            <TouchableOpacity
-                                                style={{
-                                                    backgroundColor: COLORS.primary,
-                                                    padding: 10,
-                                                    borderRadius: 10,
-                                                    marginVertical: 10,
-                                                    width: '80%',
-                                                    alignItems: 'center',
-                                                }}
-                                                onPress={() => {
-                                                    console.log('Review found');
-                                                    navigation.navigate('SettlerAddReview', { reviewId: review.id || 'newReview', booking: booking });
-                                                }}
-                                            >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Review</Text>
-                                            </TouchableOpacity>
-                                        )
-                                    ) : (
-                                        <TouchableOpacity
-                                            style={{
-                                                backgroundColor: COLORS.primary,
-                                                padding: 10,
-                                                borderRadius: 10,
-                                                marginVertical: 10,
-                                                width: '80%',
-                                                alignItems: 'center',
-                                            }}
-                                            onPress={async () => {
-                                                const newReview = await createReview({
-                                                    bookingId: booking.id || '',
-                                                    settlerReviewerId: user?.uid || '',
-                                                    catalogueServiceId: booking.catalogueService.id || '',
-
-                                                    settlerOverallRating: 0,
-                                                    settlerTimelinessRating: 0,
-                                                    settlerTimelinessFeedback: [''],
-                                                    settlerOtherTimelinessReview: '',
-                                                    settlerCooperationRating: 0,
-                                                    settlerCooperationFeedback: [''],
-                                                    settlerOtherCooperationReview: '',
-                                                    settlerBehaviourRating: 0,
-                                                    settlerBehaviourFeedback: [''],
-                                                    settlerOtherBehaviourReview: '',
-                                                    settlerCommunicationRating: 0,
-                                                    settlerCommunicationFeedback: [''],
-                                                    settlerOtherCommunicationReview: '',
-                                                    settlerRequestAccuracyRating: 0,
-                                                    settlerRequestAccuracyFeedback: [''],
-                                                    settlerOtherRequestAccuracyReview: '',
-                                                    settlerPriceWorthyRating: 0,
-                                                    settlerPublicReview: '',
-                                                    settlerPrivateNotesforCustomer: '',
-                                                    settlerUpdatedAt: new Date(),
-                                                    settlerCreateAt: new Date(),
-                                                    settlerStatus: 0,
-                                                }, booking.catalogueService.id || 'undefined');
-                                                console.log('Review not found');
-                                                navigation.navigate('SettlerAddReview', { reviewId: newReview, booking: booking });
-                                            }}
-                                        >
-                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Review</Text>
-                                        </TouchableOpacity>
-                                    )}
+                                    <Text style={{ fontWeight: 'bold' }}>Your job is now completed.</Text>
                                 </View>
                             )
                             }

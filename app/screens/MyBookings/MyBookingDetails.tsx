@@ -471,8 +471,8 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                     <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>
                                         {booking?.selectedDate ? `${Math.ceil((new Date(booking.selectedDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left` : "N/A"}
                                     </Text>
-                                    <View style={[GlobalStyleSheet.line, {marginVertical: 10}]} />
-                                    <Text style={{ fontWeight: 'bold'}}>Release payment to settler?</Text>
+                                    <View style={[GlobalStyleSheet.line, { marginVertical: 10 }]} />
+                                    <Text style={{ fontWeight: 'bold' }}>Release payment to settler?</Text>
                                     <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                         <TouchableOpacity
                                             style={{
@@ -510,56 +510,23 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                             ) : (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                     <Text style={{ fontWeight: 'bold' }}>Your feedback matters for this platform</Text>
-                                    {review ? (
-                                        review.customerStatus === 0 ? (
-                                            <TouchableOpacity
-                                                style={{
-                                                    backgroundColor: COLORS.primary,
-                                                    padding: 10,
-                                                    borderRadius: 10,
-                                                    marginVertical: 10,
-                                                    width: '80%',
-                                                    alignItems: 'center',
-                                                }}
-                                                onPress={() => {
-                                                    console.log('Review found');
-                                                    navigation.navigate('BookingAddReview', { reviewId: review.id || 'newReview', booking: booking });
-                                                }}
-                                            >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Edit Review</Text>
-                                            </TouchableOpacity>
-                                        ) : review.customerStatus ? (
-                                            <TouchableOpacity
-                                                style={{
-                                                    backgroundColor: COLORS.primary,
-                                                    padding: 10,
-                                                    borderRadius: 10,
-                                                    marginVertical: 10,
-                                                    width: '80%',
-                                                    alignItems: 'center',
-                                                }}
-                                                onPress={() => { }}
-                                            >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Review Completed</Text>
-                                            </TouchableOpacity>
-                                        ) : (
-                                            <TouchableOpacity
-                                                style={{
-                                                    backgroundColor: COLORS.primary,
-                                                    padding: 10,
-                                                    borderRadius: 10,
-                                                    marginVertical: 10,
-                                                    width: '80%',
-                                                    alignItems: 'center',
-                                                }}
-                                                onPress={() => {
-                                                    console.log('Review found');
-                                                    navigation.navigate('BookingAddReview', { reviewId: review.id || 'newReview', booking: booking });
-                                                }}
-                                            >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Review</Text>
-                                            </TouchableOpacity>
-                                        )
+                                    {booking.status === 6 ? (
+                                        <TouchableOpacity
+                                            style={{
+                                                backgroundColor: COLORS.primary,
+                                                padding: 10,
+                                                borderRadius: 10,
+                                                marginVertical: 10,
+                                                width: '80%',
+                                                alignItems: 'center',
+                                            }}
+                                            onPress={() => {
+                                                console.log('Review found');
+                                                navigation.navigate('BookingAddReview', { booking: booking });
+                                            }}
+                                        >
+                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>View Review</Text>
+                                        </TouchableOpacity>
                                     ) : (
                                         <TouchableOpacity
                                             style={{
@@ -570,37 +537,9 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                 width: '80%',
                                                 alignItems: 'center',
                                             }}
-                                            onPress={async () => {
-                                                const newReview = await createReview({
-                                                    bookingId: booking.id || '',
-                                                    customerReviewerId: user?.uid || '',
-                                                    catalogueServiceId: booking.catalogueService.id || '',
-
-                                                    customerOverallRating: 0,
-                                                    customerTimelinessRating: 0,
-                                                    customerTimelinessFeedback: [''],
-                                                    customerOtherTimelinessReview: '',
-                                                    customerProfessionalismRating: 0,
-                                                    customerProfessionalismFeedback: [''],
-                                                    customerOtherProfessionalismReview: '',
-                                                    customerSafetyRating: 0,
-                                                    customerSafetyFeedback: [''],
-                                                    customerOtherSafetyReview: '',
-                                                    customerCommunicationRating: 0,
-                                                    customerCommunicationFeedback: [''],
-                                                    customerOtherCommunicationReview: '',
-                                                    customerServiceResultRating: 0,
-                                                    customerServiceResultFeedback: [''],
-                                                    customerOtherServiceResultReview: '',
-                                                    customerPriceWorthyRating: 0,
-                                                    customerPublicReview: '',
-                                                    customerPrivateNotesforSettler: '',
-                                                    customerUpdatedAt: new Date(),
-                                                    customerCreateAt: new Date(),
-                                                    customerStatus: 0,
-                                                }, booking.catalogueService.id || 'undefined');
-                                                console.log('Review not found');
-                                                navigation.navigate('BookingAddReview', { reviewId: newReview, booking: booking });
+                                            onPress={() => {
+                                                console.log('Review found');
+                                                navigation.navigate('BookingAddReview', { booking: booking });
                                             }}
                                         >
                                             <Text style={{ color: 'white', fontWeight: 'bold' }}>Review</Text>

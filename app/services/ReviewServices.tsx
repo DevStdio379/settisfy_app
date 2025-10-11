@@ -14,55 +14,15 @@ export interface Review {
 
   // borrowerReview
   customerOverallRating?: number;
-  customerTimelinessRating?: number;
-  customerTimelinessFeedback?: string[];
-  customerOtherTimelinessReview?: string;
-  customerProfessionalismRating?: number;
-  customerProfessionalismFeedback?: string[];
-  customerOtherProfessionalismReview?: string;
-  customerSafetyRating?: number;
-  customerSafetyFeedback?: string[];
-  customerOtherSafetyReview?: string;
-  customerCommunicationRating?: number;
-  customerCommunicationFeedback?: string[];
-  customerOtherCommunicationReview?: string;
-  customerServiceResultRating?: number;
-  customerServiceResultFeedback?: string[];
-  customerOtherServiceResultReview?: string;
-  customerPriceWorthyRating?: number;
-  customerPublicReview?: string;
-  customerPrivateNotesforSettler?: string;
-  customerStatus?: number;
-  customerCreateAt?: any; 
+  customerFeedback?: string[];
+  customerOtherComment?: string;
+  customerReviewImageUrls?: string[];
+  customerCreateAt?: any;
   customerUpdatedAt?: any;
-
-  // lenderReview
-  settlerOverallRating?: number;
-  settlerTimelinessRating?: number;
-  settlerTimelinessFeedback?: string[];
-  settlerOtherTimelinessReview?: string;
-  settlerCooperationRating?: number;
-  settlerCooperationFeedback?: string[];
-  settlerOtherCooperationReview?: string;
-  settlerBehaviourRating?: number;
-  settlerBehaviourFeedback?: string[];
-  settlerOtherBehaviourReview?: string;
-  settlerCommunicationRating?: number;
-  settlerCommunicationFeedback?: string[];
-  settlerOtherCommunicationReview?: string;
-  settlerRequestAccuracyRating?: number;
-  settlerRequestAccuracyFeedback?: string[];
-  settlerOtherRequestAccuracyReview?: string;
-  settlerPriceWorthyRating?: number;
-  settlerPublicReview?: string;
-  settlerPrivateNotesforCustomer?: string;
-  settlerStatus?: number;
-  settlerCreateAt?: any;
-  settlerUpdatedAt?: any;
 }
 
 // Function to fetch a review based on borrowingId
-export const getReviewByBookingId = async (productId: string ,bookingId: string) => {
+export const getReviewByBookingId = async (productId: string, bookingId: string) => {
   try {
     const reviewsRef = collection(db, 'reviews');
     const querySnapshot = await getDocs(reviewsRef);
@@ -80,11 +40,58 @@ export const getReviewByBookingId = async (productId: string ,bookingId: string)
   }
 };
 
+export const uploadImages = async (imageName: string, imagesUrl: string[]) => {
+    const urls: string[] = [];
+
+    for (const uri of imagesUrl) {
+        try {
+            // Convert to Blob
+            const response = await fetch(uri);
+            const blob = await response.blob();
+
+            // Generate unique filename
+            const filename = `reviews/${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
+            const storageRef = ref(storage, filename);
+
+            // Upload file
+            const uploadTask = uploadBytesResumable(storageRef, blob);
+
+            await new Promise<void>((resolve, reject) => {
+                uploadTask.on(
+                    "state_changed",
+                    snapshot => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        console.log(`Upload ${filename}: ${progress.toFixed(2)}% done`);
+                    },
+                    reject, // Handle error
+                    async () => {
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        urls.push(downloadURL);
+                        resolve();
+                    }
+                );
+            });
+
+        } catch (error) {
+            console.error("Upload failed:", error);
+        }
+    }
+
+    console.log("All images uploaded:", urls);
+    return urls; // Return all uploaded image URLs
+};
+
+
 // Function to save a product to Firestore
 export const createReview = async (review: Review, productId: string) => {
   try {
     const productRef = collection(db, 'reviews');
     const docRef = await addDoc(productRef, review);
+
+    if (review.customerReviewImageUrls && review.customerReviewImageUrls.length > 0) {
+      const uploadedUrls = await uploadImages(docRef.id, review.customerReviewImageUrls);
+      await updateDoc(doc(db, 'reviews', docRef.id), { customerReviewImageUrls: uploadedUrls });
+    }
 
     console.log('Review saved successfully with ID:', docRef.id);
     return docRef.id;  // Return the ID of the newly created review
@@ -158,7 +165,7 @@ export const getReviewAverageRatingByProductId = async (productId: string): Prom
   }
 };
 
-export const calculateBorrowingRatingByUser = async (userID: string): Promise<number | null > => {
+export const calculateBorrowingRatingByUser = async (userID: string): Promise<number | null> => {
   try {
     const reviewsRef = collection(db, 'reviews');
 
@@ -186,7 +193,7 @@ export const calculateBorrowingRatingByUser = async (userID: string): Promise<nu
   }
 };
 
-export const calculateLendingRatingByUser = async (userID: string): Promise< number | null > => {
+export const calculateLendingRatingByUser = async (userID: string): Promise<number | null> => {
   try {
     const reviewsRef = collection(db, 'reviews');
 

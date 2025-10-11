@@ -157,13 +157,6 @@ const MyServices = ({ navigation, route }: MyServicesScreenProps) => {
                                                                     <Text style={{ fontSize: 12 }}>{data.id}</Text>
                                                                     <Text numberOfLines={1} style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.black }}>{data.selectedCatalogue.title ? data.selectedCatalogue.title : 'Unlisted title'}</Text>
                                                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                                        <Text
-                                                                            numberOfLines={2}
-                                                                            ellipsizeMode="tail"
-                                                                            style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}
-                                                                        >
-                                                                            {data.selectedCatalogue.description ? data.selectedCatalogue.description : 'Undefined rate'}
-                                                                        </Text>
                                                                     </View>
                                                                     <Text numberOfLines={1} style={{ fontSize: 13, color: COLORS.black, opacity: 0.7 }}>
                                                                         {data.address ? data.address : 'No address provided'}
@@ -214,13 +207,6 @@ const MyServices = ({ navigation, route }: MyServicesScreenProps) => {
                                                                     <Text style={{ fontSize: 12 }}>{data.id}</Text>
                                                                     <Text numberOfLines={1} style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.black }}>{data.selectedCatalogue.title ? data.selectedCatalogue.title : 'Unlisted title'}</Text>
                                                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                                        <Text
-                                                                            numberOfLines={2}
-                                                                            ellipsizeMode="tail"
-                                                                            style={{ fontSize: 14, color: COLORS.black, opacity: .5 }}
-                                                                        >
-                                                                            {data.selectedCatalogue.description ? data.selectedCatalogue.description : 'Undefined rate'}
-                                                                        </Text>
                                                                     </View>
                                                                     <Text numberOfLines={1} style={{ fontSize: 13, color: COLORS.black, opacity: 0.7 }}>
                                                                         {data.address ? data.address : 'No address provided'}

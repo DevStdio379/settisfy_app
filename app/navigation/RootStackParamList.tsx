@@ -19,7 +19,7 @@ export type RootStackParamList = {
     PaymentSuccess: { bookingId: string, image: string };
     MyBookings: undefined;
     MyBookingDetails: { booking: Booking };
-    BookingAddReview: { reviewId: string, booking: Booking };
+    BookingAddReview: { booking: Booking };
 
     ChatList: undefined;
     NewChat: undefined;
