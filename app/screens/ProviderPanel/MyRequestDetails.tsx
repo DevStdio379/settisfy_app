@@ -571,7 +571,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                     }
                                 </View>
                                 <View style={{ flex: 7, paddingLeft: 20 }}>
-                                    <TouchableOpacity onPress={() => navigation.navigate('QuoteCleaning', { service: booking.catalogueService })}>
+                                    <TouchableOpacity onPress={() => navigation.navigate('QuoteService', { service: booking.catalogueService })}>
                                         <View style={{ width: SIZES.width * 0.63 }}>
                                             <Text style={{ fontSize: 17, fontWeight: 'bold', color: COLORS.black }} numberOfLines={1} ellipsizeMode="tail">Settling for: {booking.firstName} {booking.lastName}</Text>
                                         </View>

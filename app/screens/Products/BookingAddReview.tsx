@@ -12,6 +12,7 @@ import { createReview, getReviewAverageRatingByProductId, getReviewByBookingId, 
 import { updateProduct } from '../../services/ProductServices';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { updateBooking } from '../../services/BookingServices';
+import { fetchSelectedCatalogue, updateCatalogue } from '../../services/CatalogueServices';
 
 type BookingAddReviewScreenProps = StackScreenProps<RootStackParamList, 'BookingAddReview'>;
 
@@ -171,7 +172,15 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                 customerUpdatedAt: new Date(),
                 customerCreateAt: new Date(),
             }, booking.catalogueService.id || 'undefined');
-            await updateBooking(booking.id || '', {status: 6})
+
+            await updateBooking(booking.id || '', { status: 6 });
+            // updating ratings for catalogue & settler
+
+            const selectedCatalogue = await fetchSelectedCatalogue(booking.catalogueService.id || '');
+            await updateCatalogue(booking.catalogueService.id || '', {
+                averageRatings: selectedCatalogue && selectedCatalogue.averageRatings === null ? 0 : 4,
+            });
+
             Alert.alert('Review created successfully.');
         } catch (error) {
             Alert.alert('Failed to create or update listing.');
@@ -196,7 +205,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                         <View style={{ flex: 1, alignItems: 'flex-start' }}>
                         </View>
                         <View style={{ flex: 1, alignItems: 'center' }}>
-                            <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center' }}>{booking.status !== 6  ? 'Add Review': 'Your Review'}</Text>
+                            <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center' }}>{booking.status !== 6 ? 'Add Review' : 'Your Review'}</Text>
                         </View>
                         <View style={{ flex: 1, alignItems: 'flex-end' }}>
                             <TouchableOpacity
@@ -309,20 +318,20 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                     />
 
                                     {/* Delete Button */}
-                                    { booking.status !== 6 && (
+                                    {booking.status !== 6 && (
                                         <TouchableOpacity
-                                        onPress={() => deleteImage()}
-                                        style={{
-                                            position: 'absolute',
-                                            top: 10,
-                                            right: 10,
-                                            backgroundColor: 'rgba(0,0,0,0.6)',
-                                            padding: 8,
-                                            borderRadius: 20,
-                                        }}
-                                    >
-                                        <Ionicons name="trash-outline" size={24} color={COLORS.white} />
-                                    </TouchableOpacity>
+                                            onPress={() => deleteImage()}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 10,
+                                                right: 10,
+                                                backgroundColor: 'rgba(0,0,0,0.6)',
+                                                padding: 8,
+                                                borderRadius: 20,
+                                            }}
+                                        >
+                                            <Ionicons name="trash-outline" size={24} color={COLORS.white} />
+                                        </TouchableOpacity>
                                     )}
 
                                     {/* Thumbnail List */}
@@ -395,30 +404,30 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                 </TouchableOpacity>
                             )}
                         </View>
-                        { booking.status !== 6 && (
+                        {booking.status !== 6 && (
                             <View style={{ paddingTop: 20 }}>
-                            <TouchableOpacity
-                                style={{
-                                    backgroundColor: COLORS.primary,
-                                    padding: 15,
-                                    borderRadius: 10,
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    width: '100%',
-                                }}
-                                onPress={() => {
+                                <TouchableOpacity
+                                    style={{
+                                        backgroundColor: COLORS.primary,
+                                        padding: 15,
+                                        borderRadius: 10,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        width: '100%',
+                                    }}
+                                    onPress={() => {
 
-                                    handleReview();
-                                    navigation.reset({
-                                        index: 0,
-                                        routes: [{ name: 'BottomNavigation', params: { screen: 'MyBookings' } }],
-                                    });
-                                }}
-                            >
-                                <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>Submit Review</Text>
-                            </TouchableOpacity>
-                        </View>
-                        )} 
+                                        handleReview();
+                                        navigation.reset({
+                                            index: 0,
+                                            routes: [{ name: 'BottomNavigation', params: { screen: 'MyBookings' } }],
+                                        });
+                                    }}
+                                >
+                                    <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>Submit Review</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
                     </View>
                 </ScrollView >
             </View >

@@ -34,7 +34,7 @@ import ProviderDashboard from '../screens/ProviderPanel/ProviderDashboard';
 import MyServices from '../screens/ProviderPanel/MyServices';
 import MyBookingDetails from '../screens/MyBookings/MyBookingDetails';
 import MyBookings from '../screens/MyBookings/MyBookings';
-import QuoteCleaning from '../screens/Products/QuoteCleaning';
+import QuoteService from '../screens/Products/QuoteService';
 import BookingAddReview from '../screens/Products/BookingAddReview';
 import SettlerAddService from '../screens/ProviderPanel/SettlerAddService';
 import ServiceCatalogue, { ServiceCatalogueForm } from '../screens/ServiceCatalogueForm';
@@ -93,7 +93,7 @@ const StackNavigator = () => {
 				<StackComponent.Screen name="ServiceCatalogueForm" component={ServiceCatalogueForm}/>
 
 				{/* Services Quotation Screens */}
-				<StackComponent.Screen name="QuoteCleaning" component={QuoteCleaning} />
+				<StackComponent.Screen name="QuoteService" component={QuoteService} />
 
 			</StackComponent.Navigator>
 		</View>

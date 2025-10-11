@@ -33,9 +33,9 @@ interface AddonCategory {
 }
 
 
-type QuoteCleaningScreenProps = StackScreenProps<RootStackParamList, "QuoteCleaning">;
+type QuoteServiceScreenProps = StackScreenProps<RootStackParamList, "QuoteService">;
 
-const QuoteCleaning = ({ navigation, route }: QuoteCleaningScreenProps) => {
+const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
   const [service, setService] = useState(route.params.service)
 
   const extrasOptions = [
@@ -1174,4 +1174,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default QuoteCleaning;
+export default QuoteService;

@@ -31,6 +31,8 @@ export interface Catalogue {
 
     //records
     isActive: boolean;
+    bookingsCount?: number;
+    averageRatings?: number;
     createAt: any;
     updateAt: any;
 }
@@ -108,6 +110,9 @@ const mapDocToCatalogue = (doc: any): Catalogue => {
 
         //records
         isActive: catalogueData.isActive,
+
+        bookingsCount: catalogueData.bookingsCount,
+        averageRatings: catalogueData.averageRatings,
         createAt: catalogueData.createAt,
         updateAt: catalogueData.updateAt
     }

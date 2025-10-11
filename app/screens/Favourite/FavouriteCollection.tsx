@@ -103,7 +103,7 @@ const Map = ({ navigation }: FavouriteCollectionScreenProps) => {
                   description={service.description}
                   location={''}
                   title={service.title}
-                  onPress={() => navigation.navigate('QuoteCleaning', { service: service })}
+                  onPress={() => navigation.navigate('QuoteService', { service: service })}
                   product={true}
                   ratingCount={0} 
                   deposit={0}

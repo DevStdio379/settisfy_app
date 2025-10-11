@@ -73,7 +73,7 @@ export const SearchResults = ({ navigation, route }: SearchResultsScreenProps) =
                                     description={item.description}
                                     location={item.address}
                                     title={item.title}
-                                    onPress={() => navigation.navigate('QuoteCleaning', { service: item })}
+                                    onPress={() => navigation.navigate('QuoteService', { service: item })}
                                     // onPress5={() => addItemToWishList(item)}
                                     product={true}
                                     deposit={item.depositAmount}

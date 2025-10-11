@@ -53,7 +53,7 @@ export type RootStackParamList = {
     FavouriteCollection: undefined;
 
     // Services Quotatation Screens
-    QuoteCleaning: {service: Catalogue};
+    QuoteService: {service: Catalogue};
     CatalogueList: undefined;
 
 };

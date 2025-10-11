@@ -57,7 +57,7 @@ export const Home = ({ navigation }: HomeScreenProps) => {
                     location={''}
                     deposit={0}
                     title={item.title}
-                    onPress={() => navigation.navigate('QuoteCleaning', { service: item })}
+                    onPress={() => navigation.navigate('QuoteService', { service: item })}
                     product={true}
                     averageRating={item.averageRating}
                     ratingCount={item.ratingCount}

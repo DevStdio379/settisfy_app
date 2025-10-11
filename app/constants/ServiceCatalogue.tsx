@@ -5,7 +5,7 @@ export const serviceCatalogue = [
         image: require('../assets/images/services-images/general-cleaning.jpg'),
         description: 'General house cleaning',
         category: 'Essentials',
-        navigateLink: 'QuoteCleaning'
+        navigateLink: 'QuoteService'
     },
     {
         id: '2',
