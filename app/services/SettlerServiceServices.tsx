@@ -4,6 +4,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } fr
 import { doc, getDoc } from 'firebase/firestore';
 import { set } from 'date-fns';
 import { Catalogue } from './CatalogueServices';
+import { Address } from './AddressServices';
 
 export interface SettlerService {
     id?: string;
@@ -12,7 +13,6 @@ export interface SettlerService {
     settlerLastName: string;
 
     selectedCatalogue: Catalogue;
-    isExperienced: boolean;
     serviceCardImageUrls: string[];
     serviceCardBrief: string;
     isAvailableImmediately: boolean;
@@ -20,18 +20,12 @@ export interface SettlerService {
     serviceStartTime: string;
     serviceEndTime: string;
 
-    addressId: string;
-    latitude: number;
-    longitude: number;
-    addressName: string;
-    address: string;
-    addressAdditionalDetails: string;
-    postcode: string;
+    serviceLocation: string;
 
     qualifications: string[];
     isActive: boolean;
-    ratingCount?: number;
-    averageRating?: number;
+    jobsCount: number;
+    averageRatings: number;
     createdAt: any;
     updatedAt: any;
     
@@ -47,7 +41,6 @@ const mapDocToSettlerService = (doc: any): SettlerService => {
     settlerLastName: settlerServiceData.settlerLastName,
 
     selectedCatalogue: settlerServiceData.selectedCatalogue,
-    isExperienced: settlerServiceData.isExperienced,
     serviceCardImageUrls: settlerServiceData.serviceCardImageUrls,
     serviceCardBrief: settlerServiceData.serviceCardBrief,
     isAvailableImmediately: settlerServiceData.isAvailableImmediately,
@@ -55,18 +48,12 @@ const mapDocToSettlerService = (doc: any): SettlerService => {
     serviceStartTime: settlerServiceData.serviceStartTime,
     serviceEndTime: settlerServiceData.serviceEndTime,
 
-    addressId: settlerServiceData.addressId,
-    latitude: settlerServiceData.latitude,
-    longitude: settlerServiceData.longitude,
-    addressName: settlerServiceData.addressName,
-    address: settlerServiceData.address,
-    addressAdditionalDetails: settlerServiceData.addressAdditionalDetails,
-    postcode: settlerServiceData.postcode,
+    serviceLocation: settlerServiceData.serviceLocation,
 
     qualifications: settlerServiceData.qualifications,
     isActive: settlerServiceData.isActive,
-    ratingCount: settlerServiceData.ratingCount,
-    averageRating: settlerServiceData.averageRating,
+    jobsCount: settlerServiceData.jobsCount,
+    averageRatings: settlerServiceData.averageRatings,
     createdAt: settlerServiceData.createdAt,
     updatedAt: settlerServiceData.updatedAt
   };
@@ -82,7 +69,7 @@ export const uploadImages = async (imageName: string, imagesUrl: string[]) => {
       const blob = await response.blob();
 
       // Generate unique filename
-      const filename = `settler_service_assets/${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
+      const filename = `settler_services/${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
       const storageRef = ref(storage, filename);
 
       // Upload file
@@ -120,7 +107,7 @@ export const createSettlerService = async (serviceData: SettlerService) => {
     
         if (serviceData.serviceCardImageUrls && serviceData.serviceCardImageUrls.length > 0) {
           const uploadedUrls = await uploadImages(docRef.id, serviceData.serviceCardImageUrls);
-          await updateDoc(doc(db, 'settler_job_assets', docRef.id), { imageUrls: uploadedUrls });
+          await updateDoc(doc(db, 'settler_services', docRef.id), { serviceCardImageUrls: uploadedUrls });
         }
         console.log('Settler job saved successfully');
       } catch (error) {
@@ -176,7 +163,7 @@ export const updateSettlerService = async (settlerServiceId: string, updatedSett
 
 export const deleteSettlerService = async (serviceId: string) => {
   try {
-    const catalogueRef = doc(db, 'catalogue', serviceId);
+    const catalogueRef = doc(db, 'settler_services', serviceId);
     await deleteDoc(catalogueRef);
     console.log('Settler service deleted successfully');
   } catch (error) {

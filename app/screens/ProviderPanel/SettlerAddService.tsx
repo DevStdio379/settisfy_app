@@ -63,8 +63,8 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
 
     const [qualifications, setQualifications] = useState<string[]>();
     const [isActive, setIsActive] = useState<boolean>(false);
-    const [ratingCount, setRatingCount] = useState<number>(0);
-    const [averageRating, setAverageRating] = useState<number>(0);
+    const [jobsCount, setRatingCount] = useState<number>(0);
+    const [averageRatings, setAverageRating] = useState<number>(0);
     const [createdAt, setCreatedAt] = useState<any>();
     const [updatedAt, setUpdatedAt] = useState<any>();
 
@@ -119,8 +119,8 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
 
                             setQualifications(selectedSettlerService.qualifications);
                             setIsActive(selectedSettlerService.isActive);
-                            setRatingCount(selectedSettlerService.ratingCount || 0);
-                            setAverageRating(selectedSettlerService.averageRating || 0);
+                            setRatingCount(selectedSettlerService.jobsCount || 0);
+                            setAverageRating(selectedSettlerService.averageRatings || 0);
                             setCreatedAt(selectedSettlerService.createdAt);
                             setUpdatedAt(selectedSettlerService.updatedAt);
                         }
@@ -302,8 +302,6 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
                 if (settlerService === null) {
                     if (selectedCatalogue) {
                         await createSettlerService({
-                            id: serviceId,
-
                             settlerId: settlerId,
                             settlerFirstName: settlerFirstName,
                             settlerLastName: settlerLastName,
@@ -327,8 +325,8 @@ const SettlerAddService = ({ navigation, route }: SettlerAddServiceScreenProps) 
 
                             qualifications: qualifications ?? [],
                             isActive: isActive,
-                            ratingCount: ratingCount,
-                            averageRating: averageRating,
+                            jobsCount: jobsCount,
+                            averageRatings: averageRatings,
                             createdAt: createdAt ?? new Date(),
                             updatedAt: updatedAt ?? new Date(),
                         });

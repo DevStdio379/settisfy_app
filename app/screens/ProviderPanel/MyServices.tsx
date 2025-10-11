@@ -73,7 +73,7 @@ const MyServices = ({ navigation, route }: MyServicesScreenProps) => {
                                 borderRadius: 50,
                                 padding: 10,
                             }}
-                            onPress={() => navigation.navigate('SettlerAddService', { settlerService: null })}
+                            onPress={() => navigation.navigate('SettlerServiceForm', { settlerService: null })}
                         >
                             <Ionicons name="add" size={25} color={COLORS.title} />
                         </TouchableOpacity>
@@ -159,7 +159,7 @@ const MyServices = ({ navigation, route }: MyServicesScreenProps) => {
                                                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                                                     </View>
                                                                     <Text numberOfLines={1} style={{ fontSize: 13, color: COLORS.black, opacity: 0.7 }}>
-                                                                        {data.address ? data.address : 'No address provided'}
+                                                                        {data.serviceLocation ? data.serviceLocation : 'No address provided'}
                                                                     </Text>
                                                                 </View>
                                                             </View>
