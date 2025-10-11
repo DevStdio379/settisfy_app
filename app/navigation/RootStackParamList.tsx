@@ -43,7 +43,6 @@ export type RootStackParamList = {
     SettlerAddReview: { reviewId: string, booking: Booking };
     MyServices: undefined;
     SettlerServiceForm: { settlerService: SettlerService | null };
-    SettlerAddService: {settlerService: SettlerService | null};
     ProviderDashboard: undefined;
     Messages: undefined;
 

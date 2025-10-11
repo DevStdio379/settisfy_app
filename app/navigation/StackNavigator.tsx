@@ -7,7 +7,6 @@ import OnBoarding from '../screens/Auth/Onboarding';
 import SignUp from '../screens/Auth/SignUp';
 import SignIn from '../screens/Auth/SignIn';
 import MyCalendar from '../screens/ProviderPanel/MyRequests';
-import AddListing from '../screens/ProviderPanel/SettlerAddService';
 import EditAttributes from '../screens/Profile/EditAttributes';
 import PersonalDetails from '../screens/Profile/PersonalDetails';
 import AddressBook from '../screens/Profile/AddressBook';
@@ -36,7 +35,6 @@ import MyBookingDetails from '../screens/MyBookings/MyBookingDetails';
 import MyBookings from '../screens/MyBookings/MyBookings';
 import QuoteService from '../screens/Products/QuoteService';
 import BookingAddReview from '../screens/Products/BookingAddReview';
-import SettlerAddService from '../screens/ProviderPanel/SettlerAddService';
 import ServiceCatalogue, { ServiceCatalogueForm } from '../screens/ServiceCatalogueForm';
 import SettlerAddReview from '../screens/ProviderPanel/SettlerAddReview';
 import SettlerServiceForm from '../screens/ProviderPanel/SettlerServiceForm';
@@ -85,7 +83,6 @@ const StackNavigator = () => {
 				<StackComponent.Screen name="ProviderDashboard" component={ProviderDashboard} />
 				<StackComponent.Screen name="MyServices" component={MyServices} />
 				<StackComponent.Screen name="SettlerServiceForm" component={SettlerServiceForm} />
-				<StackComponent.Screen name="SettlerAddService" component={SettlerAddService} />
 				<StackComponent.Screen name="MyRequestDetails" component={LendingDetails} />
 				<StackComponent.Screen name="SettlerAddReview" component={SettlerAddReview} />
 
