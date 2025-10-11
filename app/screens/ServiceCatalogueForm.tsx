@@ -138,6 +138,8 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
           subOptions: opt.subOptions,
           multipleSelect: opt.multipleSelect // or true, depending on your logic
         })),
+        bookingsCount: 0,
+        averageRatings: 0,
         isActive: selectedStatus === 'active' ? true : false,
         createAt: new Date(),
         updateAt: new Date()

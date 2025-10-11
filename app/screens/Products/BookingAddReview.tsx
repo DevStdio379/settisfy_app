@@ -177,9 +177,12 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
             // updating ratings for catalogue & settler
 
             const selectedCatalogue = await fetchSelectedCatalogue(booking.catalogueService.id || '');
-            await updateCatalogue(booking.catalogueService.id || '', {
-                averageRatings: selectedCatalogue && selectedCatalogue.averageRatings === null ? 0 : 4,
+            
+            if (selectedCatalogue) {
+                await updateCatalogue(booking.catalogueService.id || '', {
+                averageRatings: (selectedCatalogue.averageRatings + overallRating) / selectedCatalogue.bookingsCount,
             });
+            }
 
             Alert.alert('Review created successfully.');
         } catch (error) {

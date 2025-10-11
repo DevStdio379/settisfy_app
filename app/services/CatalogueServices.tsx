@@ -31,8 +31,8 @@ export interface Catalogue {
 
     //records
     isActive: boolean;
-    bookingsCount?: number;
-    averageRatings?: number;
+    bookingsCount: number;
+    averageRatings: number;
     createAt: any;
     updateAt: any;
 }

@@ -59,8 +59,8 @@ export const Home = ({ navigation }: HomeScreenProps) => {
                     title={item.title}
                     onPress={() => navigation.navigate('QuoteService', { service: item })}
                     product={true}
-                    averageRating={item.averageRating}
-                    ratingCount={item.ratingCount}
+                    averageRating={item.averageRatings}
+                    ratingCount={item.bookingsCount}
                 />
             </View>
         );

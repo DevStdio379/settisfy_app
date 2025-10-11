@@ -19,6 +19,7 @@ import TabButtonStyleHome from "../../components/Tabs/TabButtonStyleHome";
 import { createBooking } from "../../services/BookingServices";
 import { CategoryDropdown } from "../../components/CategoryDropdown";
 import { launchCamera, launchImageLibrary } from "react-native-image-picker";
+import { updateCatalogue } from "../../services/CatalogueServices";
 
 interface AddonOption {
   label: string;
@@ -314,6 +315,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
 
     const bookingId = await createBooking(bookingData);
     if (bookingId) {
+      await updateCatalogue(service.id || '', {bookingsCount: service.bookingsCount + 1})
       Alert.alert('Success', `Booking created successfully with ID: ${bookingId}`);
       navigation.navigate('PaymentSuccess', {
         bookingId: bookingId,
