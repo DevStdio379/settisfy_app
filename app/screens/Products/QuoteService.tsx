@@ -20,6 +20,7 @@ import { createBooking } from "../../services/BookingServices";
 import { CategoryDropdown } from "../../components/CategoryDropdown";
 import { launchCamera, launchImageLibrary } from "react-native-image-picker";
 import { updateCatalogue } from "../../services/CatalogueServices";
+import { fetchReviewsByCatalogueId, Review } from "../../services/ReviewServices";
 
 interface AddonOption {
   label: string;
@@ -38,39 +39,6 @@ type QuoteServiceScreenProps = StackScreenProps<RootStackParamList, "QuoteServic
 
 const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
   const [service, setService] = useState(route.params.service)
-
-  const extrasOptions = [
-    { id: 1, label: "Fridge Cleaning", price: 15, time: 0.5 },
-    { id: 2, label: "Oven Cleaning", price: 20, time: 0.5 },
-    { id: 3, label: "Window Cleaning", price: 25, time: 1 },
-  ];
-
-  const reviews = [
-    {
-      borrowerProfilePicture: "https://randomuser.me/api/portraits/men/32.jpg",
-      borrowerFirstName: "John",
-      borrowerLastName: "Doe",
-      borrowerUpdatedAt: "2024-06-01T10:00:00Z",
-      borrowerPublicReview: "Great service! The team was punctual and did an excellent job.",
-      borrowerOverallRating: 5,
-    },
-    {
-      borrowerProfilePicture: "https://randomuser.me/api/portraits/women/44.jpg",
-      borrowerFirstName: "Jane",
-      borrowerLastName: "Smith",
-      borrowerUpdatedAt: "2024-05-20T14:30:00Z",
-      borrowerPublicReview: "Very thorough cleaning, friendly staff. Will book again.",
-      borrowerOverallRating: 4,
-    },
-    {
-      borrowerProfilePicture: "https://randomuser.me/api/portraits/men/65.jpg",
-      borrowerFirstName: "Alex",
-      borrowerLastName: "Johnson",
-      borrowerUpdatedAt: "2024-05-10T09:15:00Z",
-      borrowerPublicReview: "Satisfied with the service. Quick and efficient.",
-      borrowerOverallRating: 4,
-    },
-  ]
 
   // Payment Methods
   const paymentMethods = [
@@ -110,6 +78,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
   const basePrice = service ? service.basePrice : 0;
   const [totalQuote, setTotalQuote] = useState(basePrice);
   const platformFee = 2; // Fixed platform fee
+  const [reviews, setReviews] = useState<Review[]>();
 
   const handleImageSelect = () => {
     if (notesToSettlerImageUrls.length >= 5) {
@@ -316,7 +285,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
 
     const bookingId = await createBooking(bookingData);
     if (bookingId) {
-      await updateCatalogue(service.id || '', {bookingsCount: service.bookingsCount + 1})
+      await updateCatalogue(service.id || '', { bookingsCount: service.bookingsCount + 1 })
       Alert.alert('Success', `Booking created successfully with ID: ${bookingId}`);
       navigation.navigate('PaymentSuccess', {
         bookingId: bookingId,
@@ -337,7 +306,14 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
 
   // load
   useEffect(() => {
-    getAddresses();
+    const fetchData = async () => {
+      await getAddresses();
+      const reviewsData = await fetchReviewsByCatalogueId(service.id || '');
+      // do something with reviewsData, e.g.:
+      setReviews(reviewsData);
+    };
+
+    fetchData();
   }, []);
 
 
@@ -581,7 +557,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                         </View>
                       </View>
                     )}
-                    {tabIndex === 3 && (
+                    {tabIndex === 3 && reviews && (
                       <View style={{ paddingRight: 40 }}>
                         {/* Static reviews */}
                         {reviews.map((review, reviewIndex) => (
@@ -594,21 +570,21 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                             }}
                           >
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                              <Image
+                              {/* <Image
                                 source={{ uri: review.borrowerProfilePicture }}
                                 style={{ width: 40, height: 40, borderRadius: 40, marginRight: 10 }}
-                              />
+                              /> */}
                               <View>
                                 <Text style={{ fontSize: 16, fontWeight: 'bold', color: COLORS.title }}>
-                                  {`${review.borrowerFirstName} ${review.borrowerLastName}`}
+                                  {`${review.customerId} ${review.customerId}`}
                                 </Text>
                                 <Text style={{ fontSize: 14, color: COLORS.blackLight }}>
-                                  {new Date(review.borrowerUpdatedAt).toLocaleDateString()}
+                                  {new Date(review.customerCreateAt).toLocaleDateString()}
                                 </Text>
                               </View>
                             </View>
                             <Text style={{ fontSize: 14, color: COLORS.black, marginVertical: 10 }}>
-                              {review.borrowerPublicReview}
+                              {review.customerFeedback}
                             </Text>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                               {Array.from({ length: 5 }, (_, i) => (
@@ -616,11 +592,11 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                                   key={i}
                                   name="star"
                                   size={16}
-                                  color={i < review.borrowerOverallRating ? COLORS.primary : COLORS.blackLight}
+                                  color={i < review.customerOverallRating!  ? COLORS.primary : COLORS.blackLight}
                                 />
                               ))}
                               <Text style={{ fontSize: 14, color: COLORS.black, marginLeft: 5 }}>
-                                {review.borrowerOverallRating}
+                                {review.customerOverallRating}
                               </Text>
                             </View>
                             <View style={{ height: 1, backgroundColor: COLORS.blackLight, marginVertical: 10 }} />

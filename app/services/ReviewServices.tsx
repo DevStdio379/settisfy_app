@@ -42,44 +42,44 @@ export const getReviewByBookingId = async (productId: string, bookingId: string)
 };
 
 export const uploadImages = async (imageName: string, imagesUrl: string[]) => {
-    const urls: string[] = [];
+  const urls: string[] = [];
 
-    for (const uri of imagesUrl) {
-        try {
-            // Convert to Blob
-            const response = await fetch(uri);
-            const blob = await response.blob();
+  for (const uri of imagesUrl) {
+    try {
+      // Convert to Blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
 
-            // Generate unique filename
-            const filename = `reviews/${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
-            const storageRef = ref(storage, filename);
+      // Generate unique filename
+      const filename = `reviews/${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
+      const storageRef = ref(storage, filename);
 
-            // Upload file
-            const uploadTask = uploadBytesResumable(storageRef, blob);
+      // Upload file
+      const uploadTask = uploadBytesResumable(storageRef, blob);
 
-            await new Promise<void>((resolve, reject) => {
-                uploadTask.on(
-                    "state_changed",
-                    snapshot => {
-                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                        console.log(`Upload ${filename}: ${progress.toFixed(2)}% done`);
-                    },
-                    reject, // Handle error
-                    async () => {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        urls.push(downloadURL);
-                        resolve();
-                    }
-                );
-            });
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          snapshot => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Upload ${filename}: ${progress.toFixed(2)}% done`);
+          },
+          reject, // Handle error
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            urls.push(downloadURL);
+            resolve();
+          }
+        );
+      });
 
-        } catch (error) {
-            console.error("Upload failed:", error);
-        }
+    } catch (error) {
+      console.error("Upload failed:", error);
     }
+  }
 
-    console.log("All images uploaded:", urls);
-    return urls; // Return all uploaded image URLs
+  console.log("All images uploaded:", urls);
+  return urls; // Return all uploaded image URLs
 };
 
 
@@ -114,26 +114,39 @@ export const updateReview = async (productId: string, reviewId: string, updatedR
   }
 };
 
+const mapDocToReviewService = (doc: any): Review => {
+  const data = doc.data();
+  return {
+    id: doc.id,
+    bookingId: data.bookingId,
+    customerId: data.customerId,
+    settlerId: data.settlerId,
+    catalogueServiceId: data.catalogueServiceId,
+    settlerServiceId: data.settlerServiceId,
+
+    // borrowerReview
+    customerOverallRating: data.customerOverallRating,
+    customerFeedback: data.customerFeedback,
+    customerOtherComment: data.customerOtherComment,
+    customerReviewImageUrls: data.customerReviewImageUrls,
+    customerCreateAt: data.customerCreateAt,
+    customerUpdatedAt: data.customerUpdatedAt,  // Convert Firestore timestamp to JavaScript Date
+  };
+}
+
 
 // Function to fetch reviews based on productId
-export const getReviewsByProductId = async (productId: string) => {
+export const fetchReviewsByCatalogueId = async (catalogueId: string) => {
   try {
-    const reviewsRef = collection(db, 'reviews');
-    const querySnapshot = await getDocs(reviewsRef);
-    const reviews = querySnapshot.docs
-      .map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          customerOverallRating: data.customerOverallRating,
-          borrowerPublicReview: data.borrowerPublicReview,
-          borrowerUpdatedAt: data.borrowerUpdatedAt.toDate(),  // Convert Firestore timestamp to JavaScript Date
-          customerReviewerId: data.customerReviewerId,
-          productId: data.productId
-        };
-      })
-      .filter(review => review.productId === productId);  // Filter reviews by productId
-    return reviews;
+    const catalogueReviewList: Review[] = [];
+    const snapshot = await getDocs(collection(db, 'reviews'));
+    snapshot.forEach(doc => {
+      const settlerService = mapDocToReviewService(doc);
+      if (settlerService.catalogueServiceId === catalogueId) {
+        catalogueReviewList.push(settlerService);
+      }
+    });
+    return catalogueReviewList;
   } catch (error) {
     console.error('Error fetching reviews: ', error);
     throw error;  // Throwing the error to handle it at the call site
