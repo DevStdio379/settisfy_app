@@ -11,7 +11,7 @@ import Swiper from "react-native-swiper";
 import { Calendar } from "react-native-calendars";
 import { format, set, setMonth } from "date-fns";
 import { GlobalStyleSheet } from "../../constants/StyleSheet";
-import { useUser } from "../../context/UserContext";
+import { fetchSelectedUser, useUser } from "../../context/UserContext";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { Address, fetchUserAddresses } from "../../services/AddressServices";
 import Input from "../../components/Input/Input";
@@ -20,7 +20,9 @@ import { createBooking } from "../../services/BookingServices";
 import { CategoryDropdown } from "../../components/CategoryDropdown";
 import { launchCamera, launchImageLibrary } from "react-native-image-picker";
 import { updateCatalogue } from "../../services/CatalogueServices";
-import { fetchReviewsByCatalogueId, Review } from "../../services/ReviewServices";
+import { fetchReviewsByCatalogueId, Review, ReviewWithUser } from "../../services/ReviewServices";
+import ImageViewer from "../../components/ImageViewer";
+import FeedbackPills from "../../components/FeedbackPills";
 
 interface AddonOption {
   label: string;
@@ -78,7 +80,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
   const basePrice = service ? service.basePrice : 0;
   const [totalQuote, setTotalQuote] = useState(basePrice);
   const platformFee = 2; // Fixed platform fee
-  const [reviews, setReviews] = useState<Review[]>();
+  const [reviews, setReviews] = useState<ReviewWithUser[]>();
 
   const handleImageSelect = () => {
     if (notesToSettlerImageUrls.length >= 5) {
@@ -309,8 +311,17 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
     const fetchData = async () => {
       await getAddresses();
       const reviewsData = await fetchReviewsByCatalogueId(service.id || '');
-      // do something with reviewsData, e.g.:
-      setReviews(reviewsData);
+
+      const reviewsWithReviewerData = await Promise.all(
+        reviewsData.map(async (review) => {
+          const reviewerData = await fetchSelectedUser(review.customerId);
+          return {
+            ...review,
+            reviewer: reviewerData
+          }
+        })
+      )
+      setReviews(reviewsWithReviewerData);
     };
 
     fetchData();
@@ -570,35 +581,57 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                             }}
                           >
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                              {/* <Image
-                                source={{ uri: review.borrowerProfilePicture }}
-                                style={{ width: 40, height: 40, borderRadius: 40, marginRight: 10 }}
-                              /> */}
-                              <View>
+                              {
+                                review.reviewer?.profileImageUrl ? (
+                                  <Image
+                                    source={{ uri: review.reviewer.profileImageUrl }}
+                                    style={{
+                                      width: 60,
+                                      height: 60,
+                                      borderRadius: 20,
+                                    }}
+                                  />
+                                ) : (
+                                  <View
+                                    style={{
+                                      width: 60,
+                                      height: 60,
+                                      borderRadius: 20,
+                                      backgroundColor: COLORS.card,
+                                      justifyContent: 'center',
+                                      alignItems: 'center',
+                                    }}
+                                  >
+                                    <Ionicons name="person" size={30} color={COLORS.blackLight} />
+                                  </View>
+                                )
+                              }
+                              <View style={{ paddingLeft: 10 }}>
                                 <Text style={{ fontSize: 16, fontWeight: 'bold', color: COLORS.title }}>
-                                  {`${review.customerId} ${review.customerId}`}
+                                  {review.reviewer?.firstName} {review.reviewer?.lastName}
                                 </Text>
-                                <Text style={{ fontSize: 14, color: COLORS.blackLight }}>
-                                  {new Date(review.customerCreateAt).toLocaleDateString()}
+                                <Text style={{ fontSize: 14 }}>
+                                  {review.reviewer?.createAt?.toDate
+                                    ? review.reviewer.createAt.toDate().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year:'numeric' })
+                                    : '—'}
                                 </Text>
                               </View>
                             </View>
-                            <Text style={{ fontSize: 14, color: COLORS.black, marginVertical: 10 }}>
-                              {review.customerFeedback}
-                            </Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 10 }}>
                               {Array.from({ length: 5 }, (_, i) => (
                                 <Ionicons
                                   key={i}
                                   name="star"
                                   size={16}
-                                  color={i < review.customerOverallRating!  ? COLORS.primary : COLORS.blackLight}
+                                  color={i < review.customerOverallRating! ? COLORS.primary : COLORS.blackLight}
                                 />
                               ))}
-                              <Text style={{ fontSize: 14, color: COLORS.black, marginLeft: 5 }}>
-                                {review.customerOverallRating}
-                              </Text>
                             </View>
+                            <Text style={{ fontSize: 14, color: COLORS.black, }}>
+                              {review.customerOtherComment}
+                            </Text>
+                            <FeedbackPills feedbacks={review.customerFeedback || []} />
+                            <ImageViewer imageUrls={review.customerReviewImageUrls || []} />
                             <View style={{ height: 1, backgroundColor: COLORS.blackLight, marginVertical: 10 }} />
                           </View>
                         ))}

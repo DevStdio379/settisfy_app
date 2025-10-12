@@ -19,6 +19,7 @@ import type { AppDispatch } from '../../redux/store';
 import { fetchFavorites } from '../../redux/favoriteSlice';
 import FavoriteButton from '../../components/FavoriteButton';
 import { Catalogue, fetchCatalogue } from '../../services/CatalogueServices';
+import { categories } from '../../constants/ServiceCategory';
 
 type HomeScreenProps = StackScreenProps<RootStackParamList, 'Home'>
 
@@ -89,7 +90,7 @@ export const Home = ({ navigation }: HomeScreenProps) => {
     const scrollViewHome = useRef<any>(null);
 
 
-    const buttons = ['All', 'Cleaning', 'Plumbing', 'Electrical', 'Delivery', 'Others'];
+    const buttons = ['All', ...categories.map(c => c.label)];
 
     const scrollX = useRef(new Animated.Value(0)).current;
     const onCLick = (i: any) => scrollViewHome.current.scrollTo({ x: i * SIZES.width });

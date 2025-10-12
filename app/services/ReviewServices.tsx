@@ -3,6 +3,7 @@ import { collection, getDocs, addDoc, doc, updateDoc, getDoc, query, where } fro
 import { getStorage, ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';  // Import Firebase storage functions
 import { Borrowing } from './BorrowingServices';
 import { Alert } from 'react-native';
+import { User } from '../context/UserContext';
 
 // Define the Review interface
 export interface Review {
@@ -20,6 +21,10 @@ export interface Review {
   customerReviewImageUrls?: string[];
   customerCreateAt?: any;
   customerUpdatedAt?: any;
+}
+
+export interface ReviewWithUser extends Review {
+  reviewer: User | null;
 }
 
 // Function to fetch a review based on borrowingId
