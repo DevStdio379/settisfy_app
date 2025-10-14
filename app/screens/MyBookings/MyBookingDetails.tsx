@@ -354,15 +354,12 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                 ) : (
                                                     <View style={{ width: '100%', }}>
                                                         <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10 }}>
-                                                            <Text style={{ fontSize: 14, color: COLORS.black }}>
-                                                                Available Settler
-                                                            </Text>
-
+                                                            <Text style={{ fontSize: 14, color: COLORS.black }}>Preferred Settler</Text>
                                                             <TouchableOpacity
                                                                 onPress={() => { setIndex(1) }}
                                                             >
                                                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                                    <Text style={{ fontSize: 13, color: COLORS.black, marginRight: 4 }}>
+                                                                    <Text style={{ fontSize: 13, color: COLORS.blackLight, marginRight: 4 }}>
                                                                         More Settler
                                                                     </Text>
                                                                     <Ionicons name="chevron-forward-outline" size={18} color={COLORS.blackLight2} />
@@ -370,75 +367,124 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                             </TouchableOpacity>
 
                                                         </View>
-                                                        {bookingWithSettlerProfiles && bookingWithSettlerProfiles.slice(0, 1).map((profile, index) => {
-                                                            const isSelected = selectedSettlerId === profile.settlerProfile?.uid;
-                                                            return (
+                                                        {bookingWithSettlerProfiles && bookingWithSettlerProfiles[profileIndex] && (
+                                                            <TouchableOpacity
+                                                                key={index}
+                                                                style={[{ paddingVertical: 10, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: "#ccc", backgroundColor: "#fff", }, bookingWithSettlerProfiles[profileIndex].settlerProfile?.uid === selectedSettlerId && { borderColor: COLORS.primary }]}
+                                                                onPress={async () => {
+                                                                    setIndex(2);
+                                                                    setProfileIndex(index);
+                                                                }}
+                                                                activeOpacity={0.8}
+                                                            >
+
+                                                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }}>
+                                                                    <View>
+                                                                        {
+                                                                            bookingWithSettlerProfiles[profileIndex].settlerProfile?.profileImageUrl ? (
+                                                                                <Image
+                                                                                    source={{ uri: bookingWithSettlerProfiles[profileIndex].settlerProfile?.profileImageUrl }}
+                                                                                    style={{
+                                                                                        width: 50,
+                                                                                        height: 50,
+                                                                                        borderRadius: 20,
+                                                                                    }}
+                                                                                />
+                                                                            ) : (
+                                                                                <View
+                                                                                    style={{
+                                                                                        width: 50,
+                                                                                        height: 50,
+                                                                                        borderRadius: 20,
+                                                                                        backgroundColor: COLORS.card,
+                                                                                        justifyContent: 'center',
+                                                                                        alignItems: 'center',
+                                                                                    }}
+                                                                                >
+                                                                                    <Ionicons name="person" size={30} color={COLORS.blackLight} />
+                                                                                </View>
+                                                                            )
+                                                                        }
+                                                                    </View>
+                                                                    <View style={{ flex: 7, paddingLeft: 20 }}>
+                                                                        <TouchableOpacity onPress={() => {
+                                                                            setProfileIndex(index);
+                                                                            setIndex(2);
+                                                                        }}>
+                                                                            <View style={{}}>
+                                                                                <Text style={{ fontSize: 17, fontWeight: 'bold', color: COLORS.black }} numberOfLines={1} ellipsizeMode="tail">{bookingWithSettlerProfiles[profileIndex].settlerProfile?.firstName} {bookingWithSettlerProfiles[profileIndex].settlerProfile?.lastName} [{profileIndex}]</Text>
+                                                                            </View>
+                                                                        </TouchableOpacity>
+                                                                        <Text style={{ fontSize: 14, color: COLORS.black }}>{bookingWithSettlerProfiles[profileIndex].settlerJobProfile?.averageRatings === 0 ? 'No ratings' : `${bookingWithSettlerProfiles[profileIndex].settlerJobProfile?.averageRatings} (${bookingWithSettlerProfiles[profileIndex].settlerJobProfile?.jobsCount})`}</Text>
+                                                                    </View>
+                                                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                                                        <Ionicons name="chevron-forward-outline" size={25} color={COLORS.blackLight2} />
+                                                                    </View>
+                                                                </View>
+                                                            </TouchableOpacity>
+                                                        )}
+                                                        <View style={[GlobalStyleSheet.line, { marginTop: 10 }]} />
+                                                        <View style={{ width: "100%", alignItems: "center", justifyContent: "center", paddingTop: 10 }}>
+                                                            <Text style={{ fontWeight: 'bold' }}>Select this settler?</Text>
+                                                            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                                                 <TouchableOpacity
-                                                                    key={index}
-                                                                    style={[{ paddingVertical: 10, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: "#ccc", backgroundColor: "#fff", }, isSelected && { borderColor: COLORS.primary }]}
+                                                                    style={{
+                                                                        backgroundColor: COLORS.primary,
+                                                                        padding: 10,
+                                                                        borderRadius: 10,
+                                                                        marginVertical: 10,
+                                                                        width: '40%',
+                                                                        alignItems: 'center',
+                                                                    }}
+                                                                    onPress={() => { }}
+                                                                >
+                                                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>No</Text>
+                                                                </TouchableOpacity>
+                                                                <TouchableOpacity
+                                                                    style={{
+                                                                        backgroundColor: COLORS.primary,
+                                                                        padding: 10,
+                                                                        borderRadius: 10,
+                                                                        marginVertical: 10,
+                                                                        width: '40%',
+                                                                        alignItems: 'center',
+                                                                    }}
                                                                     onPress={async () => {
-                                                                        await updateBooking(booking.id || 'undefined', {
+                                                                        if (!booking.acceptors) {
+                                                                            Alert.alert('No settlers found.');
+                                                                            return;
+                                                                        }
+
+                                                                        const selectedAcceptor = booking.acceptors[profileIndex];
+                                                                        if (!selectedAcceptor) {
+                                                                            Alert.alert('Select a settler');
+                                                                            return;
+                                                                        }
+                                                                        await updateBooking(booking.id || '', {
                                                                             status: status! + 1,
-                                                                            settlerId: profile.settlerId,
-                                                                            settlerServiceId: profile.settlerServiceId,
-                                                                            settlerFirstName: profile.firstName,
-                                                                            settlerLastName: profile.lastName,
+                                                                            settlerId: booking.acceptors[profileIndex].settlerId,
+                                                                            settlerServiceId: booking.acceptors[profileIndex].settlerServiceId,
+                                                                            settlerFirstName: booking.acceptors[profileIndex].firstName,
+                                                                            settlerLastName: booking.acceptors[profileIndex].lastName,
                                                                             serviceStartCode: Math.floor(1000000 + Math.random() * 9000000).toString()
                                                                         });
 
-                                                                        const selectedSettler = await fetchSelectedUser(profile.settlerId || 'undefined');
+                                                                        const selectedSettler = await fetchSelectedUser(booking.acceptors[profileIndex].settlerId || 'undefined');
                                                                         if (selectedSettler) {
                                                                             setSettler(selectedSettler);
                                                                         }
-                                                                        setSelectedSettlerId(profile.settlerId || '');
-                                                                        setSelectedSettlerFirstName(profile.firstName || '');
-                                                                        setSelectedSettlerLastName(profile.lastName || '');
+
+                                                                        setSelectedSettlerId(booking.settlerId || '');
+                                                                        setSelectedSettlerFirstName(booking.settlerFirstName || '');
+                                                                        setSelectedSettlerLastName(booking.settlerLastName || '');
                                                                         setStatus(status! + 1);
                                                                         onRefresh();
                                                                     }}
-                                                                    activeOpacity={0.8}
                                                                 >
-
-                                                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start' }}>
-                                                                        <View>
-                                                                            {
-                                                                                profile.settlerProfile?.profileImageUrl ? (
-                                                                                    <Image
-                                                                                        source={{ uri: profile.settlerProfile?.profileImageUrl }}
-                                                                                        style={{
-                                                                                            width: 50,
-                                                                                            height: 50,
-                                                                                            borderRadius: 20,
-                                                                                        }}
-                                                                                    />
-                                                                                ) : (
-                                                                                    <View
-                                                                                        style={{
-                                                                                            width: 50,
-                                                                                            height: 50,
-                                                                                            borderRadius: 20,
-                                                                                            backgroundColor: COLORS.card,
-                                                                                            justifyContent: 'center',
-                                                                                            alignItems: 'center',
-                                                                                        }}
-                                                                                    >
-                                                                                        <Ionicons name="person" size={30} color={COLORS.blackLight} />
-                                                                                    </View>
-                                                                                )
-                                                                            }
-                                                                        </View>
-                                                                        <View style={{ flex: 7, paddingLeft: 20 }}>
-                                                                            <TouchableOpacity onPress={() => navigation.navigate('QuoteService', { service: booking.catalogueService })}>
-                                                                                <View style={{}}>
-                                                                                    <Text style={{ fontSize: 17, fontWeight: 'bold', color: COLORS.black }} numberOfLines={1} ellipsizeMode="tail">{profile.settlerProfile?.firstName} {profile.settlerProfile?.lastName}</Text>
-                                                                                </View>
-                                                                            </TouchableOpacity>
-                                                                            <Text style={{ fontSize: 14, color: COLORS.black }}>{profile.settlerJobProfile?.averageRatings === 0 ? 'No ratings' : `${profile.settlerJobProfile?.averageRatings} (${profile.settlerJobProfile?.jobsCount})`}</Text>
-                                                                        </View>
-                                                                    </View>
+                                                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
                                                                 </TouchableOpacity>
-                                                            );
-                                                        })}
+                                                            </View>
+                                                        </View>
                                                     </View>
                                                 )}
                                         </View>
@@ -993,24 +1039,8 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                     key={index}
                                     style={[{ paddingVertical: 10, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: "#ccc", backgroundColor: "#fff", }, isSelected && { borderColor: COLORS.primary }]}
                                     onPress={async () => {
-                                        await updateBooking(booking.id || 'undefined', {
-                                            status: status! + 1,
-                                            settlerId: profile.settlerId,
-                                            settlerServiceId: profile.settlerServiceId,
-                                            settlerFirstName: profile.firstName,
-                                            settlerLastName: profile.lastName,
-                                            serviceStartCode: Math.floor(1000000 + Math.random() * 9000000).toString()
-                                        });
-
-                                        const selectedSettler = await fetchSelectedUser(profile.settlerId || 'undefined');
-                                        if (selectedSettler) {
-                                            setSettler(selectedSettler);
-                                        }
-                                        setSelectedSettlerId(profile.settlerId || '');
-                                        setSelectedSettlerFirstName(profile.firstName || '');
-                                        setSelectedSettlerLastName(profile.lastName || '');
-                                        setStatus(status! + 1);
-                                        onRefresh();
+                                        setProfileIndex(index);
+                                        setIndex(1);
                                     }}
                                     activeOpacity={0.8}
                                 >
@@ -1044,13 +1074,17 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                             }
                                         </View>
                                         <View style={{ flex: 7, paddingLeft: 20 }}>
-                                            <TouchableOpacity onPress={() => navigation.navigate('QuoteService', { service: booking.catalogueService })}>
+                                            <TouchableOpacity onPress={() => {
+                                                setIndex(0);
+                                                setProfileIndex(index);
+                                                setSelectedSettlerId(profile.settlerProfile?.uid || '');
+                                            }}>
                                                 <View style={{}}>
                                                     <Text style={{ fontSize: 17, fontWeight: 'bold', color: COLORS.black }} numberOfLines={1} ellipsizeMode="tail">{profile.settlerProfile?.firstName} {profile.settlerProfile?.lastName}</Text>
+                                                    <Text style={{ fontSize: 14, color: COLORS.black }}>{profile.settlerJobProfile?.averageRatings === 0 ? 'No ratings' : `${profile.settlerJobProfile?.averageRatings} (${profile.settlerJobProfile?.jobsCount})`}</Text>
+                                                    <Text>{profile.settlerJobProfile?.serviceCardBrief}</Text>
                                                 </View>
                                             </TouchableOpacity>
-                                            <Text style={{ fontSize: 14, color: COLORS.black }}>{profile.settlerJobProfile?.averageRatings === 0 ? 'No ratings' : `${profile.settlerJobProfile?.averageRatings} (${profile.settlerJobProfile?.jobsCount})`}</Text>
-                                            <Text>{profile.settlerJobProfile?.serviceCardBrief}</Text>
                                         </View>
                                         <View style={{ flex: 1, alignItems: 'flex-start' }}>
                                             <TouchableOpacity
@@ -1114,7 +1148,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                 <Text style={{ paddingBottom: 10 }}>
                                     In service since {bookingWithSettlerProfiles[profileIndex].settlerProfile!.createAt
                                         .toDate()
-                                        .toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year:'numeric' })}
+                                        .toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                 </Text>
                             </View>
                             <View style={[GlobalStyleSheet.line]} />
