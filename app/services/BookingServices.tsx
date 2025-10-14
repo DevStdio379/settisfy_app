@@ -3,6 +3,8 @@ import { collection, addDoc, query, where, getDocs, doc, getDoc, updateDoc, Coll
 import { Address } from './AddressServices';
 import { Catalogue } from './CatalogueServices';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
+import { User } from '../context/UserContext';
+import { SettlerService } from './SettlerServiceServices';
 
 export interface Acceptor {
   settlerId: string;
@@ -62,6 +64,12 @@ export interface Booking {
 
   createAt: any;
   updatedAt: any;
+}
+
+export interface BookingWithUser extends Booking {
+  settlerProfile: User | null;
+  settlerJobProfile: SettlerService | null; 
+
 }
 
 export const uploadImages = async (imageName: string, imagesUrl: string[]) => {
