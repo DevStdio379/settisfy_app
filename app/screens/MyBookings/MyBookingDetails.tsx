@@ -186,7 +186,6 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
     ];
 
     const actions = [
-        { buttonTitle: 'Extend Service', onPressAction: () => Alert.alert('Extend Service Pressed') },
         { buttonTitle: 'Report Issue', onPressAction: () => Alert.alert('Report Issue Pressed') },
         { buttonTitle: 'Contact Support', onPressAction: () => Alert.alert('Contact Support Pressed') },
     ];
@@ -758,6 +757,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                     scrollEventThrottle={16}
                                     scrollEnabled={false}
                                     decelerationRate="fast"
+                                    style = {{ width: SIZES.width, paddingHorizontal: 10}}
                                     showsHorizontalScrollIndicator={false}
                                     onScroll={Animated.event(
                                         [{ nativeEvent: { contentOffset: { x: scrollX } } }],
@@ -766,7 +766,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                 >
                                     {buttons.map((button, index) => (
                                         <View key={index} style={{ width: SIZES.width }}>
-                                            <View style={{}}>
+                                            <View style={{ width: '90%' }}>
                                                 {index === 0 && (
                                                     <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
                                                         {/* Product Info */}
@@ -862,7 +862,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                     </View>
                                                 )}
                                                 {index === 1 && (
-                                                    <View style={{ width: '90%', paddingTop: 20, gap: 10 }}>
+                                                    <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
                                                         <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Notes to Settler</Text>
                                                         <View
                                                             style={{
@@ -973,7 +973,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                 </ScrollView>
                                 <View style={[GlobalStyleSheet.line, { marginTop: 15 }]} />
                                 <View style={{ width: '100%', }}>
-                                    <Text style={{ fontSize: 18, fontWeight: 'bold', marginTop: 20 }}>Additional Information</Text>
+                                    <Text style={{ fontSize: 18, fontWeight: 'bold', marginTop: 20 }}>Quick Actions</Text>
                                     <FlatList
                                         scrollEnabled={false}
                                         data={actions}

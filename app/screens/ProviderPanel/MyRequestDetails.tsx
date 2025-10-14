@@ -239,8 +239,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     ];
 
     const actions = [
-        { buttonTitle: 'Extend Service', onPressAction: () => Alert.alert('Extend Service Pressed') },
-        { buttonTitle: 'Report Issue', onPressAction: () => Alert.alert('Report Issue Pressed') },
+        { buttonTitle: 'Extend Period', onPressAction: () => Alert.alert('Extend Service Pressed') },
+        { buttonTitle: 'Adjust Quotation', onPressAction: () => Alert.alert('Report Issue Pressed') },
+        { buttonTitle: 'Apply Checking Fee', onPressAction: () => Alert.alert('Contact Support Pressed') },
+        { buttonTitle: 'Partial Completion', onPressAction: () => Alert.alert('Contact Support Pressed')},
         { buttonTitle: 'Contact Support', onPressAction: () => Alert.alert('Contact Support Pressed') },
     ];
 
@@ -315,7 +317,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                     }
                 >
-                    <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40 }]}>
+                    <View style={[GlobalStyleSheet.container, { paddingHorizontal: 10, paddingBottom: 40 }]}>
                         {/* Progress Section */}
                         <View style={{ alignItems: "center", marginVertical: 20 }}>
                             <View
@@ -503,6 +505,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                     >
                                         <Text style={{ color: 'white', fontWeight: 'bold' }}>Upload Service Evidence</Text>
                                     </TouchableOpacity>
+                                    <Text style={{ fontSize: 13, color: COLORS.black }}>or go to the bottom of this screen for more action</Text>
                                 </View>
                             ) : status === 3 ? (
                                 <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
@@ -630,6 +633,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             scrollEventThrottle={16}
                             scrollEnabled={false}
                             decelerationRate="fast"
+                            style = {{ width: SIZES.width, paddingHorizontal: 10}}
                             showsHorizontalScrollIndicator={false}
                             onScroll={Animated.event(
                                 [{ nativeEvent: { contentOffset: { x: scrollX } } }],
@@ -638,9 +642,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         >
                             {buttons.map((button, index) => (
                                 <View key={index} style={{ width: SIZES.width }}>
-                                    <View style={{}}>
+                                    <View style={{ width: '90%', }}>
                                         {index === 0 && (
-                                            <View style={{ width: '90%', paddingTop: 20, paddingHorizontal: 15, gap: 10 }}>
+                                            <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
                                                 {/* Product Info */}
                                                 <View style={{ flexDirection: "row", marginBottom: 20 }}>
                                                     <Image
@@ -649,7 +653,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     />
                                                     <View style={{ flex: 1, marginTop: 5 }}>
                                                         <Text style={{ fontSize: 16, marginBottom: 5 }}>
-                                                            <Text style={{ color: "#E63946", fontWeight: "bold" }}>£{booking.total}</Text> / Session {" "}
+                                                            <Text style={{ color: "#E63946", fontWeight: "bold" }}>RM{booking.total}</Text> / Session {" "}
                                                             {/* <Text style={styles.originalPrice}>£40.20</Text> */}
                                                         </Text>
                                                         <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }}>Cleaning Service</Text>
@@ -725,7 +729,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         <Text style={{ fontSize: 14, color: "#333" }}> N/A</Text>
                                                         <Text style={{ fontSize: 14, fontWeight: "bold" }}>£0.00</Text>
                                                     </View>
-                                                    <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '90%', alignSelf: 'center' },]} />
+                                                    <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '100%', alignSelf: 'center' },]} />
                                                     <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                                                         <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
                                                         <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>£{booking.total}</Text>
@@ -734,7 +738,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             </View>
                                         )}
                                         {index === 1 && (
-                                            <View style={{ width: '90%', paddingTop: 20, gap: 10 }}>
+                                            <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
                                                 <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Notes to Settler</Text>
                                                 <View
                                                     style={{
@@ -840,7 +844,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             </View>
                                         )}
                                         {index === 2 && (
-                                            <View style={{ width: '90%', paddingTop: 20, gap: 10 }}>
+                                            <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
                                                 <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Service Completion Evidence</Text>
                                                 <Text style={{ fontSize: 13, color: COLORS.blackLight2 }}>This helps verify your service completion in case of disputes. Complete this part before submitting your job completion.</Text>
                                                 <View
@@ -1021,7 +1025,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         </ScrollView>
                         <View style={[GlobalStyleSheet.line, { marginTop: 20 }]} />
                         <View style={{ width: '100%', }}>
-                            <Text style={{ fontSize: 18, fontWeight: 'bold', marginTop: 20 }}>Additional Information</Text>
+                            <Text style={{ fontSize: 18, fontWeight: 'bold', marginTop: 20 }}>Quick Actions</Text>
                             <FlatList
                                 scrollEnabled={false}
                                 data={actions}
