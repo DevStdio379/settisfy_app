@@ -1,7 +1,7 @@
 import { db, storage } from './firebaseConfig';
 import { collection, addDoc, query, where, getDocs, doc, getDoc, updateDoc, CollectionReference, DocumentReference, setDoc, onSnapshot } from 'firebase/firestore';
 import { Address } from './AddressServices';
-import { Catalogue } from './CatalogueServices';
+import { Catalogue, DynamicOption } from './CatalogueServices';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 import { User } from '../context/UserContext';
 import { SettlerService } from './SettlerServiceServices';
@@ -12,19 +12,6 @@ export interface Acceptor {
   firstName: string;
   lastName: string;
   acceptedAt: string; // store as ISO string, or use Firestore Timestamp if needed
-}
-
-
-export interface SubOption {
-  label: string;        // e.g. "10 sqft"
-  additionalPrice: number; // e.g. 15 (store as number for calculations)
-  notes?: string;       // optional: "measure carefully"
-}
-
-export interface DynamicOption {
-  name: string;          // e.g. "sqft", "extras"
-  subOptions: SubOption[];
-  multipleSelect: boolean;
 }
 
 export interface Booking {

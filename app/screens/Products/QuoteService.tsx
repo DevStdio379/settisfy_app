@@ -16,26 +16,14 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import { Address, fetchUserAddresses } from "../../services/AddressServices";
 import Input from "../../components/Input/Input";
 import TabButtonStyleHome from "../../components/Tabs/TabButtonStyleHome";
-import { createBooking } from "../../services/BookingServices";
+import { SubOption } from "../../services/CatalogueServices";
 import { CategoryDropdown } from "../../components/CategoryDropdown";
 import { launchCamera, launchImageLibrary } from "react-native-image-picker";
-import { updateCatalogue } from "../../services/CatalogueServices";
+import { DynamicOption, updateCatalogue } from "../../services/CatalogueServices";
 import { fetchReviewsByCatalogueId, Review, ReviewWithUser } from "../../services/ReviewServices";
 import ImageViewer from "../../components/ImageViewer";
 import FeedbackPills from "../../components/FeedbackPills";
-
-interface AddonOption {
-  label: string;
-  additionalPrice: number;
-  notes?: string;
-}
-
-interface AddonCategory {
-  name: string;
-  subOptions: AddonOption[];
-  multipleSelect: boolean;
-}
-
+import { createBooking } from "../../services/BookingServices";
 
 type QuoteServiceScreenProps = StackScreenProps<RootStackParamList, "QuoteService">;
 
@@ -67,6 +55,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
   const [selectedDate, setSelectedDate] = useState(today);
   const [index, setIndex] = useState(0);
   const { user } = useUser();
+  
   const [paymentMethod, setPaymentMethod] = useState<string | null>('card');
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<Address | undefined>(user?.currentAddress);
@@ -76,7 +65,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
   const [notesToSettlerImageUrls, setNotesToSettlerImageUrls] = useState<string[]>([]);
   const [notesToSettler, setNotesToSettler] = useState<string>('');
   const [grandTotal, setGrandTotal] = useState<number>(0);
-  const [selectedAddons, setSelectedAddons] = useState<{ [key: string]: AddonOption[] }>({});
+  const [selectedAddons, setSelectedAddons] = useState<{ [key: string]: SubOption[] }>({});
   const basePrice = service ? service.basePrice : 0;
   const [totalQuote, setTotalQuote] = useState(basePrice);
   const platformFee = 2; // Fixed platform fee
@@ -204,11 +193,11 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
     }
   }
 
-  function toggleAddon(category: AddonCategory, option: AddonOption) {
+  function toggleAddon(category: DynamicOption, option: SubOption) {
     setSelectedAddons((prev) => {
       const prevOptions = prev[category.name] || [];
 
-      let newOptions: AddonOption[];
+      let newOptions: SubOption[];
 
       if (category.multipleSelect) {
         // ✅ Single selection: replace entire list

@@ -3,14 +3,14 @@ import { db, storage } from "./firebaseConfig";
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
 
 export interface SubOption {
-    id: number;
+    id?: number;
     label: string;        // e.g. "10 sqft"
     additionalPrice: number; // e.g. 15 (store as number for calculations)
     notes?: string;       // optional: "measure carefully"
 }
 
 export interface DynamicOption {
-    id: number;
+    id?: number;
     name: string;          // e.g. "sqft", "extras"
     subOptions: SubOption[];
     multipleSelect: boolean;
@@ -36,6 +36,19 @@ export interface Catalogue {
     createAt: any;
     updateAt: any;
 }
+
+interface AddonOption {
+  label: string;
+  additionalPrice: number;
+  notes?: string;
+}
+
+interface AddonCategory {
+  name: string;
+  subOptions: AddonOption[];
+  multipleSelect: boolean;
+}
+
 
 export const uploadImages = async (imageName: string, imagesUrl: string[]) => {
     const urls: string[] = [];
