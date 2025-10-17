@@ -13,7 +13,6 @@
     "@gorhom/bottom-sheet": "^5.1.1",
     "@ptomasroos/react-native-multi-slider": "^2.2.2",
     "@react-native-async-storage/async-storage": "^2.1.2",
-    "@react-native-community/checkbox": "^0.5.20",
     "@react-native-firebase/app": "^21.14.0",
     "@react-native-firebase/firestore": "^21.14.0",
     "@react-navigation/bottom-tabs": "^7.2.1",

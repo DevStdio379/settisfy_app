@@ -12,7 +12,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { createReview, getReviewByBookingId, Review } from '../../services/ReviewServices';
 import axios from 'axios';
 import { Booking, fetchSelectedBooking, updateBooking } from '../../services/BookingServices';
-import { arrayUnion } from 'firebase/firestore';
+import { arrayUnion, deleteField } from 'firebase/firestore';
 import { getOrCreateChat } from '../../services/ChatServices';
 import Input from '../../components/Input/Input';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
@@ -39,6 +39,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     const [activeIndex, setActiveIndex] = useState(0);
     const [subScreenIndex, setSubScreenIndex] = useState(0);
     const [isFocused, setisFocused] = useState(false);
+    const [completedAddons, setCompletedAddons] = useState<{ [key: string]: string[] }>({});
+
 
     const [booking, setBooking] = useState<Booking>(route.params.booking);
     const [accordionOpen, setAccordionOpen] = useState<{ [key: string]: boolean }>({});
@@ -50,8 +52,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     const today = new Date().toISOString().split('T')[0];
     const [selectedDate, setSelectedDate] = useState(today);
     const [selectedAddons, setSelectedAddons] = useState<{ [key: string]: SubOption[] }>({});
-    const [manualQuotationDescription, setManualQuotationDescription] = useState<string>();
-    const [additionalrice, setAdditionalPrice] = useState<number>(0);
+    const [newManualQuoteDescription, setNewManualQuotationDescription] = useState<string>();
+    const [newManualQuotePrice, setNewManualQuotationPrice] = useState<number>(0);
 
     const CODE_LENGTH = 7;
     const [collectionCode, setCollectionCode] = useState<string[]>(Array(CODE_LENGTH).fill(""));
@@ -65,7 +67,12 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     const [settlerEvidenceImageUrls, setSettlerEvidenceImageUrls] = useState<string[]>([]);
     const [settlerEvidenceRemark, setSettlerEvidenceRemark] = useState<string>('');
     const basePrice = booking.catalogueService.basePrice ? booking.catalogueService.basePrice : 0;
-    const [totalQuote, setTotalQuote] = useState(basePrice);
+    const [totalQuote, setTotalQuote] = useState(booking.total - 2);
+    const [subOptionCompletion, setSubOptionCompletion] = useState<SubOption[]>([]);
+    const [localAddons, setLocalAddons] = useState<DynamicOption[]>([]);
+    const [localTotal, setLocalTotal] = useState<number>(
+        booking?.total ?? booking?.catalogueService?.basePrice ?? 0
+    );
 
     const userAlreadyAccepted = booking.acceptors?.some(
         (acceptor) => acceptor.settlerId === user?.uid
@@ -77,6 +84,12 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
             navigation.navigate("Chat", { chatId: chatId });
         }
     };
+
+    const addonsArray = Object.entries(selectedAddons).map(([category, options]) => ({
+        name: category,
+        subOptions: options,
+        multipleSelect: false, // Set appropriately if you have this info
+    }));
 
     const handleImageSelect = () => {
         if (settlerEvidenceImageUrls.length >= 5) {
@@ -104,6 +117,32 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
         }
     };
 
+    function toggleSubOptionCompletion(addonIndex: number, subIndex: number) {
+        setLocalAddons(prevAddons => {
+            const updated = [...prevAddons];
+            const subOpt = updated[addonIndex].subOptions[subIndex];
+
+            // Toggle completion
+            subOpt.jobCompleted = !subOpt.jobCompleted;
+
+            // Recalculate local total
+            const basePrice = booking.catalogueService.basePrice;
+            const completedAddonsTotal = updated
+                .flatMap(a => a.subOptions)
+                .filter(opt => opt.jobCompleted) // ✅ only count completed ones
+                .reduce((sum, opt) => sum + Number(opt.additionalPrice || 0), 0);
+
+            const total = Number(basePrice) + Number(completedAddonsTotal) + 2; // add £2 platform fee
+
+            setLocalTotal(total);
+
+            return updated;
+        });
+    }
+
+
+
+
     function toggleAddon(category: DynamicOption, option: SubOption) {
         setSelectedAddons((prev) => {
             const prevOptions = prev[category.name] || [];
@@ -111,10 +150,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
             let newOptions: SubOption[];
 
             if (category.multipleSelect) {
-                // ✅ Single selection: replace entire list
+                // ✅ Single selection
                 newOptions = prevOptions[0]?.label === option.label ? [] : [option];
             } else {
-                // ✅ Multiple selection: toggle
+                // ✅ Multiple selection
                 const exists = prevOptions.some((o) => o.label === option.label);
                 newOptions = exists
                     ? prevOptions.filter((o) => o.label !== option.label)
@@ -123,15 +162,23 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
 
             const newSelections = { ...prev, [category.name]: newOptions };
 
-            // Recalculate total
-            const addonsTotal = Object.values(newSelections)
-                .flat()
-                .reduce((sum, o) => sum + Number(o.additionalPrice), 0);
+            // ✅ Use the shared function
+            const newTotal = calculateTotalQuote(basePrice, newSelections, Number(newManualQuotePrice));
+            setTotalQuote(newTotal);
 
-            setTotalQuote(Number(basePrice) + Number(addonsTotal));
             return newSelections;
         });
     }
+
+
+    const calculateTotalQuote = (basePrice: number, selectedAddons: { [key: string]: SubOption[] }, newManualQuotePrice: number) => {
+        const addonsTotal = Object.values(selectedAddons)
+            .flat()
+            .reduce((sum, o) => sum + Number(o.additionalPrice || 0), 0);
+
+        return Number(basePrice) + Number(addonsTotal) + Number(newManualQuotePrice || 0);
+    };
+
 
 
 
@@ -270,6 +317,27 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         setReview(fetchedReview);
                     }
                 }
+
+                if (booking.addons) {
+                    const cloned = booking.addons.map(addon => ({
+                        ...addon,
+                        subOptions: addon.subOptions.map(opt => ({
+                            ...opt,
+                            jobCompleted: opt.jobCompleted ?? true, // ✅ Default to true if undefined
+                        })),
+                    }));
+                    setLocalAddons(cloned);
+                }
+
+                const basePrice = booking.catalogueService?.basePrice ?? 0;
+
+                const addonsTotal =
+                    booking.addons
+                        ?.flatMap(a => a.subOptions)
+                        .filter(opt => opt.jobCompleted)
+                        .reduce((sum, opt) => sum + Number(opt.additionalPrice || 0), 0) ?? 0;
+
+                setLocalTotal(Number(basePrice) + Number(addonsTotal) + 2);
             }
         }
         fetchData();
@@ -280,6 +348,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
         setRefreshing(true);
         fetchSelectedBookingData().then(() => setRefreshing(false));
     }, []);
+
+    // status info:
+    // 1-6 : ok flow
+    // 7++ : exception handling
 
     const steps = [
         { label: "Booking\nCreated", date: 'Job\nbroadcast', completed: (status ?? 0) >= 0 },
@@ -370,6 +442,31 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             }
                         >
                             <View style={[GlobalStyleSheet.container, { paddingHorizontal: 10, paddingBottom: 40 }]}>
+                                {booking.isQuoteUpdateSuccess !== undefined && (
+                                    <View
+                                        style={{
+                                            backgroundColor: booking.isQuoteUpdateSuccess ? COLORS.success : COLORS.placeholder,
+                                            borderRadius: 20,
+                                            paddingVertical: 8,
+                                            paddingHorizontal: 14,
+                                            marginTop: 10,
+                                            alignItems: 'center',
+                                            width: '100%',
+                                        }}
+                                    >
+                                        <Text
+                                            style={{
+                                                justifyContent: 'center',
+                                                textAlign: 'center',
+                                                color: COLORS.black,
+                                                fontSize: 14,
+                                                fontWeight: '600',
+                                            }}
+                                        >
+                                            {booking.isQuoteUpdateSuccess ? "Your quote has been approved" : "Your quote has been rejected"}
+                                        </Text>
+                                    </View>
+                                )}
                                 {/* Progress Section */}
                                 <View style={{ alignItems: "center", marginVertical: 20 }}>
                                     <View
@@ -583,6 +680,24 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>
                                                 {booking?.selectedDate ? `${Math.ceil((new Date(booking.selectedDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left` : "N/A"}
                                             </Text>
+                                            <TouchableOpacity
+                                                style={{
+                                                    backgroundColor: COLORS.primary,
+                                                    padding: 10,
+                                                    borderRadius: 10,
+                                                    marginVertical: 10,
+                                                    width: '80%',
+                                                    alignItems: 'center',
+                                                }}
+                                                onPress={() => { if (user && customer) handleChat(user.uid, customer.uid) }}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Customer</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    ) : status === 7 ? (
+                                        <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Quotation Update Sent</Text>
+                                            <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Awaiting for customer to accept or reject the quotation updates.</Text>
                                             <TouchableOpacity
                                                 style={{
                                                     backgroundColor: COLORS.primary,
@@ -1251,7 +1366,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             onFocus={() => setisFocused(true)}
                             onBlur={() => setisFocused(false)}
                             isFocused={isFocused}
-                            onChangeText={setManualQuotationDescription}
+                            onChangeText={setNewManualQuotationDescription}
                             backround={COLORS.card}
                             style={{
                                 fontSize: 12,
@@ -1269,41 +1384,175 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Additional Price</Text>
                         <Input
                             onFocus={() => setisFocused(true)}
-                            onBlur={() => setisFocused(false)}
+                            onBlur={() => {
+                                setisFocused(false);
+                                const newTotal = calculateTotalQuote(basePrice, selectedAddons, Number(newManualQuotePrice));
+                                setTotalQuote(newTotal);
+                            }}
                             isFocused={isFocused}
-                            onChangeText={setAdditionalPrice}
-                            value={basePrice ? basePrice.toString() : ''}
+                            onChangeText={setNewManualQuotationPrice}
+                            value={newManualQuotePrice ? newManualQuotePrice.toString() : ''}
                             backround={COLORS.card}
                             style={{ borderRadius: 12, backgroundColor: COLORS.input, borderColor: COLORS.inputBorder, borderWidth: 1, height: 50 }}
                             placeholder='e.g. 20'
                             keyboardType={'numeric'}
                         />
-                        <TouchableOpacity
-                            style={{
-                                backgroundColor: COLORS.primary,
-                                padding: 15,
-                                borderRadius: 10,
-                                marginVertical: 20,
-                                width: '100%',
-                                alignItems: 'center',
-                            }}
-                            onPress={() => {
-                                setSubScreenIndex(0);
-                            }}
-                        >
-                            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 15, }}>Submit Quotation Adjustment</Text>
-                        </TouchableOpacity>
                     </View>
                 </ScrollView>
             )}
             {subScreenIndex === 3 && (
                 <ScrollView
                     showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ flexGrow: 1, paddingBottom: 70, paddingHorizontal: 15 }}>
+                    contentContainerStyle={{ flexGrow: 1, paddingBottom: 70, paddingHorizontal: 15, }}>
                     <View>
-                        <Text>Apply Checking Fee</Text>
+                        <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>
+                            Service Pricing Breakdown
+                        </Text>
+
+                        <View style={{ marginBottom: 20 }}>
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
+                                <Text style={{ fontSize: 14, color: "#333" }}>1 x session</Text>
+                                <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.catalogueService.basePrice}</Text>
+                            </View>
+
+                            {localAddons.map((addon, addonIndex) => (
+                                <View key={addon.name} style={{ flexDirection: "column" }}>
+                                    {addon.subOptions.map((opt, subIndex) => (
+                                        <View key={opt.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                                            <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+                                                <TouchableOpacity
+                                                    onPress={() => toggleSubOptionCompletion(addonIndex, subIndex)}
+                                                    style={{
+                                                        width: 24,
+                                                        height: 24,
+                                                        borderRadius: 4,
+                                                        borderWidth: 2,
+                                                        borderColor: COLORS.inputBorder,
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                        marginRight: 8,
+                                                        backgroundColor: opt.jobCompleted ? COLORS.primary : COLORS.input,
+                                                    }}
+                                                >
+                                                    {opt.jobCompleted && <Ionicons name="checkmark" size={18} color={COLORS.white} />}
+                                                </TouchableOpacity>
+                                                <Text style={{ fontSize: 14, color: "#333", marginLeft: 5 }}>
+                                                    {addon.name}: {opt.label}
+                                                </Text>
+                                            </View>
+
+                                            <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>
+                                                £{opt.additionalPrice}
+                                            </Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            ))}
+
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
+                                <Text style={{ fontSize: 14, fontWeight: "bold" }}>£2.00</Text>
+                            </View>
+
+                            <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '100%', alignSelf: 'center' }]} />
+
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
+                                <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>
+                                    £{Number(localTotal ?? 0).toFixed(2)}
+                                </Text>
+                            </View>
+                        </View>
+                        <View style={[GlobalStyleSheet.line]} />
+                        <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10, paddingTop: 20 }}>Partial Completion Remarks</Text>
+                        <Input
+                            onFocus={() => setisFocused(true)}
+                            onBlur={() => setisFocused(false)}
+                            isFocused={isFocused}
+                            onChangeText={setNewManualQuotationDescription}
+                            backround={COLORS.card}
+                            style={{
+                                fontSize: 12,
+                                borderRadius: 12,
+                                backgroundColor: COLORS.input,
+                                borderColor: COLORS.inputBorder,
+                                borderWidth: 1,
+                                height: 150,
+                            }}
+                            inputicon
+                            placeholder={`e.g. Got a grassy platform.`}
+                            multiline={true}  // Enable multi-line input
+                            numberOfLines={10} // Suggest the input area size
+                        />
+                    </View>
+                    <View style={{ alignItems: 'center' }}>
+                        <TouchableOpacity
+                            style={{
+                                backgroundColor: COLORS.primary,
+                                padding: 10,
+                                borderRadius: 10,
+                                marginVertical: 10,
+                                width: '80%',
+                                alignItems: 'center',
+                            }}
+                            onPress={async () => {
+                                updateBooking(booking.id || '', {
+                                    addons: localAddons,
+                                    total: localTotal
+                                })
+                            }}
+                        >
+                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Update Job Completion</Text>
+                        </TouchableOpacity>
                     </View>
                 </ScrollView>
+            )}
+            {subScreenIndex === 2 && (
+                <View style={[GlobalStyleSheet.flex, { paddingVertical: 15, paddingHorizontal: 20, backgroundColor: COLORS.card, }]}>
+                    <View
+                        style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 10,
+                        }}
+                    >
+                        <View style={{ flexDirection: 'column' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                                <Text style={{ fontSize: 23, color: COLORS.title, fontWeight: 'bold' }}>
+                                    Starting at RM{totalQuote}
+                                </Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', gap: 5 }}>
+                                <Text style={{ fontSize: 14, color: COLORS.blackLight2 }}>Platform fees applied.</Text>
+                                {/* <Text>{startDate && endDate ? `Available from ${format(new Date(startDate), 'dd MMM.')}` : ''}</Text> */}
+                            </View>
+                        </View>
+                    </View>
+                    <TouchableOpacity
+                        style={{
+                            backgroundColor: COLORS.primary,
+                            width: 150,
+                            padding: 15,
+                            borderRadius: 10,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}
+                        onPress={async () => {
+                            await updateBooking(booking.id!, {
+                                newAddons: addonsArray,
+                                newTotal: totalQuote + 2,
+                                newManualQuoteDescription: newManualQuoteDescription,
+                                newManualQuotePrice: newManualQuotePrice,
+                                isQuoteUpdateSuccess: deleteField(),
+                                status: 7,
+                            })
+                            setSubScreenIndex(0)
+                        }}
+                    >
+                        <Text style={{ color: COLORS.white, fontSize: 16, fontWeight: 'bold' }}>Update Pricing</Text>
+                    </TouchableOpacity>
+                </View>
             )}
         </View>
     )

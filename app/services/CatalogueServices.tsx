@@ -7,6 +7,7 @@ export interface SubOption {
     label: string;        // e.g. "10 sqft"
     additionalPrice: number; // e.g. 15 (store as number for calculations)
     notes?: string;       // optional: "measure carefully"
+    jobCompleted?: boolean;
 }
 
 export interface DynamicOption {
@@ -36,19 +37,6 @@ export interface Catalogue {
     createAt: any;
     updateAt: any;
 }
-
-interface AddonOption {
-  label: string;
-  additionalPrice: number;
-  notes?: string;
-}
-
-interface AddonCategory {
-  name: string;
-  subOptions: AddonOption[];
-  multipleSelect: boolean;
-}
-
 
 export const uploadImages = async (imageName: string, imagesUrl: string[]) => {
     const urls: string[] = [];

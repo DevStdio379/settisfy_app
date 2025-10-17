@@ -259,6 +259,10 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
       paymentMethod: paymentMethod,
       paymentIntentId: paymentIntentId,
 
+      // for quick actions
+      manualQuoteDescription: '',
+      manualQuotePrice: 0,
+
       // after broadcast
       settlerId: '',
       settlerServiceId: '',

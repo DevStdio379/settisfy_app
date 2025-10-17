@@ -11,7 +11,7 @@ import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { GlobalStyleSheet } from '../constants/StyleSheet';
 import { CategoryDropdown } from '../components/CategoryDropdown';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { createCatalogue, deleteCatalogue, fetchSelectedCatalogue, updateCatalogue } from '../services/CatalogueServices';
+import { createCatalogue, deleteCatalogue, DynamicOption, fetchSelectedCatalogue, updateCatalogue } from '../services/CatalogueServices';
 import { set } from 'date-fns';
 import { categories } from '../constants/ServiceCategory';
 
@@ -30,20 +30,6 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
   const [selectedCategory, setSelectedCategory] = useState("");
   const [basePrice, setBasePrice] = useState<number>(0);
   const [selectedStatus, setSelectedStatus] = useState('active');
-  type DynamicSubOption = {
-    id: number;
-    label: string;
-    additionalPrice: number;
-    notes: string;
-  };
-
-  type DynamicOption = {
-    id: number;
-    name: string;
-    subOptions: DynamicSubOption[];
-    multipleSelect: boolean;
-  };
-
   const [dynamicOptions, setDynamicOptions] = useState<DynamicOption[]>([]);
 
   // options addon
@@ -506,7 +492,7 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
                   {/* Main Option Name */}
                   <Input
                     value={opt.name}
-                    onChangeText={(text) => updateMainOptionName(opt.id, text)}
+                    onChangeText={(text) => updateMainOptionName(opt.id!, text)}
                     placeholder="Main option (e.g. sqft, extras)"
                     style={{ marginBottom: 10 }}
                   />
@@ -543,36 +529,36 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
                     <View key={sub.id} style={{ marginBottom: 10, borderWidth: 1, borderColor: COLORS.inputBorder, borderRadius: 8, padding: 8 }}>
                       <Input
                         value={sub.label}
-                        onChangeText={(text) => updateSubOption(opt.id, sub.id, "label", text)}
+                        onChangeText={(text) => updateSubOption(opt.id!, sub.id!, "label", text)}
                         placeholder="Value (e.g. 10 sqft)"
                         style={{ marginBottom: 5 }}
                       />
                       <Input
                         value={String(sub.additionalPrice)}
-                        onChangeText={(text) => updateSubOption(opt.id, sub.id, "additionalPrice", text)}
+                        onChangeText={(text) => updateSubOption(opt.id!, sub.id!, "additionalPrice", text)}
                         placeholder="Price (e.g. +$15)"
                         style={{ marginBottom: 5 }}
                         keyboardType={'numeric'}
                       />
                       <Input
                         value={sub.notes}
-                        onChangeText={(text) => updateSubOption(opt.id, sub.id, "notes", text)}
+                        onChangeText={(text) => updateSubOption(opt.id!, sub.id!, "notes", text)}
                         placeholder="Notes (e.g. measure carefully)"
                       />
-                      <TouchableOpacity onPress={() => removeSubOption(opt.id, sub.id)} style={{ marginTop: 5 }}>
+                      <TouchableOpacity onPress={() => removeSubOption(opt.id!, sub.id!)} style={{ marginTop: 5 }}>
                         <Ionicons name="trash-outline" size={20} color="red" />
                       </TouchableOpacity>
                     </View>
                   ))}
 
                   {/* Add Sub-Option Button */}
-                  <TouchableOpacity onPress={() => addSubOption(opt.id)} style={{ flexDirection: "row", alignItems: "center", marginTop: 5 }}>
+                  <TouchableOpacity onPress={() => addSubOption(opt.id!)} style={{ flexDirection: "row", alignItems: "center", marginTop: 5 }}>
                     <Ionicons name="add" size={20} color={COLORS.black} style={{ marginRight: 5 }} />
                     <Text>Add Variety</Text>
                   </TouchableOpacity>
 
                   {/* Remove Main Option */}
-                  <TouchableOpacity onPress={() => removeMainOption(opt.id)} style={{ marginTop: 8 }}>
+                  <TouchableOpacity onPress={() => removeMainOption(opt.id!)} style={{ marginTop: 8 }}>
                     <Ionicons name="trash-outline" size={20} color="red" />
                   </TouchableOpacity>
                 </View>

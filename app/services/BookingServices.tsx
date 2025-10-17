@@ -36,6 +36,15 @@ export interface Booking {
   paymentMethod: string;
   paymentIntentId?: string;
 
+  // more actions
+  newAddons?: DynamicOption[];
+  manualQuoteDescription: string;
+  manualQuotePrice: number;
+  newManualQuoteDescription?: string,
+  newManualQuotePrice?: number,
+  newTotal?: number,
+  isQuoteUpdateSuccess?: boolean,
+
   // after broadcast
   acceptors?: Acceptor[];
   settlerId?: string;
@@ -182,6 +191,15 @@ const mapBorrowingData = (doc: any): Booking => {
     notesToSettler: data.notesToSettler,
     paymentMethod: data.paymentMethod,
     paymentIntentId: data.paymentIntentId || '',  // Ensure paymentIntentId is always a string
+
+    // quick actions
+    newAddons: data.newAddons,
+    manualQuoteDescription: data.manualQuoteDescription,
+    manualQuotePrice: data.manualQuotePrice,
+    newManualQuoteDescription: data.newManualQuoteDescription,
+    newManualQuotePrice: data.newManualQuotePrice,
+    newTotal: data.newTotal,
+    isQuoteUpdateSuccess: data.isQuoteUpdateSuccess,
 
     // after broadcast
     acceptors: data.acceptors,

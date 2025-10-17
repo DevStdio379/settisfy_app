@@ -18,6 +18,7 @@ import { getOrCreateChat } from '../../services/ChatServices';
 import Input from '../../components/Input/Input';
 import { fetchSelectedSettlerService, fetchSettlerServices, updateSettlerService } from '../../services/SettlerServiceServices';
 import { fetchSelectedCatalogue, updateCatalogue } from '../../services/CatalogueServices';
+import { deleteField } from 'firebase/firestore';
 
 type MyBookingDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyBookingDetails'>;
 
@@ -635,6 +636,24 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                 </TouchableOpacity>
                                             </View>
                                         </View>
+                                    ) : status === 7 ? (
+                                        <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Your settler just updated your quotation</Text>
+                                            <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>You can choose to accept or reject the update. Kindly discuss with the settler on-site.</Text>
+                                            <TouchableOpacity
+                                                style={{
+                                                    backgroundColor: COLORS.primary,
+                                                    padding: 10,
+                                                    borderRadius: 10,
+                                                    marginVertical: 10,
+                                                    width: '80%',
+                                                    alignItems: 'center',
+                                                }}
+                                                onPress={() => { setIndex(3) }}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>View Quotation Update</Text>
+                                            </TouchableOpacity>
+                                        </View>
                                     ) : (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                             <Text style={{ fontWeight: 'bold' }}>{booking.status === 5 ? 'Your feedback matters for this platform' : 'This job is completed'}</Text>
@@ -757,7 +776,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                     scrollEventThrottle={16}
                                     scrollEnabled={false}
                                     decelerationRate="fast"
-                                    style = {{ width: SIZES.width, paddingHorizontal: 10}}
+                                    style={{ width: SIZES.width, paddingHorizontal: 10 }}
                                     showsHorizontalScrollIndicator={false}
                                     onScroll={Animated.event(
                                         [{ nativeEvent: { contentOffset: { x: scrollX } } }],
@@ -828,7 +847,6 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         <View style={{ marginBottom: 20 }}>
                                                             <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                                                                 <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
-                                                                <Text style={{ fontSize: 14, color: "#333" }}>1 x session</Text>
                                                                 <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.catalogueService.basePrice}</Text>
                                                             </View>
                                                             {booking.addons && booking.addons.map((addon) => (
@@ -849,9 +867,13 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                 <Text style={{ fontSize: 14, fontWeight: "bold" }}>£2.00</Text>
                                                             </View>
                                                             <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                                <Text style={{ fontSize: 14, color: "#333" }}>Delivery Charge</Text>
-                                                                <Text style={{ fontSize: 14, color: "#333" }}> N/A</Text>
-                                                                <Text style={{ fontSize: 14, fontWeight: "bold" }}>£0.00</Text>
+                                                                <View style={{ justifyContent: 'center', alignItems: 'flex-start' }}>
+                                                                    <Text style={{ fontSize: 14, color: "#333" }}>Additional Charge (by settler)</Text>
+                                                                    <Text style={{ fontSize: 14, width: SIZES.width * 0.8, marginTop: 5, color: "#333", backgroundColor: COLORS.primaryLight, padding: 10, borderRadius: 10, }}>{booking.manualQuoteDescription}</Text>
+                                                                </View>
+                                                                <View style={{ justifyContent: 'center' }}>
+                                                                    <Text style={{ fontSize: 14, fontWeight: "bold" }}>RM{booking.manualQuotePrice}</Text>
+                                                                </View>
                                                             </View>
                                                             <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '90%', alignSelf: 'center' },]} />
                                                             <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
@@ -1108,7 +1130,8 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                         );
                     })}
                 </ScrollView>
-            )}{index === 2 && (
+            )}
+            {index === 2 && (
                 <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{ flexGrow: 1, paddingBottom: 70, paddingHorizontal: 10, alignItems: 'flex-start' }}
@@ -1160,6 +1183,224 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                         </View>
                     )}
                 </ScrollView>
+            )}
+            {index === 3 && (
+                <View>
+                    {booking ? (
+                        <ScrollView
+                            showsVerticalScrollIndicator={false}
+                            contentContainerStyle={{ paddingBottom: 70, alignItems: 'center' }}
+                            refreshControl={
+                                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                            }
+                        >
+                            <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40 }]}>
+                                {/* Settler Details Card */}
+                                <View style={{ backgroundColor: "#f3f3f3", padding: 16, borderRadius: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, marginVertical: 20, marginHorizontal: 10 }}>
+                                    <View style={{ width: "100%", alignItems: "center", justifyContent: "center", paddingTop: 10 }}>
+                                        <Text style={{ fontWeight: 'bold' }}>Please Respond to This Quotation Update</Text>
+                                        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
+                                            <TouchableOpacity
+                                                style={{
+                                                    backgroundColor: COLORS.primary,
+                                                    padding: 10,
+                                                    borderRadius: 10,
+                                                    marginVertical: 10,
+                                                    width: '40%',
+                                                    alignItems: 'center',
+                                                }}
+                                                onPress={async () => {
+                                                    await updateBooking(booking.id!, {
+                                                        newAddons: deleteField(),
+                                                        newTotal: deleteField(),
+                                                        newManualQuoteDescription: deleteField(),
+                                                        newManualQuotePrice: deleteField(),
+                                                        isQuoteUpdateSuccess: false,
+                                                        status: 2,
+                                                    });
+                                                    setIndex(0);
+                                                }}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>No</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                style={{
+                                                    backgroundColor: COLORS.primary,
+                                                    padding: 10,
+                                                    borderRadius: 10,
+                                                    marginVertical: 10,
+                                                    width: '40%',
+                                                    alignItems: 'center',
+                                                }}
+                                                onPress={async () => {
+                                                    await updateBooking(booking.id!, {
+                                                        addons: booking.newAddons,
+                                                        total: booking.newTotal,
+                                                        manualQuoteDescription: booking.newManualQuoteDescription,
+                                                        manualQuotePrice: booking.newManualQuotePrice,
+                                                        newAddons: deleteField(),
+                                                        newTotal: deleteField(),
+                                                        newManualQuoteDescription: deleteField(),
+                                                        newManualQuotePrice: deleteField(),
+                                                        isQuoteUpdateSuccess: true,
+                                                        status: 2
+                                                    });
+                                                    setIndex(0);
+                                                }}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                </View>
+                                <View style={[GlobalStyleSheet.line]} />
+                                <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
+                                    {/* Product Info */}
+                                    <View style={{ flexDirection: "row", marginBottom: 20 }}>
+                                        <Image
+                                            source={{ uri: images[0] }}
+                                            style={{ width: 100, height: 100, borderRadius: 8, marginRight: 16 }}
+                                        />
+                                        <View style={{ flex: 1, marginTop: 5 }}>
+                                            <Text style={{ fontSize: 16, marginBottom: 5 }}>
+                                                <Text style={{ color: "#E63946", fontWeight: "bold" }}>£{booking.total}</Text> / Session {" "}
+                                                {/* <Text style={styles.originalPrice}>£40.20</Text> */}
+                                            </Text>
+                                            <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }}>{booking.catalogueService.title}</Text>
+                                            <Text style={{ fontSize: 12, color: COLORS.black }}>Product ID: {booking.catalogueService.id}</Text>
+                                        </View>
+                                    </View>
+                                    <View style={GlobalStyleSheet.line} />
+                                    {/* Borrowing Period and Delivery Method */}
+                                    <View
+                                        style={{
+                                            flexDirection: "row",
+                                            justifyContent: "space-between",
+                                            alignItems: "flex-start",
+                                            marginBottom: 10,
+                                            width: "100%",
+                                            gap: 10, // optional, for small spacing between columns
+                                        }}
+                                    >
+                                        {/* Left Column */}
+                                        <View style={{ flex: 1, paddingVertical: 10 }}>
+                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Booking ID:</Text>
+                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
+                                                {booking.id}
+                                            </Text>
+
+                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Location:</Text>
+                                            <Text style={{ fontSize: 14, color: "#666" }}>
+                                                {booking.selectedAddress?.addressName || ""}
+                                            </Text>
+                                        </View>
+
+                                        {/* Right Column */}
+                                        <View style={{ flex: 1, paddingVertical: 10 }}>
+                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Reference Number:</Text>
+                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
+                                                {booking.serviceStartCode || "N/A"}
+                                            </Text>
+
+                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Date:</Text>
+                                            <Text style={{ fontSize: 14, color: COLORS.title }}>
+                                                {booking.selectedDate}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    <View style={GlobalStyleSheet.line} />
+                                    {/* Borrowing Rate Breakdown */}
+                                    <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Service Pricing Breakdown</Text>
+                                    <View style={{ marginBottom: 20 }}>
+                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                            <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
+                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.catalogueService.basePrice}</Text>
+                                        </View>
+                                        {booking.newAddons && booking.newAddons.map((addon) => (
+                                            <View key={addon.name} style={{ flexDirection: "column" }}>
+                                                {addon.subOptions.map((opt) => (
+                                                    <View key={opt.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                                                        <Text style={{ fontSize: 14, color: "#333" }}>
+                                                            {addon.name}: {opt.label}
+                                                        </Text>
+                                                        <Text style={{ fontSize: 14, color: "#333", fontWeight: 'bold' }}>£{opt.additionalPrice}</Text>
+                                                    </View>
+                                                ))}
+                                            </View>
+                                        ))}
+                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                            <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
+                                            <Text style={{ fontSize: 14, color: "#333" }}></Text>
+                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£2.00</Text>
+                                        </View>
+                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                            <View style={{ justifyContent: 'center', alignItems: 'flex-start' }}>
+                                                <Text style={{ fontSize: 14, color: "#333" }}>Additional Charge (by settler)</Text>
+                                                <Text style={{ fontSize: 14, width: SIZES.width * 0.8, marginTop: 5, color: "#333", backgroundColor: COLORS.primaryLight, padding: 10, borderRadius: 10, }}>{booking.newManualQuoteDescription}</Text>
+                                            </View>
+                                            <View style={{ justifyContent: 'center' }}>
+                                                <Text style={{ fontSize: 14, fontWeight: "bold" }}>RM{booking.newManualQuotePrice}</Text>
+                                            </View>
+                                        </View>
+                                        <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '90%', alignSelf: 'center' },]} />
+                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
+                                            <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>£{booking.newTotal}</Text>
+                                        </View>
+                                    </View>
+                                </View>
+
+                                <View style={[GlobalStyleSheet.line, { marginTop: 15 }]} />
+                                <View style={{ width: '100%', }}>
+                                    <Text style={{ fontSize: 18, fontWeight: 'bold', marginTop: 20 }}>Quick Actions</Text>
+                                    <FlatList
+                                        scrollEnabled={false}
+                                        data={actions}
+                                        keyExtractor={(item, index) => index.toString()}
+                                        numColumns={2}
+                                        columnWrapperStyle={{ justifyContent: 'space-between', marginTop: 20 }}
+                                        renderItem={({ item }) => (
+                                            <TouchableOpacity
+                                                style={{
+                                                    backgroundColor: COLORS.background,
+                                                    padding: 10,
+                                                    borderRadius: 10,
+                                                    borderWidth: 1,
+                                                    borderColor: COLORS.blackLight,
+                                                    width: '48%',
+                                                    alignItems: 'center',
+                                                }}
+                                                onPress={item.onPressAction}
+                                            >
+                                                <Text style={{ color: COLORS.black, fontWeight: 'bold' }}>{item.buttonTitle}</Text>
+                                            </TouchableOpacity>
+                                        )}
+                                    />
+                                    <View style={{ marginTop: 40 }} >
+                                        <TouchableOpacity
+                                            activeOpacity={0.8}
+                                            style={{
+                                                paddingHorizontal: 20,
+                                                borderRadius: 30,
+                                                flexDirection: 'row',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                gap: 10
+                                            }}
+                                            onPress={() => { }}
+                                        >
+                                            <Text style={{ fontSize: 14, color: COLORS.danger, lineHeight: 21, fontWeight: 'bold', textDecorationLine: 'underline' }}>Cancel Booking</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            </View>
+                        </ScrollView>
+                    ) : (
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                            <Text style={{ color: COLORS.black }}>Product not found 404</Text>
+                        </View>
+                    )}
+                </View>
             )}
         </View>
     )
