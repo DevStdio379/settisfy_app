@@ -117,30 +117,6 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
         }
     };
 
-    function toggleSubOptionCompletion(addonIndex: number, subIndex: number) {
-        setLocalAddons(prevAddons => {
-            const updated = [...prevAddons];
-            const subOpt = updated[addonIndex].subOptions[subIndex];
-
-            // Toggle completion
-            subOpt.jobCompleted = !subOpt.jobCompleted;
-
-            // Recalculate local total
-            const basePrice = booking.catalogueService.basePrice;
-            const completedAddonsTotal = updated
-                .flatMap(a => a.subOptions)
-                .filter(opt => opt.jobCompleted) // ✅ only count completed ones
-                .reduce((sum, opt) => sum + Number(opt.additionalPrice || 0), 0);
-
-            const total = Number(basePrice) + Number(completedAddonsTotal) + 2; // add £2 platform fee
-
-            setLocalTotal(total);
-
-            return updated;
-        });
-    }
-
-
 
 
     function toggleAddon(category: DynamicOption, option: SubOption) {
@@ -364,7 +340,6 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     const actions = [
         { buttonTitle: 'Extend Period', onPressAction: () => { setSubScreenIndex(1) } },
         { buttonTitle: 'Adjust Quotation', onPressAction: () => { setSubScreenIndex(2) } },
-        { buttonTitle: 'Partial Completion', onPressAction: () => { setSubScreenIndex(3) } },
         { buttonTitle: 'Contact Support', onPressAction: () => Alert.alert('Contact Support Pressed') },
     ];
 
@@ -871,7 +846,6 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         <View style={{ marginBottom: 20 }}>
                                                             <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                                                                 <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
-                                                                <Text style={{ fontSize: 14, color: "#333" }}>1 x session</Text>
                                                                 <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.catalogueService.basePrice}</Text>
                                                             </View>
                                                             {booking.addons && booking.addons.map((addon) => (
@@ -892,11 +866,15 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                 <Text style={{ fontSize: 14, fontWeight: "bold" }}>£2.00</Text>
                                                             </View>
                                                             <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                                <Text style={{ fontSize: 14, color: "#333" }}>Delivery Charge</Text>
-                                                                <Text style={{ fontSize: 14, color: "#333" }}> N/A</Text>
-                                                                <Text style={{ fontSize: 14, fontWeight: "bold" }}>£0.00</Text>
+                                                                <View style={{ justifyContent: 'center', alignItems: 'flex-start' }}>
+                                                                    <Text style={{ fontSize: 14, color: "#333" }}>Additional Charge (by settler)</Text>
+                                                                    <Text style={{ fontSize: 14, width: SIZES.width * 0.8, marginTop: 5, color: "#333", backgroundColor: COLORS.primaryLight, padding: 10, borderRadius: 10, }}>{booking.manualQuoteDescription}</Text>
+                                                                </View>
+                                                                <View style={{ justifyContent: 'center' }}>
+                                                                    <Text style={{ fontSize: 14, fontWeight: "bold" }}>RM{booking.manualQuotePrice}</Text>
+                                                                </View>
                                                             </View>
-                                                            <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '100%', alignSelf: 'center' },]} />
+                                                            <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '90%', alignSelf: 'center' },]} />
                                                             <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                                                                 <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
                                                                 <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>£{booking.total}</Text>
@@ -1397,114 +1375,6 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             placeholder='e.g. 20'
                             keyboardType={'numeric'}
                         />
-                    </View>
-                </ScrollView>
-            )}
-            {subScreenIndex === 3 && (
-                <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ flexGrow: 1, paddingBottom: 70, paddingHorizontal: 15, }}>
-                    <View>
-                        <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>
-                            Service Pricing Breakdown
-                        </Text>
-
-                        <View style={{ marginBottom: 20 }}>
-                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
-                                <Text style={{ fontSize: 14, color: "#333" }}>1 x session</Text>
-                                <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.catalogueService.basePrice}</Text>
-                            </View>
-
-                            {localAddons.map((addon, addonIndex) => (
-                                <View key={addon.name} style={{ flexDirection: "column" }}>
-                                    {addon.subOptions.map((opt, subIndex) => (
-                                        <View key={opt.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                                            <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
-                                                <TouchableOpacity
-                                                    onPress={() => toggleSubOptionCompletion(addonIndex, subIndex)}
-                                                    style={{
-                                                        width: 24,
-                                                        height: 24,
-                                                        borderRadius: 4,
-                                                        borderWidth: 2,
-                                                        borderColor: COLORS.inputBorder,
-                                                        justifyContent: 'center',
-                                                        alignItems: 'center',
-                                                        marginRight: 8,
-                                                        backgroundColor: opt.jobCompleted ? COLORS.primary : COLORS.input,
-                                                    }}
-                                                >
-                                                    {opt.jobCompleted && <Ionicons name="checkmark" size={18} color={COLORS.white} />}
-                                                </TouchableOpacity>
-                                                <Text style={{ fontSize: 14, color: "#333", marginLeft: 5 }}>
-                                                    {addon.name}: {opt.label}
-                                                </Text>
-                                            </View>
-
-                                            <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>
-                                                £{opt.additionalPrice}
-                                            </Text>
-                                        </View>
-                                    ))}
-                                </View>
-                            ))}
-
-                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
-                                <Text style={{ fontSize: 14, fontWeight: "bold" }}>£2.00</Text>
-                            </View>
-
-                            <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '100%', alignSelf: 'center' }]} />
-
-                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
-                                <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>
-                                    £{Number(localTotal ?? 0).toFixed(2)}
-                                </Text>
-                            </View>
-                        </View>
-                        <View style={[GlobalStyleSheet.line]} />
-                        <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10, paddingTop: 20 }}>Partial Completion Remarks</Text>
-                        <Input
-                            onFocus={() => setisFocused(true)}
-                            onBlur={() => setisFocused(false)}
-                            isFocused={isFocused}
-                            onChangeText={setNewManualQuotationDescription}
-                            backround={COLORS.card}
-                            style={{
-                                fontSize: 12,
-                                borderRadius: 12,
-                                backgroundColor: COLORS.input,
-                                borderColor: COLORS.inputBorder,
-                                borderWidth: 1,
-                                height: 150,
-                            }}
-                            inputicon
-                            placeholder={`e.g. Got a grassy platform.`}
-                            multiline={true}  // Enable multi-line input
-                            numberOfLines={10} // Suggest the input area size
-                        />
-                    </View>
-                    <View style={{ alignItems: 'center' }}>
-                        <TouchableOpacity
-                            style={{
-                                backgroundColor: COLORS.primary,
-                                padding: 10,
-                                borderRadius: 10,
-                                marginVertical: 10,
-                                width: '80%',
-                                alignItems: 'center',
-                            }}
-                            onPress={async () => {
-                                updateBooking(booking.id || '', {
-                                    addons: localAddons,
-                                    total: localTotal
-                                })
-                            }}
-                        >
-                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Update Job Completion</Text>
-                        </TouchableOpacity>
                     </View>
                 </ScrollView>
             )}
