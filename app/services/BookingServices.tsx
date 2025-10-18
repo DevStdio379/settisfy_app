@@ -1,5 +1,5 @@
 import { db, storage } from './firebaseConfig';
-import { collection, addDoc, query, where, getDocs, doc, getDoc, updateDoc, CollectionReference, DocumentReference, setDoc, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, doc, getDoc, updateDoc, CollectionReference, DocumentReference, setDoc, onSnapshot, arrayUnion } from 'firebase/firestore';
 import { Address } from './AddressServices';
 import { Catalogue, DynamicOption } from './CatalogueServices';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
@@ -40,10 +40,16 @@ export interface Booking {
   newAddons?: DynamicOption[];
   manualQuoteDescription: string;
   manualQuotePrice: number;
+  isManualQuoteCompleted?: boolean,
   newManualQuoteDescription?: string,
   newManualQuotePrice?: number,
   newTotal?: number,
+
+  // for notification
   isQuoteUpdateSuccess?: boolean,
+  isDoingVisitAndFix?: boolean,
+  isDoingUpdateEvidence?: boolean,
+  isDoingQuoteUpdate?: boolean,
 
   // after broadcast
   acceptors?: Acceptor[];
@@ -58,13 +64,18 @@ export interface Booking {
   serviceStartCode: string;
   serviceEndCode: string;
 
+  // report
+  problemReportRemark?: string;
+  problemReportImageUrls?: string[];
+  problemReportIsCompleted?: boolean;
+
   createAt: any;
   updatedAt: any;
 }
 
 export interface BookingWithUser extends Booking {
   settlerProfile: User | null;
-  settlerJobProfile: SettlerService | null; 
+  settlerJobProfile: SettlerService | null;
 
 }
 
@@ -150,6 +161,47 @@ export const uploadImagesEvidence = async (imageName: string, imagesUrl: string[
   return urls; // Return all uploaded image URLs
 };
 
+export const uploadImagesReport = async (imageName: string, imagesUrl: string[]) => {
+  const urls: string[] = [];
+
+  for (const uri of imagesUrl) {
+    try {
+      // Convert to Blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // Generate unique filename
+      const filename = `bookings/report_${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
+      const storageRef = ref(storage, filename);
+
+      // Upload file
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          snapshot => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Upload ${filename}: ${progress.toFixed(2)}% done`);
+          },
+          reject, // Handle error
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            urls.push(downloadURL);
+            resolve();
+          }
+        );
+      });
+
+    } catch (error) {
+      console.error("Upload failed:", error);
+    }
+  }
+
+  console.log("All images uploaded:", urls);
+  return urls; // Return all uploaded image URLs
+};
+
 export const createBooking = async (bookingData: Booking) => {
   try {
     const bookingRef = collection(db, 'bookings');
@@ -196,10 +248,16 @@ const mapBorrowingData = (doc: any): Booking => {
     newAddons: data.newAddons,
     manualQuoteDescription: data.manualQuoteDescription,
     manualQuotePrice: data.manualQuotePrice,
+    isManualQuoteCompleted: data.isManualQuoteCompleted,
     newManualQuoteDescription: data.newManualQuoteDescription,
     newManualQuotePrice: data.newManualQuotePrice,
     newTotal: data.newTotal,
+
+    // for notification
     isQuoteUpdateSuccess: data.isQuoteUpdateSuccess,
+    isDoingVisitAndFix: data.isDoingVisitAndFix,
+    isDoingUpdateEvidence: data.isDoingUpdateEvidence,
+    isDoingQuoteUpdate: data.isDoingQuoteUpdate,
 
     // after broadcast
     acceptors: data.acceptors,
@@ -213,6 +271,12 @@ const mapBorrowingData = (doc: any): Booking => {
     // collection and return code
     serviceStartCode: data.serviceStartCode,
     serviceEndCode: data.serviceEndCode,
+
+    // reports
+    problemReportRemark: data.problemReportRemark,
+    problemReportImageUrls: data.problemReportImageUrls,
+    problemReportIsCompleted: data.problemReportIsCompleted,
+
     createAt: data.createAt,
     updatedAt: data.updatedAt,
   };
@@ -314,11 +378,12 @@ export const updateBooking = async (bookingId: string, updatedData: Partial<any>
 
     if (updatedData.settlerEvidenceImageUrls && updatedData.settlerEvidenceImageUrls.length > 0) {
       const uploadedUrls = await uploadImagesEvidence(bookingRef.id, updatedData.settlerEvidenceImageUrls);
-      await updateDoc(bookingRef, { 
+      await updateDoc(bookingRef, {
         ...updatedData,
-        settlerEvidenceImageUrls: uploadedUrls 
+        settlerEvidenceImageUrls: uploadedUrls
       });
-    } else {
+    }
+    else {
       await updateDoc(bookingRef, updatedData);
     }
     console.log('Booking updated with ID: ', bookingId);
@@ -347,4 +412,37 @@ export const countActivitiesByUser = async (userID: string): Promise<{ borrowing
     console.error('Error counting reviews: ', error);
     throw error;  // Throwing the error to handle it at the call site
   }
+};
+
+
+export const deleteProblemReportByIndex = async (
+  bookingId: string,
+  reportIndex: number
+) => {
+  const bookingRef = doc(db, "bookings", bookingId);
+
+  // 1️⃣ Get current booking data
+  const bookingSnap = await getDoc(bookingRef);
+  if (!bookingSnap.exists()) throw new Error("Booking not found");
+
+  const currentReports = bookingSnap.data().reports || [];
+
+  // 2️⃣ Ensure index is valid
+  if (reportIndex < 0 || reportIndex >= currentReports.length) {
+    throw new Error("Invalid report index");
+  }
+
+  // Optional: if you store image URLs and want to clean them up
+  const reportToDelete = currentReports[reportIndex];
+  // await deleteReportImages(reportToDelete.reportImageUrls); // optional cleanup
+
+  // 3️⃣ Remove report at index
+  const updatedReports = currentReports.filter(
+    (_: any, idx: number) => idx !== reportIndex
+  );
+
+  // 4️⃣ Save back to Firestore
+  await updateDoc(bookingRef, {
+    reports: updatedReports,
+  });
 };

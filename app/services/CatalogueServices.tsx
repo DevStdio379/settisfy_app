@@ -7,7 +7,7 @@ export interface SubOption {
     label: string;        // e.g. "10 sqft"
     additionalPrice: number; // e.g. 15 (store as number for calculations)
     notes?: string;       // optional: "measure carefully"
-    jobCompleted?: boolean;
+    isCompleted?: boolean;
 }
 
 export interface DynamicOption {
