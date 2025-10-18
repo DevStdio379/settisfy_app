@@ -320,6 +320,13 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
         setStatus(booking.status);
     }, [booking]);
 
+    useEffect(() => {
+        if (booking.manualQuoteDescription && booking.manualQuotePrice) {
+            setNewManualQuotationDescription(booking.manualQuoteDescription);
+            setNewManualQuotationPrice(booking.manualQuotePrice);
+        }
+    }, []);
+
     const onRefresh = useCallback(() => {
         setRefreshing(true);
         fetchSelectedBookingData().then(() => setRefreshing(false));
@@ -1345,6 +1352,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             onBlur={() => setisFocused(false)}
                             isFocused={isFocused}
                             onChangeText={setNewManualQuotationDescription}
+                            value={newManualQuoteDescription ? newManualQuoteDescription : ''}
                             backround={COLORS.card}
                             style={{
                                 fontSize: 12,
@@ -1367,9 +1375,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 const newTotal = calculateTotalQuote(basePrice, selectedAddons, Number(newManualQuotePrice));
                                 setTotalQuote(newTotal);
                             }}
+                            value={ newManualQuotePrice ? `${newManualQuotePrice}` : '0'}
                             isFocused={isFocused}
                             onChangeText={setNewManualQuotationPrice}
-                            value={newManualQuotePrice ? newManualQuotePrice.toString() : ''}
                             backround={COLORS.card}
                             style={{ borderRadius: 12, backgroundColor: COLORS.input, borderColor: COLORS.inputBorder, borderWidth: 1, height: 50 }}
                             placeholder='e.g. 20'
@@ -1417,7 +1425,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 isQuoteUpdateSuccess: deleteField(),
                                 status: 7,
                             })
-                            setSubScreenIndex(0)
+                            setSubScreenIndex(0);
+                            setTotalQuote(Number(totalQuote) - Number(newManualQuotePrice))
                         }}
                     >
                         <Text style={{ color: COLORS.white, fontSize: 16, fontWeight: 'bold' }}>Update Pricing</Text>
