@@ -5,6 +5,30 @@ import { Catalogue, DynamicOption } from './CatalogueServices';
 import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 import { User } from '../context/UserContext';
 import { SettlerService } from './SettlerServiceServices';
+import { Alert } from 'react-native';
+
+export enum BookingActivityType {
+  QUOTE_CREATED = "QUOTE_CREATED",
+  QUOTE_UPDATED = "QUOTE_UPDATED",
+  JOB_INCOMPLETE = "JOB_INCOMPLETE",
+  PAYMENT_RELEASED = "PAYMENT_RELEASED",
+  REPORT_SUBMITTED = "REPORT_SUBMITTED",
+  STATUS_CHANGED = "STATUS_CHANGED",
+}
+
+export enum BookingActorType {
+  SETTLER = "settler",
+  CUSTOMER = "customer",
+}
+
+export interface BookingActivity {
+  id: string; // unique id
+  type: BookingActivityType,
+  message: string; // readable summary
+  timestamp: any; // Date.now()
+  actor: BookingActorType; // who triggered this
+}
+
 
 export interface Acceptor {
   settlerId: string;
@@ -68,6 +92,9 @@ export interface Booking {
   problemReportRemark?: string;
   problemReportImageUrls?: string[];
   problemReportIsCompleted?: boolean;
+
+  // timeline
+  timeline: BookingActivity[],
 
   createAt: any;
   updatedAt: any;
@@ -205,20 +232,31 @@ export const uploadImagesReport = async (imageName: string, imagesUrl: string[])
 export const createBooking = async (bookingData: Booking) => {
   try {
     const bookingRef = collection(db, 'bookings');
+
+    // Step 1: Create the booking first (without uploading images yet)
     const docRef = await addDoc(bookingRef, bookingData);
     console.log('Booking created with ID:', docRef.id);
 
+    // Step 2: If notesToSettlerImageUrls exist (local file URIs or base64)
     if (bookingData.notesToSettlerImageUrls && bookingData.notesToSettlerImageUrls.length > 0) {
+      // Upload the images and get back URLs
       const uploadedUrls = await uploadImages(docRef.id, bookingData.notesToSettlerImageUrls);
-      await updateDoc(doc(db, 'bookings', docRef.id), { notesToSettlerImageUrls: uploadedUrls });
+
+      // Step 3: Update the same booking doc with those URLs
+      await updateDoc(doc(db, 'bookings', docRef.id), {
+        notesToSettlerImageUrls: uploadedUrls,
+        updatedAt: new Date(), // ✅ keep consistency
+      });
     }
 
+    // Step 4: Return ID for navigation or confirmation
     return docRef.id;
   } catch (error) {
     console.error('Error creating booking: ', error);
     throw error;
   }
 };
+
 
 const mapBorrowingData = (doc: any): Booking => {
   const data = doc.data();
@@ -271,6 +309,9 @@ const mapBorrowingData = (doc: any): Booking => {
     // collection and return code
     serviceStartCode: data.serviceStartCode,
     serviceEndCode: data.serviceEndCode,
+
+    // timeline
+    timeline: data.timeline,
 
     // reports
     problemReportRemark: data.problemReportRemark,

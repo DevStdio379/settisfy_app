@@ -23,7 +23,7 @@ import { DynamicOption, updateCatalogue } from "../../services/CatalogueServices
 import { fetchReviewsByCatalogueId, Review, ReviewWithUser } from "../../services/ReviewServices";
 import ImageViewer from "../../components/ImageViewer";
 import FeedbackPills from "../../components/FeedbackPills";
-import { createBooking } from "../../services/BookingServices";
+import { BookingActivityType, BookingActorType, createBooking } from "../../services/BookingServices";
 
 type QuoteServiceScreenProps = StackScreenProps<RootStackParamList, "QuoteService">;
 
@@ -55,7 +55,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
   const [selectedDate, setSelectedDate] = useState(today);
   const [index, setIndex] = useState(0);
   const { user } = useUser();
-  
+
   const [paymentMethod, setPaymentMethod] = useState<string | null>('card');
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<Address | undefined>(user?.currentAddress);
@@ -238,6 +238,9 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
       multipleSelect: false, // Set appropriately if you have this info
     }));
 
+    // helper to generate a simple unique id (safe for React Native environments)
+    const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+
     const bookingData = {
       userId: user?.uid || '',
       status: 0,
@@ -271,6 +274,17 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
       settlerEvidenceImageUrls: [],
       settlerEvidenceRemark: '',
 
+      // timeline
+      timeline: [
+        {
+          id: generateId(),
+          type: BookingActivityType.QUOTE_CREATED,
+          message: "Customer made a booking.",
+          timestamp: new Date(),
+          actor: BookingActorType.CUSTOMER,
+        },
+      ],
+
       //generate random collection and return codes
       serviceStartCode: '',
       serviceEndCode: '',
@@ -278,14 +292,26 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
       createAt: new Date(),
     };
 
-    const bookingId = await createBooking(bookingData);
-    if (bookingId) {
-      await updateCatalogue(service.id || '', { bookingsCount: service.bookingsCount + 1 })
-      Alert.alert('Success', `Booking created successfully with ID: ${bookingId}`);
-      navigation.navigate('PaymentSuccess', {
-        bookingId: bookingId,
-        image: service.imageUrls[0],
-      });
+    try {
+      const bookingId = await createBooking(bookingData);
+      if (bookingId) {
+        try {
+          await updateCatalogue(service.id || '', { bookingsCount: (service.bookingsCount || 0) + 1 });
+        } catch (err) {
+          console.error('Failed to update catalogue bookingsCount:', err);
+        }
+        Alert.alert('Success', `Booking created successfully with ID: ${bookingId}`);
+        navigation.navigate('PaymentSuccess', {
+          bookingId: bookingId,
+          image: service.imageUrls[0],
+        });
+      } else {
+        Alert.alert('Error', 'Booking creation returned no id.');
+        console.error('createBooking returned falsy bookingId', bookingId);
+      }
+    } catch (err: any) {
+      console.error('createBooking error:', err);
+      Alert.alert('Error', err?.message || 'Failed to create booking. Check logs for details.');
     }
   };
 
@@ -605,7 +631,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                                 </Text>
                                 <Text style={{ fontSize: 14 }}>
                                   {review.reviewer?.createAt?.toDate
-                                    ? review.reviewer.createAt.toDate().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year:'numeric' })
+                                    ? review.reviewer.createAt.toDate().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
                                     : '—'}
                                 </Text>
                               </View>

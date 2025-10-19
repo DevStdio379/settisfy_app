@@ -410,7 +410,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
         <View style={{ backgroundColor: COLORS.background, flex: 1 }}>
             <View style={{ height: 60, borderBottomColor: COLORS.card, borderBottomWidth: 1 }}>
                 <View
-                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, paddingHorizontal: 5 }}>
+                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, paddingHorizontal: 10 }}>
                     <View style={{ flex: 1, alignItems: 'flex-start' }}>
                         <TouchableOpacity
                             onPress={() => { subScreenIndex === 0 ? navigation.goBack() : setSubScreenIndex(subScreenIndex - 1) }}
@@ -428,7 +428,17 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                         <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center', marginVertical: 10 }}>Booking Details</Text>
                     </View>
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                        {/* right header element */}
+                        <TouchableOpacity
+                            onPress={() => { setSubScreenIndex(6) }}
+                            style={{
+                                height: 40,
+                                width: 40,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                        >
+                            <Ionicons size={27} color={COLORS.black} name='notifications-outline' />
+                        </TouchableOpacity>
                     </View>
                 </View>
             </View>
@@ -2328,6 +2338,64 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                 </TouchableOpacity>
                             )}
                         </View>
+                    </ScrollView>
+                </View>
+            )}
+            {/* Timeline Subscreen */}
+            {subScreenIndex === 6 && (
+                <View>
+                    <ScrollView
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{ paddingBottom: 70, alignItems: 'center' }}
+                        refreshControl={
+                            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                        }
+                    >
+                        <View style={{ marginVertical: 10, width: '100%', paddingHorizontal: 15 }}>
+                            <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 10 }}>
+                                Activity Timeline
+                            </Text>
+                            { booking.timeline?.length ? (
+                                booking.timeline
+                                    .sort((a, b) => a.timestamp - b.timestamp)
+                                    .map((item) => (
+                                        <View key={item.id} style={{ flexDirection: "row", marginBottom: 12 }}>
+                                            <View
+                                                style={{
+                                                    width: 8,
+                                                    height: 8,
+                                                    borderRadius: 4,
+                                                    backgroundColor: item.actor === "settler" ? "#007AFF" : "#FF9500",
+                                                    marginTop: 6,
+                                                    marginRight: 10,
+                                                }}
+                                            />
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={{ color: "#333", fontSize: 14 }}>{item.message}</Text>
+                                                <Text style={{ color: "#999", fontSize: 12 }}>
+                                                    {(() => {
+                                                        const ts = item.timestamp;
+                                                        let d: Date | null = null;
+                                                        if (!ts) return 'N/A';
+                                                        if (typeof ts === 'number') d = new Date(ts);
+                                                        else if (ts?.toDate && typeof ts.toDate === 'function') d = ts.toDate();
+                                                        else if (typeof ts === 'string') {
+                                                            const parsed = Date.parse(ts);
+                                                            if (!isNaN(parsed)) d = new Date(parsed);
+                                                        }
+                                                        return d
+                                                            ? d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })
+                                                            : 'N/A';
+                                                    })()}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    ))
+                            ) : (
+                                <Text style={{ color: "#999" }}>No activity recorded yet.</Text>
+                            )}
+                        </View>
+
                     </ScrollView>
                 </View>
             )}
