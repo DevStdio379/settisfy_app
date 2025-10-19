@@ -9,16 +9,24 @@ import { Alert } from 'react-native';
 
 export enum BookingActivityType {
   QUOTE_CREATED = "QUOTE_CREATED",
-  QUOTE_UPDATED = "QUOTE_UPDATED",
+  SETTLER_ACCEPT = "SETTLER_ACCEPT",
+  SETTLER_SELECTED = "SETTLER_SELECTED",
+  SETTLER_SERVICE_START = "SETTLER_SERVICE_START",
+  SETTLER_SERVICE_END = "SETTLER_SERVICE_END",
+  SETTLER_EVIDENCE_SUBMITTED = "SETTLER_EVIDENCE_SUBMITTED",
+  SETTLER_EVIDENCE_UPDATED = "SETTLER_EVIDENCE_UPDATED",
+  SETTLER_QUOTE_UPDATED = "SETTLER_QUOTE_UPDATED",
   JOB_INCOMPLETE = "JOB_INCOMPLETE",
+  VISIT_AND_FIX_SCHEDULED = "VISIT_AND_FIX_SCHEDULED",
+  JOB_COMPLETED = "JOB_COMPLETED",
   PAYMENT_RELEASED = "PAYMENT_RELEASED",
   REPORT_SUBMITTED = "REPORT_SUBMITTED",
   STATUS_CHANGED = "STATUS_CHANGED",
 }
 
 export enum BookingActorType {
-  SETTLER = "settler",
-  CUSTOMER = "customer",
+  SETTLER = "SETTLER",
+  CUSTOMER = "CUSTOMER",
 }
 
 export interface BookingActivity {
@@ -69,6 +77,13 @@ export interface Booking {
   newManualQuotePrice?: number,
   newTotal?: number,
 
+  // incompletion check
+  incompletionAddonsCheck?: DynamicOption[];
+  incompletionManualQuoteCheck?: boolean;
+  incompletionRemark?: string;
+  incompletionImageUrls?: string[];
+  incompletionTotal?: number;
+
   // for notification
   isQuoteUpdateSuccess?: boolean,
   isDoingVisitAndFix?: boolean,
@@ -94,7 +109,15 @@ export interface Booking {
   problemReportIsCompleted?: boolean;
 
   // timeline
-  timeline: BookingActivity[],
+  timeline: any[],
+  // for timeline must have:
+  // { 
+//   id: string; 
+//   message: string; 
+//   timestamp: any; 
+//   actor: BookingActorType; 
+//   type: BookingActivityType
+// }
 
   createAt: any;
   updatedAt: any;
@@ -158,6 +181,47 @@ export const uploadImagesEvidence = async (imageName: string, imagesUrl: string[
 
       // Generate unique filename
       const filename = `bookings/evidence_${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
+      const storageRef = ref(storage, filename);
+
+      // Upload file
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          snapshot => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Upload ${filename}: ${progress.toFixed(2)}% done`);
+          },
+          reject, // Handle error
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            urls.push(downloadURL);
+            resolve();
+          }
+        );
+      });
+
+    } catch (error) {
+      console.error("Upload failed:", error);
+    }
+  }
+
+  console.log("All images uploaded:", urls);
+  return urls; // Return all uploaded image URLs
+};
+
+export const uploadImageIncompletionEvidence = async (imageName: string, imagesUrl: string[]) => {
+  const urls: string[] = [];
+
+  for (const uri of imagesUrl) {
+    try {
+      // Convert to Blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // Generate unique filename
+      const filename = `bookings/incompletion_evidence_${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
       const storageRef = ref(storage, filename);
 
       // Upload file
@@ -289,13 +353,19 @@ const mapBorrowingData = (doc: any): Booking => {
     isManualQuoteCompleted: data.isManualQuoteCompleted,
     newManualQuoteDescription: data.newManualQuoteDescription,
     newManualQuotePrice: data.newManualQuotePrice,
-    newTotal: data.newTotal,
+    incompletionTotal: data.incompletionTotal,
 
     // for notification
     isQuoteUpdateSuccess: data.isQuoteUpdateSuccess,
     isDoingVisitAndFix: data.isDoingVisitAndFix,
     isDoingUpdateEvidence: data.isDoingUpdateEvidence,
     isDoingQuoteUpdate: data.isDoingQuoteUpdate,
+
+    // incompletion check
+    incompletionAddonsCheck: data.incompletionAddonsCheck,
+    incompletionManualQuoteCheck: data.incompletionManualQuoteCheck,
+    incompletionRemark: data.incompletionRemark,
+    incompletionImageUrls: data.incompletionImageUrls,
 
     // after broadcast
     acceptors: data.acceptors,

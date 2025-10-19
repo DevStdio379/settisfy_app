@@ -24,6 +24,7 @@ import { fetchReviewsByCatalogueId, Review, ReviewWithUser } from "../../service
 import ImageViewer from "../../components/ImageViewer";
 import FeedbackPills from "../../components/FeedbackPills";
 import { BookingActivityType, BookingActorType, createBooking } from "../../services/BookingServices";
+import { generateId } from "../../helper/HelperFunctions";
 
 type QuoteServiceScreenProps = StackScreenProps<RootStackParamList, "QuoteService">;
 
@@ -238,8 +239,6 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
       multipleSelect: false, // Set appropriately if you have this info
     }));
 
-    // helper to generate a simple unique id (safe for React Native environments)
-    const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
     const bookingData = {
       userId: user?.uid || '',

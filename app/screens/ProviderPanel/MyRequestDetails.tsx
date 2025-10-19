@@ -11,7 +11,7 @@ import { fetchSelectedUser, User, useUser } from '../../context/UserContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { createReview, getReviewByBookingId, Review } from '../../services/ReviewServices';
 import axios from 'axios';
-import { Booking, fetchSelectedBooking, updateBooking } from '../../services/BookingServices';
+import { Booking, BookingActivityType, BookingActorType, fetchSelectedBooking, updateBooking } from '../../services/BookingServices';
 import { arrayUnion, deleteField } from 'firebase/firestore';
 import { getOrCreateChat } from '../../services/ChatServices';
 import Input from '../../components/Input/Input';
@@ -19,6 +19,7 @@ import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { Calendar } from 'react-native-calendars';
 import { format } from 'date-fns';
 import { DynamicOption, SubOption } from '../../services/CatalogueServices';
+import { generateId } from '../../helper/HelperFunctions';
 
 type MyRequestDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyRequestDetails'>;
 
@@ -62,6 +63,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
 
     const [selectedNotesToSettlerImageUrl, setSelectedNotesToSettlerImageUrl] = useState<string | null>(null);
     const [notesToSettlerImageUrls, setNotesToSettlerImageUrls] = useState<string[]>([]);
+
+    const [incompletionImageUrls, setIncompletionImageUrls] = useState<string[]>([]);
+    const [selectedIncompletionImageUrl, setSelectedIncompletionImageUrl] = useState<string | null>();
 
     const [selectedSettlerEvidenceImageUrl, setSelectedSettlerEvidenceImageUrl] = useState<string | null>(null);
     const [settlerEvidenceImageUrls, setSettlerEvidenceImageUrls] = useState<string[]>([]);
@@ -279,6 +283,11 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
 
                 if (booking.notesToSettlerImageUrls) {
                     setSelectedNotesToSettlerImageUrl(booking.notesToSettlerImageUrls[0])
+                }
+
+                if (booking.incompletionImageUrls) {
+                    setIncompletionImageUrls(booking.incompletionImageUrls);
+                    setSelectedIncompletionImageUrl(booking.incompletionImageUrls[0])
                 }
 
                 const selectedBooking = await fetchSelectedBooking(booking.id || 'undefined');
@@ -582,6 +591,20 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                             lastName: user?.lastName,
                                                                             acceptedAt: new Date() // cleaner than Date.toISOString
                                                                         }),
+                                                                        // add timeline entry for auditing / history
+                                                                        timeline: arrayUnion({
+                                                                            id: generateId(),
+                                                                            type: BookingActivityType.SETTLER_ACCEPT,
+                                                                            message: "Settler accepted the booking.",
+                                                                            timestamp: new Date(),
+                                                                            actor: BookingActorType.SETTLER,
+
+                                                                            // additional info
+                                                                            settlerId: user?.uid,
+                                                                            settlerServiceId: settlerServiceId,
+                                                                            firstName: user?.firstName,
+                                                                            lastName: user?.lastName,
+                                                                        }),
                                                                         status: 0,
                                                                     });
                                                                     onRefresh();
@@ -600,7 +623,6 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Your reference number is</Text>
                                             <Text style={{ fontSize: 24, fontWeight: "bold", color: "indigo" }}>{booking.serviceStartCode}</Text>
                                             <Text style={{ fontSize: 10, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Please check the code with your customer. The code must match between you and customer.</Text>
-                                            <View style={[GlobalStyleSheet.line]} />
                                             <TouchableOpacity
                                                 style={{
                                                     backgroundColor: COLORS.primary,
@@ -610,9 +632,21 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     width: '80%',
                                                     alignItems: 'center',
                                                 }}
-                                                onPress={() => { if (user && customer) handleChat(user.uid, customer.uid) }}
+                                                onPress={async () => {
+                                                    await updateBooking(booking.id!, {
+                                                        status: 2,
+                                                        timeline: arrayUnion({
+                                                            id: generateId(),
+                                                            type: BookingActivityType.SETTLER_SERVICE_START,
+                                                            message: "Settler confirmed service start.",
+                                                            timestamp: new Date(),
+                                                            actor: BookingActorType.SETTLER,
+                                                        }),
+                                                    });
+                                                    setStatus(status! + 1);
+                                                }}
                                             >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Customer</Text>
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Start Service</Text>
                                             </TouchableOpacity>
                                         </View>
                                     ) : status === 2 && booking.settlerId === user?.uid ? (
@@ -631,22 +665,28 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     alignItems: 'center',
                                                 }}
                                                 onPress={async () => {
-                                                    // if (booking.id) {
-                                                    //     await updateBooking(booking.id, { status: status! + 1, serviceEndCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
-                                                    // }
-                                                    // setStatus(status! + 1);
-                                                    onClick(2);
-                                                    onClickHeader(2);
-                                                    setActiveIndex(2);
+
+                                                    await updateBooking(booking.id!, {
+                                                        status: 3,
+                                                        timeline: arrayUnion({
+                                                            id: generateId(),
+                                                            type: BookingActivityType.SETTLER_SERVICE_END,
+                                                            message: "Settler marked service as completed.",
+                                                            timestamp: new Date(),
+                                                            actor: BookingActorType.SETTLER,
+                                                        })
+                                                    });
+
+                                                    setStatus(3);
                                                 }}
                                             >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Upload Service Evidence</Text>
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Complete Job</Text>
                                             </TouchableOpacity>
                                             <Text style={{ fontSize: 13, color: COLORS.black }}>or go to the bottom of this screen for more action</Text>
                                         </View>
-                                    ) : status === 3 ? (
+                                    ) : status === 3 || status === 4 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Awaiting for customer response</Text>
+                                            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{status === 3 ? "Submit Your Job Completion Evidence" : "Customer Review In Progress"}</Text>
                                             <TouchableOpacity
                                                 style={{
                                                     backgroundColor: COLORS.primary,
@@ -656,12 +696,17 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     width: '80%',
                                                     alignItems: 'center',
                                                 }}
-                                                onPress={() => { if (user && customer) handleChat(user.uid, customer.uid) }}
+                                                onPress={() => {
+                                                    onClick(2);
+                                                    onClickHeader(2);
+                                                    setActiveIndex(2);
+                                                }}
                                             >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Customer</Text>
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Go To Service Evidence Tab</Text>
                                             </TouchableOpacity>
+                                            <Text style={{ textAlign: 'center' }}>You might need to update the evidence if customer not mark it as completed.</Text>
                                         </View>
-                                    ) : status === 4 ? (
+                                    ) : status === 5 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                             <Text style={{ fontSize: 16, fontWeight: 'bold' }}>You're in cooldown period</Text>
                                             <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Customer will review your job completion and wait for the latecoming issues if exist.</Text>
@@ -1082,9 +1127,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                                         height: 80,
                                                                                         marginRight: 10,
                                                                                         borderRadius: 10,
-                                                                                        borderWidth: selectedNotesToSettlerImageUrl === imageUri ? 3 : 0,
+                                                                                        borderWidth: selectedSettlerEvidenceImageUrl === imageUri ? 3 : 0,
                                                                                         borderColor:
-                                                                                            selectedNotesToSettlerImageUrl === imageUri
+                                                                                            selectedSettlerEvidenceImageUrl === imageUri
                                                                                                 ? COLORS.primary
                                                                                                 : 'transparent',
                                                                                     }}
@@ -1093,7 +1138,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                         ))}
 
                                                                         {/* Small "+" box — only visible if less than 5 images */}
-                                                                        {notesToSettlerImageUrls.length < 5 && (
+                                                                        {settlerEvidenceImageUrls.length < 5 && (
                                                                             <TouchableOpacity
                                                                                 onPress={handleImageSelect}
                                                                                 activeOpacity={0.8}
@@ -1141,7 +1186,6 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         <View>
                                                             <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Settler Remarks</Text>
                                                             <Input
-                                                                readOnly={booking.settlerEvidenceRemark !== '' ? true : false}
                                                                 onFocus={() => setisFocused(true)}
                                                                 onBlur={() => setisFocused(false)}
                                                                 isFocused={isFocused}
@@ -1173,25 +1217,31 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                 alignItems: 'center',
                                                             }}
                                                             onPress={async () => {
-                                                                if (status === 2) {
-                                                                    if (settlerEvidenceImageUrls.length === 0 || !settlerEvidenceRemark) {
-                                                                        Alert.alert('Evidence & Remarks are Required');
-                                                                        return
-                                                                    }
+                                                                if (settlerEvidenceImageUrls.length === 0 || !settlerEvidenceRemark) {
+                                                                    Alert.alert('Evidence & Remarks are Required');
+                                                                    return
+                                                                }
 
-                                                                    if (booking.id) {
-                                                                        await updateBooking(booking.id, {
-                                                                            status: status! + 1,
-                                                                            settlerEvidenceImageUrls: settlerEvidenceImageUrls,
-                                                                            settlerEvidenceRemark: settlerEvidenceRemark
-                                                                        });
-                                                                    }
-                                                                    setStatus(status! + 1);
-                                                                    onRefresh()
-                                                                } else { }
+                                                                if (booking.id) {
+                                                                    await updateBooking(booking.id, {
+                                                                        status: 4,
+                                                                        settlerEvidenceImageUrls: settlerEvidenceImageUrls,
+                                                                        settlerEvidenceRemark: settlerEvidenceRemark,
+                                                                        timeline: arrayUnion({
+                                                                            id: generateId(),
+                                                                            actor: BookingActorType.SETTLER,
+                                                                            type: status === 3 ? BookingActivityType.SETTLER_EVIDENCE_SUBMITTED : BookingActivityType.SETTLER_EVIDENCE_UPDATED,
+                                                                            message: status === 3 ? 'Settler submitted service completion evidence.' : 'Settler updated service completion evidence.',
+                                                                            updatedEvidenceCount: settlerEvidenceImageUrls.length,
+                                                                            timestamp: new Date(),
+                                                                        })
+                                                                    });
+                                                                }
+                                                                setStatus(4);
+                                                                onRefresh()
                                                             }}
                                                         >
-                                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>{status === 2 ? 'Submit Evidence' : 'Evidence Submitted'}</Text>
+                                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>{status === 3 ? 'Submit Evidence' : 'Update Evidence'}</Text>
                                                         </TouchableOpacity>
                                                     </View>
                                                 )}
@@ -1400,7 +1450,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 const newTotal = calculateTotalQuote(basePrice, selectedAddons, Number(newManualQuotePrice));
                                 setTotalQuote(newTotal);
                             }}
-                            value={newManualQuotePrice ? `${newManualQuotePrice}` : '0'}
+                            value={newManualQuotePrice ? `${newManualQuotePrice}` : ''}
                             isFocused={isFocused}
                             onChangeText={setNewManualQuotationPrice}
                             backround={COLORS.card}
@@ -1448,9 +1498,24 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 newTotal: totalQuote + 2,
                                 newManualQuoteDescription: newManualQuoteDescription,
                                 newManualQuotePrice: newManualQuotePrice,
-                                isQuoteUpdateSuccess: deleteField(),
+                                isQuoteUpdateSuccessful: false,
                                 status: 7,
-                            })
+                                timeline: arrayUnion({
+                                    id: generateId(),
+                                    actor: BookingActorType.SETTLER,
+                                    type: BookingActivityType.SETTLER_QUOTE_UPDATED,
+                                    message: 'Settler updated the booking quotation.',
+                                    timestamp: new Date(),
+
+                                    // additional info
+                                    newAddons: addonsArray,
+                                    oldTotal: booking.total,
+                                    newTotal: totalQuote + 2,
+                                    newManualQuoteDescription: newManualQuoteDescription,
+                                    newManualQuotePrice: newManualQuotePrice,
+                                    isQuoteUpdateSuccessful: '',
+                                }),
+                            });
                             setSubScreenIndex(0);
                             setTotalQuote(Number(totalQuote) - Number(newManualQuotePrice))
                         }}
@@ -1487,10 +1552,14 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             }}
                                             onPress={async () => {
                                                 await updateBooking(booking.id!, {
-                                                    status: 2,
-                                                    isDoingVisitAndFix: true,
-                                                    isDoingUpdateEvidence: false,
-                                                    isDoingQuoteUpdate: false,
+                                                    status: 4,
+                                                    timeline: arrayUnion({
+                                                        id: generateId(),
+                                                        actor: BookingActorType.SETTLER,
+                                                        type: BookingActivityType.VISIT_AND_FIX_SCHEDULED,
+                                                        message: "Visit and fix scheduled",
+                                                        timestamp: Date.now(),
+                                                    }),
                                                 });
                                                 onRefresh();
                                                 setSubScreenIndex(0);
@@ -1508,7 +1577,18 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 alignItems: 'center',
                                             }}
                                             onPress={async () => {
-                                                setSubScreenIndex(4);
+                                                await updateBooking(booking.id!, {
+                                                    status: 4,
+                                                    timeline: arrayUnion({
+                                                        id: generateId(),
+                                                        actor: BookingActorType.SETTLER,
+                                                        type: BookingActivityType.VISIT_AND_FIX_SCHEDULED,
+                                                        message: "Visit and fix scheduled",
+                                                        timestamp: Date.now(),
+                                                    }),
+                                                });
+                                                onRefresh();
+                                                setSubScreenIndex(0);
                                             }}
                                         >
                                             <Text style={{ color: 'white', fontWeight: 'bold' }}>Update Evidence</Text>
@@ -1604,7 +1684,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                             </Text>
                                                         </TouchableOpacity> */}
 
-                                        {localAddons.map((addon, addonIndex) => (
+                                        {booking.incompletionAddonsCheck!.map((addon, addonIndex) => (
                                             <View key={addon.name}>
                                                 {addon.subOptions.map((opt, subIndex) => (
                                                     <View
@@ -1659,7 +1739,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                         </View>
 
                                         {/* Additional Quote */}
-                                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, opacity: booking.isManualQuoteCompleted ? 1 : 0.4 }}>
+                                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, opacity: booking.incompletionManualQuoteCheck ? 1 : 0.4 }}>
                                             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                                                 <TouchableOpacity
                                                     onPress={() => { }}
@@ -1672,10 +1752,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         justifyContent: 'center',
                                                         alignItems: 'center',
                                                         marginRight: 8,
-                                                        backgroundColor: booking.isManualQuoteCompleted && booking.isManualQuoteCompleted ? COLORS.primary : COLORS.input,
+                                                        backgroundColor: booking && booking.incompletionManualQuoteCheck ? COLORS.primary : COLORS.input,
                                                     }}
                                                 >
-                                                    {booking.isManualQuoteCompleted && <Ionicons name="checkmark" size={16} color={COLORS.white} />}
+                                                    {booking.incompletionManualQuoteCheck && <Ionicons name="checkmark" size={16} color={COLORS.white} />}
                                                 </TouchableOpacity>
 
                                                 <View style={{ flex: 1 }}>
@@ -1691,7 +1771,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                             borderRadius: 10,
                                                         }}
                                                     >
-                                                        {booking.manualQuoteDescription || '—'}
+                                                        {booking.manualQuoteDescription || 'N/A'}
                                                     </Text>
                                                 </View>
                                             </View>
@@ -1709,8 +1789,41 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                         <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
                                             <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
                                             <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>
-                                                {booking.newTotal && booking.newTotal}
+                                                RM{booking.incompletionTotal || 0}
                                             </Text>
+                                        </View>
+                                        <View style={[GlobalStyleSheet.line]} />
+                                        <View>
+                                            <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Job Incompletion Evidence</Text>
+                                            <Text style={{ paddingBottom: 10 }}>Please provide evidence of the job incompletion.</Text>
+                                            <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', gap: 10, paddingTop: 0 }}>
+                                                {booking.incompletionImageUrls!.length > 0 ? (
+                                                    <View style={{ flex: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
+                                                        <Image source={{ uri: selectedIncompletionImageUrl! }} style={{ width: '100%', height: 300, borderRadius: 10, marginBottom: 10 }} resizeMode="cover" />
+
+                                                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                                            {booking.incompletionImageUrls!.map((u, idx) => (
+                                                                <TouchableOpacity key={idx} onPress={() => setSelectedIncompletionImageUrl(u)}>
+                                                                    <Image source={{ uri: u }} style={{ width: 80, height: 80, marginRight: 10, borderRadius: 10, borderWidth: selectedIncompletionImageUrl === u ? 3 : 0, borderColor: selectedIncompletionImageUrl === u ? COLORS.primary : 'transparent' }} />
+                                                                </TouchableOpacity>
+                                                            ))}
+                                                        </ScrollView>
+                                                    </View>
+                                                ) : (
+                                                    <TouchableOpacity
+                                                        onPress={() => { }}
+                                                        activeOpacity={0.8}
+                                                        style={{ width: '100%', height: 100, borderRadius: 10, marginBottom: 10, backgroundColor: COLORS.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.blackLight }}>
+                                                        <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
+                                                        <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>No photos here</Text>
+                                                    </TouchableOpacity>
+                                                )}
+                                            </View>
+
+                                            <View>
+                                                <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Job Incompletion Remarks</Text>
+                                                <Input onFocus={() => setisFocused(true)} onBlur={() => setisFocused(false)} isFocused={isFocused}  backround={COLORS.card} style={{ fontSize: 12, borderRadius: 12, backgroundColor: COLORS.input, borderColor: COLORS.inputBorder, borderWidth: 1, height: 150 }} inputicon placeholder={`e.g. Parts left unfinished`} multiline numberOfLines={10} value={booking.incompletionRemark} />
+                                            </View>
                                         </View>
                                     </View>
                                 </View>
@@ -1767,202 +1880,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                     )}
                 </View>
             )}
-            {/* Job Completion Evidence Subscreen */}
-            {subScreenIndex === 4 && (
-                <View>
-                    {booking ? (
-                        <ScrollView
-                            showsVerticalScrollIndicator={false}
-                            contentContainerStyle={{ paddingBottom: 70, alignItems: 'center' }}
-                            refreshControl={
-                                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-                            }
-                        >
-                            <View style={{ width: '100%', paddingTop: 20, paddingHorizontal: 15, gap: 10 }}>
-                                <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Service Completion Evidence</Text>
-                                <Text style={{ fontSize: 13, color: COLORS.blackLight2 }}>This helps verify your service completion in case of disputes. Complete this part before submitting your job completion.</Text>
-                                <View
-                                    style={{
-                                        width: '100%',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        gap: 10,
-                                        paddingTop: 0,
-                                    }}
-                                >
-                                    {/* Large Preview Image */}
-                                    {selectedSettlerEvidenceImageUrl ? (
-                                        <View
-                                            style={{
-                                                flex: 1,
-                                                width: '100%',
-                                                justifyContent: 'flex-start',
-                                                alignItems: 'flex-start',
-                                            }}
-                                        >
-                                            <Image
-                                                source={{ uri: selectedSettlerEvidenceImageUrl }}
-                                                style={{
-                                                    width: '100%',
-                                                    height: 300,
-                                                    borderRadius: 10,
-                                                    marginBottom: 10,
-                                                }}
-                                                resizeMode="cover"
-                                            />
 
-                                            {/* Delete Button */}
-                                            <TouchableOpacity
-                                                onPress={() => deleteImage()}
-                                                style={{
-                                                    position: 'absolute',
-                                                    top: 10,
-                                                    right: 10,
-                                                    backgroundColor: 'rgba(0,0,0,0.6)',
-                                                    padding: 8,
-                                                    borderRadius: 20,
-                                                }}
-                                            >
-                                                <Ionicons name="trash-outline" size={24} color={COLORS.white} />
-                                            </TouchableOpacity>
-
-                                            {/* Thumbnail List */}
-                                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                                {settlerEvidenceImageUrls.map((imageUri, index) => (
-                                                    <TouchableOpacity
-                                                        key={index}
-                                                        onPress={() => setSelectedSettlerEvidenceImageUrl(imageUri)}
-                                                    >
-                                                        <Image
-                                                            source={{ uri: imageUri }}
-                                                            style={{
-                                                                width: 80,
-                                                                height: 80,
-                                                                marginRight: 10,
-                                                                borderRadius: 10,
-                                                                borderWidth: selectedNotesToSettlerImageUrl === imageUri ? 3 : 0,
-                                                                borderColor:
-                                                                    selectedNotesToSettlerImageUrl === imageUri
-                                                                        ? COLORS.primary
-                                                                        : 'transparent',
-                                                            }}
-                                                        />
-                                                    </TouchableOpacity>
-                                                ))}
-
-                                                {/* Small "+" box — only visible if less than 5 images */}
-                                                {notesToSettlerImageUrls.length < 5 && (
-                                                    <TouchableOpacity
-                                                        onPress={handleImageSelect}
-                                                        activeOpacity={0.8}
-                                                        style={{
-                                                            width: 80,
-                                                            height: 80,
-                                                            borderRadius: 10,
-                                                            borderWidth: 1,
-                                                            borderColor: COLORS.blackLight,
-                                                            justifyContent: 'center',
-                                                            alignItems: 'center',
-                                                            backgroundColor: COLORS.card,
-                                                        }}
-                                                    >
-                                                        <Ionicons name="add-outline" size={28} color={COLORS.blackLight} />
-                                                    </TouchableOpacity>
-                                                )}
-                                            </ScrollView>
-
-                                        </View>
-                                    ) : (
-                                        // Placeholder when no image is selected
-                                        <TouchableOpacity
-                                            onPress={() => handleImageSelect()}
-                                            activeOpacity={0.8}
-                                            style={{
-                                                width: '100%',
-                                                height: 100,
-                                                borderRadius: 10,
-                                                marginBottom: 10,
-                                                backgroundColor: COLORS.card,
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                borderWidth: 1,
-                                                borderColor: COLORS.blackLight,
-                                            }}
-                                        >
-                                            <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
-                                            <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>
-                                                Add photos here
-                                            </Text>
-                                        </TouchableOpacity>
-                                    )}
-                                </View>
-                                <View>
-                                    <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Settler Remarks</Text>
-                                    <Input
-                                        onFocus={() => setisFocused(true)}
-                                        onBlur={() => setisFocused(false)}
-                                        isFocused={isFocused}
-                                        onChangeText={setSettlerEvidenceRemark}
-                                        backround={COLORS.card}
-                                        style={{
-                                            fontSize: 12,
-                                            borderRadius: 12,
-                                            backgroundColor: COLORS.input,
-                                            borderColor: COLORS.inputBorder,
-                                            borderWidth: 1,
-                                            height: 150,
-                                        }}
-                                        inputicon
-                                        placeholder={`e.g. All in good conditions.`}
-                                        multiline={true}  // Enable multi-line input
-                                        numberOfLines={10} // Suggest the input area size
-                                        value={settlerEvidenceRemark ? settlerEvidenceRemark : ''}
-                                    />
-                                </View>
-
-                                <TouchableOpacity
-                                    style={{
-                                        backgroundColor: COLORS.primary,
-                                        padding: 15,
-                                        borderRadius: 10,
-                                        marginVertical: 10,
-                                        width: '100%',
-                                        alignItems: 'center',
-                                    }}
-                                    onPress={async () => {
-                                        if (status === 8) {
-                                            if (settlerEvidenceImageUrls.length === 0 || !settlerEvidenceRemark) {
-                                                Alert.alert('Evidence & Remarks are Required');
-                                                return
-                                            }
-
-                                            if (booking.id) {
-                                                await updateBooking(booking.id, {
-                                                    status: 3,
-                                                    settlerEvidenceImageUrls: settlerEvidenceImageUrls,
-                                                    settlerEvidenceRemark: settlerEvidenceRemark,
-                                                    isDoingUpdateEvidence: true,
-                                                    isDoingVisitAndFix: false,
-                                                    isDoingQuoteUpdate: false,
-                                                });
-                                            }
-                                            setStatus(3);
-                                            onRefresh();
-                                            setSubScreenIndex(0);
-                                        }
-                                    }}
-                                >
-                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Update Evidence</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </ScrollView>
-                    ) : (
-                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                            <Text style={{ color: COLORS.black }}>Product not found 404</Text>
-                        </View>
-                    )}
-                </View>
-            )}
         </View>
     )
 }

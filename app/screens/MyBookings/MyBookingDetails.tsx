@@ -13,13 +13,15 @@ import { fetchSelectedUser, User, useUser } from '../../context/UserContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { createReview, getReviewByBookingId, Review } from '../../services/ReviewServices';
 import axios from 'axios';
-import { Booking, BookingWithUser, deleteProblemReportByIndex, fetchSelectedBooking, subscribeToBookings, subscribeToOneBooking, updateBooking, uploadImagesReport } from '../../services/BookingServices';
+import { Booking, BookingActivityType, BookingActorType, BookingWithUser, deleteProblemReportByIndex, fetchSelectedBooking, subscribeToBookings, subscribeToOneBooking, updateBooking, uploadImagesReport } from '../../services/BookingServices';
 import { getOrCreateChat } from '../../services/ChatServices';
 import Input from '../../components/Input/Input';
 import { fetchSelectedSettlerService, fetchSettlerServices, updateSettlerService } from '../../services/SettlerServiceServices';
 import { DynamicOption, fetchSelectedCatalogue, updateCatalogue } from '../../services/CatalogueServices';
-import { arrayUnion, deleteField } from 'firebase/firestore';
+import { arrayUnion, deleteField, doc } from 'firebase/firestore';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { formatAnyTimestamp, generateId } from '../../helper/HelperFunctions';
+import { db } from '../../services/firebaseConfig';
 
 type MyBookingDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyBookingDetails'>;
 
@@ -70,6 +72,10 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
     const [problemReportImageUrls, setProblemReportImageUrls] = useState<string[]>([]);
     const [problemReportRemark, setProblemReportRemark] = useState<string>('');
 
+    // reporting job incompletion
+    const [selectedIncompletionImageUrl, setSelectedIncompletionImageUrl] = useState<string | null>(null);
+    const [incompletionImageUrls, setIncompletionImageUrls] = useState<string[]>([]);
+    const [incompletionRemark, setIncompletionRemark] = useState<string>('');
 
 
     const scrollViewTabHeader = useRef<any>(null);
@@ -212,9 +218,9 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                 console.log('Image picker error: ', response.errorMessage);
             } else {
                 const selectedImages = response.assets?.map(asset => asset.uri).filter(uri => uri !== undefined) as string[] || [];
-                setProblemReportImageUrls((prevImages) => {
+                setIncompletionImageUrls((prevImages) => {
                     const updatedImages = [...prevImages, ...selectedImages];
-                    setSelectedProblemReportImageUrl(updatedImages[0]);
+                    setSelectedIncompletionImageUrl(updatedImages[0]);
                     return updatedImages;
                 });
             }
@@ -243,9 +249,9 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
             } else {
                 let newImageUri = response.assets?.[0]?.uri;
                 if (newImageUri) {
-                    setProblemReportImageUrls((prevImages) => {
+                    setIncompletionImageUrls((prevImages) => {
                         const updatedImages = [...prevImages, newImageUri];
-                        setSelectedProblemReportImageUrl(updatedImages[0]);
+                        setSelectedIncompletionImageUrl(updatedImages[0]);
                         return updatedImages;
                     });
                 }
@@ -688,7 +694,20 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                             settlerServiceId: booking.acceptors[profileIndex].settlerServiceId,
                                                                             settlerFirstName: booking.acceptors[profileIndex].firstName,
                                                                             settlerLastName: booking.acceptors[profileIndex].lastName,
-                                                                            serviceStartCode: Math.floor(1000000 + Math.random() * 9000000).toString()
+                                                                            serviceStartCode: Math.floor(1000000 + Math.random() * 9000000).toString(),
+                                                                            timeline: arrayUnion({
+                                                                                id: generateId(),
+                                                                                type: BookingActivityType.SETTLER_SELECTED,
+                                                                                message: "Customer selected the settler.",
+                                                                                timestamp: new Date(),
+                                                                                actor: BookingActorType.CUSTOMER,
+
+                                                                                // additional info
+                                                                                settlerId: booking.acceptors[profileIndex].settlerId,
+                                                                                settlerServiceId: booking.acceptors[profileIndex].settlerServiceId,
+                                                                                firstName: booking.acceptors[profileIndex].firstName,
+                                                                                lastName: booking.acceptors[profileIndex].lastName,
+                                                                            }),
                                                                         });
 
                                                                         const selectedSettler = await fetchSelectedUser(booking.acceptors[profileIndex].settlerId || 'undefined');
@@ -715,41 +734,19 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                             <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Your reference number is</Text>
                                             <Text style={{ fontSize: 24, fontWeight: "bold", color: "indigo" }}>{booking.serviceStartCode}</Text>
                                             <Text style={{ fontSize: 10, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Please check the code with your settler. The code must match between customer & settler before confirming.</Text>
-                                            <View style={[GlobalStyleSheet.line]} />
-                                            <View style={{ width: "100%", alignItems: "center", justifyContent: "center", paddingTop: 10 }}>
-                                                <Text style={{ fontWeight: 'bold' }}>Please confirm this service start</Text>
-                                                <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
-                                                    <TouchableOpacity
-                                                        style={{
-                                                            backgroundColor: COLORS.primary,
-                                                            padding: 10,
-                                                            borderRadius: 10,
-                                                            marginVertical: 10,
-                                                            width: '40%',
-                                                            alignItems: 'center',
-                                                        }}
-                                                        onPress={() => { }}
-                                                    >
-                                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>No</Text>
-                                                    </TouchableOpacity>
-                                                    <TouchableOpacity
-                                                        style={{
-                                                            backgroundColor: COLORS.primary,
-                                                            padding: 10,
-                                                            borderRadius: 10,
-                                                            marginVertical: 10,
-                                                            width: '40%',
-                                                            alignItems: 'center',
-                                                        }}
-                                                        onPress={async () => {
-                                                            await updateBooking(booking.id || 'undefined', { status: status! + 1 });
-                                                            setStatus(status! + 1);
-                                                        }}
-                                                    >
-                                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
-                                                    </TouchableOpacity>
-                                                </View>
-                                            </View>
+                                            <TouchableOpacity
+                                                style={{
+                                                    backgroundColor: COLORS.primary,
+                                                    padding: 10,
+                                                    borderRadius: 10,
+                                                    marginVertical: 10,
+                                                    width: '80%',
+                                                    alignItems: 'center',
+                                                }}
+                                                onPress={() => { if (user && settler) handleChat(user.uid, settler.uid) }}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Settler</Text>
+                                            </TouchableOpacity>
                                         </View>
                                     ) : status === 2 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
@@ -838,6 +835,83 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                             </TouchableOpacity>
                                         </View>
                                     ) : status === 4 ? (
+                                        <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                            <Text style={{ fontWeight: 'bold' }}>Please confirm job completioln</Text>
+                                            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
+                                                <TouchableOpacity
+                                                    style={{
+                                                        backgroundColor: COLORS.primary,
+                                                        padding: 10,
+                                                        borderRadius: 10,
+                                                        marginVertical: 10,
+                                                        width: '40%',
+                                                        alignItems: 'center',
+                                                    }}
+                                                    onPress={async () => {
+                                                        setSubScreenIndex(4);
+                                                    }}
+                                                >
+                                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>No</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    style={{
+                                                        backgroundColor: COLORS.primary,
+                                                        padding: 10,
+                                                        borderRadius: 10,
+                                                        marginVertical: 10,
+                                                        width: '40%',
+                                                        alignItems: 'center',
+                                                    }}
+                                                    onPress={async () => {
+                                                        if (booking.id) {
+                                                            await updateBooking(booking.id, { 
+                                                                status: 5,
+                                                                timeline: arrayUnion({ 
+                                                                    id: generateId(),
+                                                                    type: BookingActivityType.JOB_COMPLETED,
+                                                                    message: "Customer confirmed job completion.",
+                                                                    timestamp: new Date(),
+                                                                    actor: BookingActorType.CUSTOMER,
+                                                                }),
+                                                            });
+
+                                                            setStatus(5);
+
+                                                            const selectedSettlerService = await fetchSelectedSettlerService(booking.settlerServiceId)
+
+                                                            if (selectedSettlerService) {
+                                                                const updatedJobsCount = selectedSettlerService?.jobsCount + 1
+                                                                await updateSettlerService(booking.settlerServiceId, { jobsCount: updatedJobsCount })
+                                                            }
+                                                        }
+                                                        setStatus(status! + 1);
+                                                    }}
+                                                >
+                                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            <TouchableOpacity
+                                                style={{
+                                                    width: '80%',
+                                                    alignItems: 'center',
+                                                }}
+                                                onPress={async () => {
+                                                    // if (booking.id) {
+                                                    //     await updateBooking(booking.id, { status: status! + 1, serviceEndCode: Math.floor(1000000 + Math.random() * 9000000).toString() });
+                                                    // }
+                                                    // setStatus(status! + 1);
+                                                    onClick(2);
+                                                    onClickHeader(2);
+                                                    setActiveIndex(2);
+                                                }}
+                                            >
+                                                <View style={{ flexDirection: 'row' }}>
+                                                    <Text>Check job completion evidence </Text>
+                                                    <Text style={{ color: COLORS.primary, fontWeight: 'bold' }}>HERE</Text>
+                                                </View>
+                                            </TouchableOpacity>
+                                        </View>
+                                    ) : status === 5 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                             <Text style={{ fontSize: 16, fontWeight: 'bold' }}>You're in cooldown period.</Text>
                                             <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Take this time to review the service and let us know if something doesn’t look right.</Text>
@@ -1334,7 +1408,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                         {booking.settlerEvidenceImageUrls.map((imageUri, index) => (
                                                                             <TouchableOpacity
                                                                                 key={index}
-                                                                                onPress={() => { }}
+                                                                                onPress={() => setSelectedSettlerEvidenceImageUrl(imageUri)}
                                                                             >
                                                                                 <Image
                                                                                     source={{ uri: imageUri }}
@@ -1343,35 +1417,15 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                                         height: 80,
                                                                                         marginRight: 10,
                                                                                         borderRadius: 10,
-                                                                                        borderWidth: selectedNotesToSettlerImageUrl === imageUri ? 3 : 0,
+                                                                                        borderWidth: selectedSettlerEvidenceImageUrl === imageUri ? 3 : 0,
                                                                                         borderColor:
-                                                                                            selectedNotesToSettlerImageUrl === imageUri
+                                                                                            selectedSettlerEvidenceImageUrl === imageUri
                                                                                                 ? COLORS.primary
                                                                                                 : 'transparent',
                                                                                     }}
                                                                                 />
                                                                             </TouchableOpacity>
                                                                         ))}
-
-                                                                        {/* Small "+" box — only visible if less than 5 images */}
-                                                                        {notesToSettlerImageUrls.length < 5 && (
-                                                                            <TouchableOpacity
-                                                                                onPress={() => { }}
-                                                                                activeOpacity={0.8}
-                                                                                style={{
-                                                                                    width: 80,
-                                                                                    height: 80,
-                                                                                    borderRadius: 10,
-                                                                                    borderWidth: 1,
-                                                                                    borderColor: COLORS.blackLight,
-                                                                                    justifyContent: 'center',
-                                                                                    alignItems: 'center',
-                                                                                    backgroundColor: COLORS.card,
-                                                                                }}
-                                                                            >
-                                                                                <Ionicons name="add-outline" size={28} color={COLORS.blackLight} />
-                                                                            </TouchableOpacity>
-                                                                        )}
                                                                     </ScrollView>
 
                                                                 </View>
@@ -1659,13 +1713,37 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                     alignItems: 'center',
                                                 }}
                                                 onPress={async () => {
+                                                    // update last timeline entry to indicate customer rejected the quote
+                                                    const updatedTimeline = booking.timeline ? [...booking.timeline] : [];
+
+                                                    if (updatedTimeline.length > 0) {
+                                                        const lastIdx = updatedTimeline.length - 1;
+                                                        updatedTimeline[lastIdx] = {
+                                                            ...updatedTimeline[lastIdx],
+                                                            message: 'Customer rejected the quotation update.',
+                                                            isQuoteUpdateSuccessful: 'false',
+                                                            timestamp: new Date(),
+                                                            actor: BookingActorType.CUSTOMER,
+                                                        };
+                                                    } else {
+                                                        // fallback: push a new timeline entry
+                                                        updatedTimeline.push({
+                                                            id: generateId(),
+                                                            type: BookingActivityType.SETTLER_QUOTE_UPDATED,
+                                                            message: 'Customer rejected the quotation update.',
+                                                            timestamp: new Date(),
+                                                            actor: BookingActorType.CUSTOMER,
+                                                        });
+                                                    }
+
                                                     await updateBooking(booking.id!, {
                                                         newAddons: deleteField(),
                                                         newTotal: deleteField(),
                                                         newManualQuoteDescription: deleteField(),
                                                         newManualQuotePrice: deleteField(),
-                                                        isQuoteUpdateSuccess: false,
+                                                        isQuoteUpdateSuccessful: deleteField(),
                                                         status: 2,
+                                                        timeline: updatedTimeline,
                                                     });
                                                     setSubScreenIndex(0);
                                                 }}
@@ -1691,8 +1769,8 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         newTotal: deleteField(),
                                                         newManualQuoteDescription: deleteField(),
                                                         newManualQuotePrice: deleteField(),
-                                                        isQuoteUpdateSuccess: true,
-                                                        status: 2
+                                                        isQuoteUpdateSuccessful: deleteField(),
+                                                        status: 3
                                                     });
                                                     setSubScreenIndex(0);
                                                 }}
@@ -1862,265 +1940,376 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                             }
                         >
-                            <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40 }]}>
-                                {/* Settler Details Card */}
-                                <View style={{ backgroundColor: "#f3f3f3", padding: 16, borderRadius: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, marginVertical: 20, marginHorizontal: 10 }}>
-                                    <View style={{ width: "100%", alignItems: "center", justifyContent: "center", paddingTop: 10 }}>
-                                        <Text style={{ fontWeight: 'bold' }}>Job Partial Completion</Text>
-                                        <Text style={{ color: COLORS.blackLight2, textAlign: 'center' }}>Please uncheck any job that you find incomplete. This will be sent back to settler to re-confirm.</Text>
-                                        <TouchableOpacity
-                                            style={{
-                                                backgroundColor: COLORS.primary,
-                                                padding: 10,
-                                                borderRadius: 10,
-                                                marginVertical: 10,
-                                                width: '80%',
-                                                alignItems: 'center',
-                                            }}
-                                            onPress={async () => {
-                                                await updateBooking(booking.id!, {
-                                                    status: 8,
-                                                    addons: localAddons,
-                                                    isManualQuoteCompleted: isManualQuoteCompleted,
-                                                    newTotal: adjustedTotal,
-                                                });
-                                                setSubScreenIndex(0);
-                                                onRefresh();
-                                            }}
-                                        >
-                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Confirm Job Incompletion</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                                <View style={[GlobalStyleSheet.line]} />
-                                <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
-                                    {/* Product Info */}
-                                    <View style={{ flexDirection: "row", marginBottom: 20 }}>
-                                        <Image
-                                            source={{ uri: images[0] }}
-                                            style={{ width: 100, height: 100, borderRadius: 8, marginRight: 16 }}
-                                        />
-                                        <View style={{ flex: 1, marginTop: 5 }}>
-                                            <Text style={{ fontSize: 16, marginBottom: 5 }}>
-                                                <Text style={{ color: "#E63946", fontWeight: "bold" }}>£{booking.total}</Text> / Session {" "}
-                                                {/* <Text style={styles.originalPrice}>£40.20</Text> */}
-                                            </Text>
-                                            <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }}>{booking.catalogueService.title}</Text>
-                                            <Text style={{ fontSize: 12, color: COLORS.black }}>Product ID: {booking.catalogueService.id}</Text>
-                                        </View>
-                                    </View>
-                                    <View style={GlobalStyleSheet.line} />
-                                    {/* Borrowing Period and Delivery Method */}
-                                    <View
-                                        style={{
-                                            flexDirection: "row",
-                                            justifyContent: "space-between",
-                                            alignItems: "flex-start",
-                                            marginBottom: 10,
-                                            width: "100%",
-                                            gap: 10, // optional, for small spacing between columns
-                                        }}
-                                    >
-                                        {/* Left Column */}
-                                        <View style={{ flex: 1, paddingVertical: 10 }}>
-                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Booking ID:</Text>
-                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
-                                                {booking.id}
-                                            </Text>
+                            {/* Job Incompletion Form (supports create & update) */}
+                            {(() => {
+                                const JobIncompletionForm: React.FC = () => {
+                                    const [formAddons, setFormAddons] = useState<DynamicOption[]>(() =>
+                                        booking.incompletionAddonsCheck && booking.incompletionAddonsCheck.length
+                                            ? booking.incompletionAddonsCheck
+                                            : (booking.addons || []).map(addon => ({
+                                                ...addon,
+                                                subOptions: addon.subOptions.map(opt => ({ ...opt, isCompleted: !!opt.isCompleted })),
+                                            }))
+                                    );
+                                    const [formIsManualComplete, setFormIsManualComplete] = useState<boolean>(
+                                        booking.incompletionManualQuoteCheck ?? (booking.manualQuoteDescription && booking.manualQuotePrice ? true : true)
+                                    );
+                                    const [formAdjustedTotal, setFormAdjustedTotal] = useState<number>(booking.incompletionTotal ?? adjustedTotal ?? Number(booking.total || 0));
+                                    const [formIncompletionImageUrls, setFormIncompletionImageUrls] = useState<string[]>(
+                                        booking.incompletionImageUrls && booking.incompletionImageUrls.length ? booking.incompletionImageUrls : incompletionImageUrls || []
+                                    );
+                                    const [formSelectedImage, setFormSelectedImage] = useState<string | null>(
+                                        (booking.incompletionImageUrls && booking.incompletionImageUrls[0]) || (incompletionImageUrls && incompletionImageUrls[0]) || null
+                                    );
+                                    const [formRemark, setFormRemark] = useState<string>(booking.incompletionRemark ?? incompletionRemark ?? '');
+                                    const [submitting, setSubmitting] = useState(false);
 
-                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Location:</Text>
-                                            <Text style={{ fontSize: 14, color: "#666" }}>
-                                                {booking.selectedAddress?.addressName || ""}
-                                            </Text>
-                                        </View>
+                                    useEffect(() => {
+                                        // keep total in sync whenever selection changes
+                                        const recalc = () => {
+                                            const basePrice = Number(booking.catalogueService.basePrice || 0);
+                                            const platformFee = 2;
+                                            const addonSum = formAddons
+                                                .flatMap(a => a.subOptions)
+                                                .filter(o => o.isCompleted)
+                                                .reduce((s, o) => s + Number(o.additionalPrice || 0), 0);
+                                            const manualSum = formIsManualComplete ? Number(booking.newManualQuotePrice ?? booking.manualQuotePrice ?? 0) : 0;
+                                            const total = basePrice + addonSum + manualSum + platformFee;
+                                            setFormAdjustedTotal(total);
+                                        };
+                                        recalc();
+                                        // eslint-disable-next-line react-hooks/exhaustive-deps
+                                    }, [formAddons, formIsManualComplete]);
 
-                                        {/* Right Column */}
-                                        <View style={{ flex: 1, paddingVertical: 10 }}>
-                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Reference Number:</Text>
-                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
-                                                {booking.serviceStartCode || "N/A"}
-                                            </Text>
+                                    const toggleFormSubOption = (addonIdx: number, subIdx: number) => {
+                                        setFormAddons(prev => {
+                                            const updated = prev.map((a, i) =>
+                                                i === addonIdx
+                                                    ? { ...a, subOptions: a.subOptions.map((s, j) => (j === subIdx ? { ...s, isCompleted: !s.isCompleted } : s)) }
+                                                    : a
+                                            );
+                                            return updated;
+                                        });
+                                    };
 
-                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Date:</Text>
-                                            <Text style={{ fontSize: 14, color: COLORS.title }}>
-                                                {booking.selectedDate}
-                                            </Text>
-                                        </View>
-                                    </View>
-                                    <View style={GlobalStyleSheet.line} />
-                                    {/* Borrowing Rate Breakdown */}
-                                    <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Service Pricing Breakdown</Text>
-                                    <View style={{ marginBottom: 20 }}>
-                                        {/* Base Service */}
-                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                            <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
-                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.catalogueService.basePrice}</Text>
-                                        </View>
+                                    const toggleFormManualQuote = () => {
+                                        setFormIsManualComplete(prev => !prev);
+                                    };
 
-                                        {/* Addons */}
-                                        {/* <TouchableOpacity onPress={toggleAllCompletion}>
-                                            <Text style={{ color: COLORS.primary, fontWeight: 'bold' }}>
-                                                {localAddons.every(addon => addon.subOptions.every(opt => opt.isCompleted))
-                                                    ? 'Mark All Incomplete'
-                                                    : 'Mark All Complete'}
-                                            </Text>
-                                        </TouchableOpacity> */}
+                                    // reuse parent's handleImageSelect/camera/selectImages if desired, but we keep local handlers to manage form images
+                                    const onPickImages = async () => {
+                                        // reuse parent's functions: they update incompletionImageUrls and selectedIncompletionImageUrl,
+                                        // but here we implement a lightweight selection using launchImageLibrary to keep form-local.
+                                        const options = {
+                                            mediaType: 'photo' as const,
+                                            includeBase64: false,
+                                            maxHeight: 2000,
+                                            maxWidth: 2000,
+                                            selectionLimit: 5 - formIncompletionImageUrls.length,
+                                        };
+                                        launchImageLibrary(options, (response) => {
+                                            if (response.didCancel) return;
+                                            if (response.errorMessage) {
+                                                console.warn('ImagePicker error', response.errorMessage);
+                                                return;
+                                            }
+                                            const assets = response.assets?.map(a => a.uri).filter(Boolean) as string[] || [];
+                                            const updated = [...formIncompletionImageUrls, ...assets].slice(0, 5);
+                                            setFormIncompletionImageUrls(updated);
+                                            setFormSelectedImage(updated[0] ?? null);
+                                        });
+                                    };
 
-                                        {localAddons.map((addon, addonIndex) => (
-                                            <View key={addon.name}>
-                                                {addon.subOptions.map((opt, subIndex) => (
-                                                    <View
-                                                        key={opt.label}
-                                                        style={{
-                                                            flexDirection: 'row',
-                                                            justifyContent: 'space-between',
-                                                            alignItems: 'center',
-                                                            marginBottom: 6,
-                                                            opacity: opt.isCompleted ? 1 : 0.4, // 🔘 grey out unchecked
-                                                        }}
-                                                    >
-                                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                                            <TouchableOpacity
-                                                                onPress={() => toggleSubOptionCompletion(addonIndex, subIndex)}
-                                                                style={{
-                                                                    width: 22,
-                                                                    height: 22,
-                                                                    borderRadius: 5,
-                                                                    borderWidth: 2,
-                                                                    borderColor: COLORS.inputBorder,
-                                                                    justifyContent: 'center',
-                                                                    alignItems: 'center',
-                                                                    marginRight: 8,
-                                                                    backgroundColor: opt.isCompleted ? COLORS.primary : COLORS.input,
-                                                                }}
-                                                            >
-                                                                {opt.isCompleted && (
-                                                                    <Ionicons name="checkmark" size={16} color={COLORS.white} />
-                                                                )}
-                                                            </TouchableOpacity>
+                                    const onTakeCamera = async () => {
+                                        const options = {
+                                            mediaType: 'photo' as const,
+                                            includeBase64: false,
+                                            maxHeight: 2000,
+                                            maxWidth: 2000,
+                                        };
+                                        launchCamera(options, (response: any) => {
+                                            if (response.didCancel) return;
+                                            if (response.errorCode) {
+                                                console.warn('Camera error', response.errorMessage);
+                                                return;
+                                            }
+                                            const uri = response.assets?.[0]?.uri;
+                                            if (uri) {
+                                                const updated = [...formIncompletionImageUrls, uri].slice(0, 5);
+                                                setFormIncompletionImageUrls(updated);
+                                                setFormSelectedImage(updated[0] ?? null);
+                                            }
+                                        });
+                                    };
 
-                                                            <Text style={{ fontSize: 14, color: '#333' }}>
-                                                                {addon.name}: {opt.label}
-                                                            </Text>
-                                                        </View>
+                                    const handleDeleteSelectedImage = () => {
+                                        if (!formSelectedImage) return;
+                                        const updated = formIncompletionImageUrls.filter(u => u !== formSelectedImage);
+                                        setFormIncompletionImageUrls(updated);
+                                        setFormSelectedImage(updated.length ? updated[0] : null);
+                                    };
 
-                                                        <Text style={{ fontSize: 14, fontWeight: 'bold' }}>
-                                                            £{opt.additionalPrice}
-                                                        </Text>
-                                                    </View>
-                                                ))}
-                                            </View>
-                                        ))}
+                                    const handleSubmit = async () => {
+                                        if (formIncompletionImageUrls.length === 0 || !formRemark) {
+                                            Alert.alert('Evidence & Remarks are required.');
+                                            return;
+                                        }
+                                        if (!booking.id) {
+                                            Alert.alert('Missing booking id.');
+                                            return;
+                                        }
+                                        setSubmitting(true);
+                                        try {
+                                            // upload images if they look like local URIs (uri not already hosted) — we can't easily detect, so attempt upload for any uri not starting with http
+                                            const needUpload = formIncompletionImageUrls.filter(u => !u.startsWith('http'));
+                                            let uploadedUrls: string[] = booking.incompletionImageUrls ?? [];
+                                            if (needUpload.length > 0) {
+                                                const uploaded = await uploadImagesReport(booking.id, needUpload);
+                                                // replace local URIs with uploaded ones
+                                                uploadedUrls = [
+                                                    ...formIncompletionImageUrls.map(u => (u.startsWith('http') ? u : uploaded.shift() || u))
+                                                ];
+                                            } else {
+                                                uploadedUrls = formIncompletionImageUrls;
+                                            }
 
+                                            const timelineEntry = {
+                                                id: generateId(),
+                                                message: `Customer marked the job as incomplete.`,
+                                                timestamp: new Date(),
+                                                actor: BookingActorType.CUSTOMER,
+                                                type: BookingActivityType.JOB_INCOMPLETE,
+                                                incompleteJobNumber: formAddons.reduce((count, addon) => {
+                                                    addon.subOptions.forEach(opt => { if (!opt.isCompleted) count += 1; });
+                                                    return count;
+                                                }, 0),
+                                                incompletionAddonsCheck: formAddons,
+                                                incompletionManualQuoteCheck: formIsManualComplete,
+                                                incompletionTotal: formAdjustedTotal,
+                                                incompletionRemark: formRemark,
+                                                incompletionImageUrls: uploadedUrls,
+                                            };
 
+                                            // Build update payload. If booking already had an incompletion (status 8), we update fields; otherwise set status 8.
+                                            const payload: any = {
+                                                incompletionAddonsCheck: formAddons,
+                                                incompletionManualQuoteCheck: formIsManualComplete,
+                                                incompletionTotal: formAdjustedTotal,
+                                                incompletionRemark: formRemark,
+                                                incompletionImageUrls: uploadedUrls,
+                                                timeline: arrayUnion(timelineEntry),
+                                            };
+                                            if (booking.status !== 8) {
+                                                payload.status = 8;
+                                            }
+                                            await updateBooking(booking.id, payload);
 
-                                        {/* Platform Fee */}
-                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                            <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
-                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£2.00</Text>
-                                        </View>
+                                            // refresh parent & go back
+                                            onRefresh();
+                                            setSubScreenIndex(0);
+                                        } catch (err) {
+                                            console.error('Failed to submit incompletion:', err);
+                                            Alert.alert('Submission failed', 'Please try again.');
+                                        } finally {
+                                            setSubmitting(false);
+                                        }
+                                    };
 
-                                        {/* Additional Quote */}
-                                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, opacity: isManualQuoteCompleted ? 1 : 0.4 }}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                                <TouchableOpacity
-                                                    onPress={toggleManualQuoteCompletion}
-                                                    style={{
-                                                        width: 22,
-                                                        height: 22,
-                                                        borderRadius: 5,
-                                                        borderWidth: 2,
-                                                        borderColor: COLORS.inputBorder,
-                                                        justifyContent: 'center',
-                                                        alignItems: 'center',
-                                                        marginRight: 8,
-                                                        backgroundColor: isManualQuoteCompleted ? COLORS.primary : COLORS.input,
-                                                    }}
-                                                >
-                                                    {isManualQuoteCompleted && <Ionicons name="checkmark" size={16} color={COLORS.white} />}
-                                                </TouchableOpacity>
+                                    const handleDeleteIncompletion = async () => {
+                                        if (!booking.id) return;
+                                        Alert.alert('Confirm', 'Delete job incompletion report?', [
+                                            { text: 'Cancel', style: 'cancel' },
+                                            {
+                                                text: 'Yes', style: 'destructive', onPress: async () => {
+                                                    try {
+                                                        await updateBooking(booking.id!, {
+                                                            incompletionAddonsCheck: deleteField(),
+                                                            incompletionManualQuoteCheck: deleteField(),
+                                                            incompletionTotal: deleteField(),
+                                                            incompletionRemark: deleteField(),
+                                                            incompletionImageUrls: deleteField(),
+                                                            newTotal: deleteField(),
+                                                            status: 3, // revert to service-completed state (adjust as needed)
+                                                        });
+                                                        onRefresh();
+                                                        setSubScreenIndex(0);
+                                                    } catch (err) {
+                                                        console.error('Failed to delete incompletion:', err);
+                                                        Alert.alert('Delete failed', 'Please try again.');
+                                                    }
+                                                }
+                                            }
+                                        ]);
+                                    };
 
-                                                <View style={{ flex: 1 }}>
-                                                    <Text style={{ fontSize: 14, color: "#333" }}>Additional Charge (by settler)</Text>
-                                                    <Text
-                                                        style={{
-                                                            fontSize: 14,
-                                                            width: SIZES.width * 0.75,
-                                                            marginTop: 5,
-                                                            color: "#333",
-                                                            backgroundColor: COLORS.primaryLight,
-                                                            padding: 10,
-                                                            borderRadius: 10,
-                                                        }}
-                                                    >
-                                                        {booking.manualQuoteDescription || '—'}
-                                                    </Text>
+                                    return (
+                                        <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40 }]}>
+                                            <View style={{ backgroundColor: "#f3f3f3", padding: 16, borderRadius: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, marginVertical: 20, marginHorizontal: 10 }}>
+                                                <View style={{ width: "100%", alignItems: "center", justifyContent: "center", paddingTop: 10 }}>
+                                                    <Text style={{ fontWeight: 'bold' }}>{booking.status === 8 ? 'Update Job Incompletion' : 'Marking Job Incompletion'}</Text>
+                                                    <Text style={{ color: COLORS.blackLight2, textAlign: 'center' }}>Uncheck any of the jobs that you find incomplete.</Text>
                                                 </View>
                                             </View>
 
-                                            <Text style={{ fontSize: 14, fontWeight: 'bold' }}>
-                                                £{booking.manualQuotePrice || 0}
-                                            </Text>
+                                            <View style={[GlobalStyleSheet.line]} />
+                                            <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
+                                                {/* Product Info */}
+                                                <View style={{ flexDirection: "row", marginBottom: 20 }}>
+                                                    <Image source={{ uri: images[0] }} style={{ width: 100, height: 100, borderRadius: 8, marginRight: 16 }} />
+                                                    <View style={{ flex: 1, marginTop: 5 }}>
+                                                        <Text style={{ fontSize: 16, marginBottom: 5 }}>
+                                                            <Text style={{ color: "#E63946", fontWeight: "bold" }}>£{booking.total}</Text> / Session{" "}
+                                                        </Text>
+                                                        <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }}>{booking.catalogueService.title}</Text>
+                                                        <Text style={{ fontSize: 12, color: COLORS.black }}>Product ID: {booking.catalogueService.id}</Text>
+                                                    </View>
+                                                </View>
+
+                                                <View style={GlobalStyleSheet.line} />
+
+                                                <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Service Pricing Breakdown</Text>
+                                                <View style={{ marginBottom: 20 }}>
+                                                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                                        <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
+                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.catalogueService.basePrice}</Text>
+                                                    </View>
+
+                                                    {formAddons.map((addon, addonIndex) => (
+                                                        <View key={addon.name}>
+                                                            {addon.subOptions.map((opt, subIndex) => (
+                                                                <View key={opt.label} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, opacity: opt.isCompleted ? 1 : 0.4 }}>
+                                                                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                                                        <TouchableOpacity onPress={() => toggleFormSubOption(addonIndex, subIndex)} style={{ width: 22, height: 22, borderRadius: 5, borderWidth: 2, borderColor: COLORS.inputBorder, justifyContent: 'center', alignItems: 'center', marginRight: 8, backgroundColor: opt.isCompleted ? COLORS.primary : COLORS.input }}>
+                                                                            {opt.isCompleted && <Ionicons name="checkmark" size={16} color={COLORS.white} />}
+                                                                        </TouchableOpacity>
+                                                                        <Text style={{ fontSize: 14, color: '#333' }}>{addon.name}: {opt.label}</Text>
+                                                                    </View>
+                                                                    <Text style={{ fontSize: 14, fontWeight: 'bold' }}>£{opt.additionalPrice}</Text>
+                                                                </View>
+                                                            ))}
+                                                        </View>
+                                                    ))}
+
+                                                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                                        <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
+                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>£2.00</Text>
+                                                    </View>
+
+                                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, opacity: formIsManualComplete ? 1 : 0.4 }}>
+                                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                                            <TouchableOpacity onPress={toggleFormManualQuote} style={{ width: 22, height: 22, borderRadius: 5, borderWidth: 2, borderColor: COLORS.inputBorder, justifyContent: 'center', alignItems: 'center', marginRight: 8, backgroundColor: formIsManualComplete ? COLORS.primary : COLORS.input }}>
+                                                                {formIsManualComplete && <Ionicons name="checkmark" size={16} color={COLORS.white} />}
+                                                            </TouchableOpacity>
+                                                            <View style={{ flex: 1 }}>
+                                                                <Text style={{ fontSize: 14, color: "#333" }}>Additional Charge (by settler)</Text>
+                                                                <Text style={{ fontSize: 14, width: SIZES.width * 0.75, marginTop: 5, color: "#333", backgroundColor: COLORS.primaryLight, padding: 10, borderRadius: 10 }}>
+                                                                    {booking.manualQuoteDescription || 'N/A'}
+                                                                </Text>
+                                                            </View>
+                                                        </View>
+                                                        <Text style={{ fontSize: 14, fontWeight: 'bold' }}>£{booking.manualQuotePrice || 0}</Text>
+                                                    </View>
+
+                                                    <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '90%', alignSelf: 'center' }]} />
+
+                                                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
+                                                        <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>£{formAdjustedTotal}</Text>
+                                                    </View>
+                                                </View>
+
+                                                {(formAddons.some(a => a.subOptions.some(o => !o.isCompleted)) || !formIsManualComplete) && (
+                                                    <>
+                                                        <View style={[GlobalStyleSheet.line]} />
+                                                        <View>
+                                                            <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Job Incompletion Evidence</Text>
+                                                            <Text style={{ paddingBottom: 10 }}>Please provide evidence of the job incompletion.</Text>
+                                                            <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', gap: 10, paddingTop: 0 }}>
+                                                                {formSelectedImage ? (
+                                                                    <View style={{ flex: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
+                                                                        <Image source={{ uri: formSelectedImage }} style={{ width: '100%', height: 300, borderRadius: 10, marginBottom: 10 }} resizeMode="cover" />
+                                                                        <TouchableOpacity onPress={handleDeleteSelectedImage} style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.6)', padding: 8, borderRadius: 20 }}>
+                                                                            <Ionicons name="trash-outline" size={24} color={COLORS.white} />
+                                                                        </TouchableOpacity>
+
+                                                                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                                                            {formIncompletionImageUrls.map((u, idx) => (
+                                                                                <TouchableOpacity key={idx} onPress={() => setFormSelectedImage(u)}>
+                                                                                    <Image source={{ uri: u }} style={{ width: 80, height: 80, marginRight: 10, borderRadius: 10, borderWidth: formSelectedImage === u ? 3 : 0, borderColor: formSelectedImage === u ? COLORS.primary : 'transparent' }} />
+                                                                                </TouchableOpacity>
+                                                                            ))}
+                                                                            {formIncompletionImageUrls.length < 5 && (
+                                                                                <TouchableOpacity onPress={() => {
+                                                                                    if (Platform.OS === 'ios') {
+                                                                                        ActionSheetIOS.showActionSheetWithOptions({ options: ['Cancel', 'Choose from Gallery', 'Use Camera'], cancelButtonIndex: 0 }, (btn) => {
+                                                                                            if (btn === 1) onPickImages();
+                                                                                            if (btn === 2) onTakeCamera();
+                                                                                        });
+                                                                                    } else {
+                                                                                        Alert.alert('Add Photo', 'Choose an option', [{ text: 'Choose from Gallery', onPress: onPickImages }, { text: 'Use Camera', onPress: onTakeCamera }, { text: 'Cancel', style: 'cancel' }]);
+                                                                                    }
+                                                                                }} activeOpacity={0.8} style={{ width: 80, height: 80, borderRadius: 10, borderWidth: 1, borderColor: COLORS.blackLight, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.card }}>
+                                                                                    <Ionicons name="add-outline" size={28} color={COLORS.blackLight} />
+                                                                                </TouchableOpacity>
+                                                                            )}
+                                                                        </ScrollView>
+                                                                    </View>
+                                                                ) : (
+                                                                    <TouchableOpacity onPress={() => {
+                                                                        if (Platform.OS === 'ios') {
+                                                                            ActionSheetIOS.showActionSheetWithOptions({ options: ['Cancel', 'Choose from Gallery', 'Use Camera'], cancelButtonIndex: 0 }, (btn) => {
+                                                                                if (btn === 1) onPickImages();
+                                                                                if (btn === 2) onTakeCamera();
+                                                                            });
+                                                                        } else {
+                                                                            Alert.alert('Add Photo', 'Choose an option', [{ text: 'Choose from Gallery', onPress: onPickImages }, { text: 'Use Camera', onPress: onTakeCamera }, { text: 'Cancel', style: 'cancel' }]);
+                                                                        }
+                                                                    }} activeOpacity={0.8} style={{ width: '100%', height: 100, borderRadius: 10, marginBottom: 10, backgroundColor: COLORS.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.blackLight }}>
+                                                                        <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
+                                                                        <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>Add photos here</Text>
+                                                                    </TouchableOpacity>
+                                                                )}
+                                                            </View>
+
+                                                            <View>
+                                                                <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Job Incompletion Remarks</Text>
+                                                                <Input onFocus={() => setisFocused(true)} onBlur={() => setisFocused(false)} isFocused={isFocused} onChangeText={setFormRemark} backround={COLORS.card} style={{ fontSize: 12, borderRadius: 12, backgroundColor: COLORS.input, borderColor: COLORS.inputBorder, borderWidth: 1, height: 150 }} inputicon placeholder={`e.g. Parts left unfinished`} multiline numberOfLines={10} value={formRemark} />
+                                                            </View>
+
+                                                            <TouchableOpacity disabled={submitting} style={{ backgroundColor: COLORS.primary, padding: 15, borderRadius: 10, marginVertical: 10, width: '100%', alignItems: 'center' }} onPress={handleSubmit}>
+                                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>{submitting ? 'Submitting...' : (booking.status === 8 ? 'Update Incompletion' : 'Confirm Job Incompletion')}</Text>
+                                                            </TouchableOpacity>
+
+                                                            {booking.status === 8 && (
+                                                                <TouchableOpacity style={{ backgroundColor: COLORS.danger, padding: 12, borderRadius: 10, marginVertical: 8, width: '100%', alignItems: 'center' }} onPress={handleDeleteIncompletion}>
+                                                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete Incompletion</Text>
+                                                                </TouchableOpacity>
+                                                            )}
+                                                        </View>
+                                                    </>
+                                                )}
+                                            </View>
+
+                                            <View style={[GlobalStyleSheet.line, { marginTop: 15 }]} />
+                                            <View style={{ width: '100%' }}>
+                                                <Text style={{ fontSize: 18, fontWeight: 'bold', marginTop: 20 }}>Quick Actions</Text>
+                                                <FlatList scrollEnabled={false} data={actions} keyExtractor={(item, idx) => idx.toString()} numColumns={2} columnWrapperStyle={{ justifyContent: 'space-between', marginTop: 20 }} renderItem={({ item }) => (
+                                                    <TouchableOpacity style={{ backgroundColor: COLORS.background, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: COLORS.blackLight, width: '48%', alignItems: 'center' }} onPress={item.onPressAction}>
+                                                        <Text style={{ color: COLORS.black, fontWeight: 'bold' }}>{item.buttonTitle}</Text>
+                                                    </TouchableOpacity>
+                                                )} />
+                                                <View style={{ marginTop: 40 }} >
+                                                    <TouchableOpacity activeOpacity={0.8} style={{ paddingHorizontal: 20, borderRadius: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }} onPress={() => { }}>
+                                                        <Text style={{ fontSize: 14, color: COLORS.danger, lineHeight: 21, fontWeight: 'bold', textDecorationLine: 'underline' }}>Cancel Booking</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </View>
                                         </View>
+                                    );
+                                };
 
-
-                                        {/* Divider */}
-                                        <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '90%', alignSelf: 'center' }]} />
-
-                                        {/* Total */}
-                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
-                                            <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>
-                                                {adjustedTotal}
-                                            </Text>
-                                        </View>
-                                    </View>
-                                </View>
-
-                                <View style={[GlobalStyleSheet.line, { marginTop: 15 }]} />
-                                <View style={{ width: '100%', }}>
-                                    <Text style={{ fontSize: 18, fontWeight: 'bold', marginTop: 20 }}>Quick Actions</Text>
-                                    <FlatList
-                                        scrollEnabled={false}
-                                        data={actions}
-                                        keyExtractor={(item, index) => index.toString()}
-                                        numColumns={2}
-                                        columnWrapperStyle={{ justifyContent: 'space-between', marginTop: 20 }}
-                                        renderItem={({ item }) => (
-                                            <TouchableOpacity
-                                                style={{
-                                                    backgroundColor: COLORS.background,
-                                                    padding: 10,
-                                                    borderRadius: 10,
-                                                    borderWidth: 1,
-                                                    borderColor: COLORS.blackLight,
-                                                    width: '48%',
-                                                    alignItems: 'center',
-                                                }}
-                                                onPress={item.onPressAction}
-                                            >
-                                                <Text style={{ color: COLORS.black, fontWeight: 'bold' }}>{item.buttonTitle}</Text>
-                                            </TouchableOpacity>
-                                        )}
-                                    />
-                                    <View style={{ marginTop: 40 }} >
-                                        <TouchableOpacity
-                                            activeOpacity={0.8}
-                                            style={{
-                                                paddingHorizontal: 20,
-                                                borderRadius: 30,
-                                                flexDirection: 'row',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: 10
-                                            }}
-                                            onPress={() => { }}
-                                        >
-                                            <Text style={{ fontSize: 14, color: COLORS.danger, lineHeight: 21, fontWeight: 'bold', textDecorationLine: 'underline' }}>Cancel Booking</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                            </View>
+                                return <JobIncompletionForm />;
+                            })()}
                         </ScrollView>
                     ) : (
                         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -2355,47 +2544,155 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                             <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 10 }}>
                                 Activity Timeline
                             </Text>
-                            { booking.timeline?.length ? (
-                                booking.timeline
-                                    .sort((a, b) => a.timestamp - b.timestamp)
-                                    .map((item) => (
-                                        <View key={item.id} style={{ flexDirection: "row", marginBottom: 12 }}>
-                                            <View
-                                                style={{
-                                                    width: 8,
-                                                    height: 8,
-                                                    borderRadius: 4,
-                                                    backgroundColor: item.actor === "settler" ? "#007AFF" : "#FF9500",
-                                                    marginTop: 6,
-                                                    marginRight: 10,
-                                                }}
-                                            />
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={{ color: "#333", fontSize: 14 }}>{item.message}</Text>
-                                                <Text style={{ color: "#999", fontSize: 12 }}>
-                                                    {(() => {
-                                                        const ts = item.timestamp;
-                                                        let d: Date | null = null;
-                                                        if (!ts) return 'N/A';
-                                                        if (typeof ts === 'number') d = new Date(ts);
-                                                        else if (ts?.toDate && typeof ts.toDate === 'function') d = ts.toDate();
-                                                        else if (typeof ts === 'string') {
-                                                            const parsed = Date.parse(ts);
-                                                            if (!isNaN(parsed)) d = new Date(parsed);
-                                                        }
-                                                        return d
-                                                            ? d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })
-                                                            : 'N/A';
-                                                    })()}
-                                                </Text>
+                            {booking.timeline?.length ? (
+                                <View>
+                                    {booking.timeline.slice().reverse().map((item, idx, arr) => (
+                                        <View key={item.timestamp ?? item.id ?? idx} style={{ marginBottom: 16, flexDirection: 'row' }}>
+                                            {/* dot column */}
+                                            <View style={{ width: 24, alignItems: 'center' }}>
+                                                <View
+                                                    style={{
+                                                        width: 10,
+                                                        height: 10,
+                                                        borderRadius: 5,
+                                                        backgroundColor: item.actor === 'SETTLER' ? '#007AFF' : '#FF9500',
+                                                        marginTop: 4,
+                                                        zIndex: 2,
+                                                    }}
+                                                />
+                                            </View>
+
+                                            {/* content */}
+                                            <View style={{ flex: 1, paddingLeft: 6 }}>
+                                                {item.type === 'QUOTE_CREATED' && (
+                                                    <View style={{ marginBottom: 6 }}>
+                                                        <Text style={{ color: '#333', fontSize: 14 }}>{item.message}</Text>
+                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
+                                                    </View>
+                                                )}
+
+                                                {item.type === 'SETTLER_ACCEPT' && (
+                                                    <View style={{ marginBottom: 6 }}>
+                                                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
+                                                            <Text style={{ color: '#333', fontSize: 14 }}>Job accepted by </Text>
+                                                            <TouchableOpacity activeOpacity={1} onPress={() => { }}>
+                                                                <Text style={{ textDecorationLine: 'underline', fontWeight: 'bold', color: '#333', fontSize: 14 }}>
+                                                                    {item.firstName} {item.lastName}
+                                                                </Text>
+                                                            </TouchableOpacity>
+                                                        </View>
+                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
+                                                    </View>
+                                                )}
+
+                                                {item.type === 'SETTLER_SELECTED' && (
+                                                    <View style={{ marginBottom: 6 }}>
+                                                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
+                                                            <Text style={{ color: '#333', fontSize: 14 }}>Customer selected </Text>
+                                                            <TouchableOpacity activeOpacity={1} onPress={() => { }}>
+                                                                <Text style={{ textDecorationLine: 'underline', fontWeight: 'bold', color: '#333', fontSize: 14 }}>
+                                                                    {item.firstName} {item.lastName}
+                                                                </Text>
+                                                            </TouchableOpacity>
+                                                            <Text style={{ color: '#333', fontSize: 14 }}> as settler.</Text>
+                                                        </View>
+                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
+                                                    </View>
+                                                )}
+
+                                                {item.type === 'SETTLER_SERVICE_START' && (
+                                                    <View style={{ marginBottom: 6 }}>
+                                                        <Text style={{ color: '#333', fontSize: 14 }}>{item.message}</Text>
+                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
+                                                    </View>
+                                                )}
+
+                                                {item.type === 'SETTLER_SERVICE_END' && (
+                                                    <View style={{ marginBottom: 6 }}>
+                                                        <Text style={{ color: '#333', fontSize: 14 }}>{item.message}</Text>
+                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
+                                                    </View>
+                                                )}
+
+                                                {item.type === 'SETTLER_EVIDENCE_SUBMITTED' && (
+                                                    <View style={{ marginBottom: 6 }}>
+                                                        <Text style={{ color: '#333', fontSize: 14 }}>Settler submitted {item.updatedEvidenceCount} evidence for job completion.</Text>
+                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
+                                                    </View>
+                                                )}
+
+                                                {item.type === 'JOB_INCOMPLETE' && (
+                                                    <View style={{ marginBottom: 6 }}>
+                                                        <Text style={{ color: '#333', fontSize: 14 }}>{item.message}</Text>
+                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
+                                                    </View>
+                                                )}
+
+                                                {item.type === 'SETTLER_EVIDENCE_UPDATED' && (
+                                                    <View style={{ marginBottom: 6 }}>
+                                                        <Text style={{ color: '#333', fontSize: 14 }}>Settler updated {item.updatedEvidenceCount} evidence for job completion.</Text>
+                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
+                                                    </View>
+                                                )}
+
+                                                {item.type === 'VISIT_AND_FIX_SCHEDULED' && (
+                                                    <View style={{ marginBottom: 6 }}>
+                                                        <Text style={{ color: '#333', fontSize: 14 }}>{item.message}</Text>
+                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
+                                                    </View>
+                                                )}
+
+                                                {item.type === 'SETTLER_QUOTE_UPDATED' && (
+                                                    <View style={{ marginBottom: 6 }}>
+                                                        <Text style={{ color: '#333', fontSize: 14 }}>
+                                                            Settler updated the quote from <Text style={{ fontWeight: 'bold' }}>RM{item.oldTotal}</Text> to <Text style={{ fontWeight: 'bold' }}>RM{item.newTotal}</Text>.
+                                                        </Text>
+                                                        {(() => {
+                                                            const addons = (item as any).newAddons ?? (item as any).addons ?? booking.newAddons ?? booking.addons ?? [];
+                                                            const count = Array.isArray(addons)
+                                                                ? addons.reduce((acc: number, addon: any) => acc + (Array.isArray(addon.subOptions) ? addon.subOptions.length : 0), 0)
+                                                                : 0;
+                                                            const manualPrice = (item as any).newManualQuotePrice ?? (item as any).manualQuotePrice ?? booking.newManualQuotePrice ?? booking.manualQuotePrice;
+                                                            return (
+                                                                <Text style={{ color: '#333', fontSize: 14 }}>
+                                                                    Consists of <Text style={{ fontWeight: 'bold' }}>{count}</Text> selected suboption{count === 1 ? '' : 's'}
+                                                                    {manualPrice != null && (
+                                                                        <>
+                                                                            {' with a manual quote of '}
+                                                                            <Text style={{ fontWeight: 'bold' }}>RM{manualPrice}. </Text>
+                                                                            <Text>
+                                                                                {(item as any).isQuoteUpdateSuccessful === '' ? (
+                                                                                    <Text style={{ color: COLORS.secondary, fontWeight: 'bold' }}>[Awaiting Customer Response]</Text>
+                                                                                ) : (item as any).isQuoteUpdateSuccessful === 'false' ? (
+                                                                                    <Text style={{ color: COLORS.danger, fontWeight: 'bold' }}>[Customer Rejected]</Text>
+                                                                                ) : (
+                                                                                    <Text style={{ color: COLORS.primary, fontWeight: 'bold' }}>[Customer Accepted]</Text>
+                                                                                )}
+                                                                            </Text>
+                                                                        </>
+                                                                    )}
+                                                                </Text>
+                                                            );
+                                                        })()}
+                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
+                                                    </View>
+                                                )}
+
+                                                {item.type === 'JOB_COMPLETED' && (
+                                                    <View style={{ marginBottom: 6 }}>
+                                                        <Text style={{ color: '#333', fontSize: 14 }}>{item.message}</Text>
+                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
+                                                    </View>
+                                                )}
+
                                             </View>
                                         </View>
-                                    ))
+                                    ))} 
+                                </View>
                             ) : (
                                 <Text style={{ color: "#999" }}>No activity recorded yet.</Text>
                             )}
                         </View>
-
                     </ScrollView>
                 </View>
             )}
