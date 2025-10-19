@@ -71,3 +71,5 @@ export const ThemeContextProvider = ({children}: ThemeContextProviderProps) => {
         </ThemeContext.Provider>
     );
 };
+
+export { COLORS };

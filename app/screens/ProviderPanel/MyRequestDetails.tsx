@@ -20,6 +20,7 @@ import { Calendar } from 'react-native-calendars';
 import { format } from 'date-fns';
 import { DynamicOption, SubOption } from '../../services/CatalogueServices';
 import { generateId } from '../../helper/HelperFunctions';
+import EvidenceForm from '../../components/Forms/EvidenceForm';
 
 type MyRequestDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyRequestDetails'>;
 
@@ -1065,186 +1066,24 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     </View>
                                                 )}
                                                 {index === 2 && (
-                                                    <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
-                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Service Completion Evidence</Text>
-                                                        <Text style={{ fontSize: 13, color: COLORS.blackLight2 }}>This helps verify your service completion in case of disputes. Complete this part before submitting your job completion.</Text>
-                                                        <View
-                                                            style={{
-                                                                width: '100%',
-                                                                justifyContent: 'center',
-                                                                alignItems: 'center',
-                                                                gap: 10,
-                                                                paddingTop: 0,
-                                                            }}
-                                                        >
-                                                            {/* Large Preview Image */}
-                                                            {selectedSettlerEvidenceImageUrl ? (
-                                                                <View
-                                                                    style={{
-                                                                        flex: 1,
-                                                                        width: '100%',
-                                                                        justifyContent: 'flex-start',
-                                                                        alignItems: 'flex-start',
-                                                                    }}
-                                                                >
-                                                                    <Image
-                                                                        source={{ uri: selectedSettlerEvidenceImageUrl }}
-                                                                        style={{
-                                                                            width: '100%',
-                                                                            height: 300,
-                                                                            borderRadius: 10,
-                                                                            marginBottom: 10,
-                                                                        }}
-                                                                        resizeMode="cover"
-                                                                    />
+                                                    <EvidenceForm
+                                                        title="Service Completion Evidence"
+                                                        description="Attach photos and remarks to verify your service completion."
+                                                        initialImages={booking?.settlerEvidenceImageUrls ?? []}
+                                                        initialRemark={booking?.settlerEvidenceRemark ?? ''}
+                                                        onSubmit={async ({ images, remark }) => {
+                                                            await updateBooking(booking.id!, {
+                                                                status: 4,
+                                                                settlerEvidenceImageUrls: images,
+                                                                settlerEvidenceRemark: remark,
+                                                            });
+                                                            onRefresh();
+                                                        }}
+                                                    />
 
-                                                                    {/* Delete Button */}
-                                                                    <TouchableOpacity
-                                                                        onPress={() => deleteImage()}
-                                                                        style={{
-                                                                            position: 'absolute',
-                                                                            top: 10,
-                                                                            right: 10,
-                                                                            backgroundColor: 'rgba(0,0,0,0.6)',
-                                                                            padding: 8,
-                                                                            borderRadius: 20,
-                                                                        }}
-                                                                    >
-                                                                        <Ionicons name="trash-outline" size={24} color={COLORS.white} />
-                                                                    </TouchableOpacity>
 
-                                                                    {/* Thumbnail List */}
-                                                                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                                                        {settlerEvidenceImageUrls.map((imageUri, index) => (
-                                                                            <TouchableOpacity
-                                                                                key={index}
-                                                                                onPress={() => setSelectedSettlerEvidenceImageUrl(imageUri)}
-                                                                            >
-                                                                                <Image
-                                                                                    source={{ uri: imageUri }}
-                                                                                    style={{
-                                                                                        width: 80,
-                                                                                        height: 80,
-                                                                                        marginRight: 10,
-                                                                                        borderRadius: 10,
-                                                                                        borderWidth: selectedSettlerEvidenceImageUrl === imageUri ? 3 : 0,
-                                                                                        borderColor:
-                                                                                            selectedSettlerEvidenceImageUrl === imageUri
-                                                                                                ? COLORS.primary
-                                                                                                : 'transparent',
-                                                                                    }}
-                                                                                />
-                                                                            </TouchableOpacity>
-                                                                        ))}
-
-                                                                        {/* Small "+" box — only visible if less than 5 images */}
-                                                                        {settlerEvidenceImageUrls.length < 5 && (
-                                                                            <TouchableOpacity
-                                                                                onPress={handleImageSelect}
-                                                                                activeOpacity={0.8}
-                                                                                style={{
-                                                                                    width: 80,
-                                                                                    height: 80,
-                                                                                    borderRadius: 10,
-                                                                                    borderWidth: 1,
-                                                                                    borderColor: COLORS.blackLight,
-                                                                                    justifyContent: 'center',
-                                                                                    alignItems: 'center',
-                                                                                    backgroundColor: COLORS.card,
-                                                                                }}
-                                                                            >
-                                                                                <Ionicons name="add-outline" size={28} color={COLORS.blackLight} />
-                                                                            </TouchableOpacity>
-                                                                        )}
-                                                                    </ScrollView>
-
-                                                                </View>
-                                                            ) : (
-                                                                // Placeholder when no image is selected
-                                                                <TouchableOpacity
-                                                                    onPress={() => handleImageSelect()}
-                                                                    activeOpacity={0.8}
-                                                                    style={{
-                                                                        width: '100%',
-                                                                        height: 100,
-                                                                        borderRadius: 10,
-                                                                        marginBottom: 10,
-                                                                        backgroundColor: COLORS.card,
-                                                                        justifyContent: 'center',
-                                                                        alignItems: 'center',
-                                                                        borderWidth: 1,
-                                                                        borderColor: COLORS.blackLight,
-                                                                    }}
-                                                                >
-                                                                    <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
-                                                                    <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>
-                                                                        Add photos here
-                                                                    </Text>
-                                                                </TouchableOpacity>
-                                                            )}
-                                                        </View>
-                                                        <View>
-                                                            <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Settler Remarks</Text>
-                                                            <Input
-                                                                onFocus={() => setisFocused(true)}
-                                                                onBlur={() => setisFocused(false)}
-                                                                isFocused={isFocused}
-                                                                onChangeText={setSettlerEvidenceRemark}
-                                                                backround={COLORS.card}
-                                                                style={{
-                                                                    fontSize: 12,
-                                                                    borderRadius: 12,
-                                                                    backgroundColor: COLORS.input,
-                                                                    borderColor: COLORS.inputBorder,
-                                                                    borderWidth: 1,
-                                                                    height: 150,
-                                                                }}
-                                                                inputicon
-                                                                placeholder={`e.g. All in good conditions.`}
-                                                                multiline={true}  // Enable multi-line input
-                                                                numberOfLines={10} // Suggest the input area size
-                                                                value={settlerEvidenceRemark ? settlerEvidenceRemark : ''}
-                                                            />
-                                                        </View>
-
-                                                        <TouchableOpacity
-                                                            style={{
-                                                                backgroundColor: COLORS.primary,
-                                                                padding: 15,
-                                                                borderRadius: 10,
-                                                                marginVertical: 10,
-                                                                width: '100%',
-                                                                alignItems: 'center',
-                                                            }}
-                                                            onPress={async () => {
-                                                                if (settlerEvidenceImageUrls.length === 0 || !settlerEvidenceRemark) {
-                                                                    Alert.alert('Evidence & Remarks are Required');
-                                                                    return
-                                                                }
-
-                                                                if (booking.id) {
-                                                                    await updateBooking(booking.id, {
-                                                                        status: 4,
-                                                                        settlerEvidenceImageUrls: settlerEvidenceImageUrls,
-                                                                        settlerEvidenceRemark: settlerEvidenceRemark,
-                                                                        timeline: arrayUnion({
-                                                                            id: generateId(),
-                                                                            actor: BookingActorType.SETTLER,
-                                                                            type: status === 3 ? BookingActivityType.SETTLER_EVIDENCE_SUBMITTED : BookingActivityType.SETTLER_EVIDENCE_UPDATED,
-                                                                            message: status === 3 ? 'Settler submitted service completion evidence.' : 'Settler updated service completion evidence.',
-                                                                            updatedEvidenceCount: settlerEvidenceImageUrls.length,
-                                                                            timestamp: new Date(),
-                                                                        })
-                                                                    });
-                                                                }
-                                                                setStatus(4);
-                                                                onRefresh()
-                                                            }}
-                                                        >
-                                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>{status === 3 ? 'Submit Evidence' : 'Update Evidence'}</Text>
-                                                        </TouchableOpacity>
-                                                    </View>
                                                 )}
+
                                             </View>
                                         </View>
                                     ))}
@@ -1822,7 +1661,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
 
                                             <View>
                                                 <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Job Incompletion Remarks</Text>
-                                                <Input onFocus={() => setisFocused(true)} onBlur={() => setisFocused(false)} isFocused={isFocused}  backround={COLORS.card} style={{ fontSize: 12, borderRadius: 12, backgroundColor: COLORS.input, borderColor: COLORS.inputBorder, borderWidth: 1, height: 150 }} inputicon placeholder={`e.g. Parts left unfinished`} multiline numberOfLines={10} value={booking.incompletionRemark} />
+                                                <Input onFocus={() => setisFocused(true)} onBlur={() => setisFocused(false)} isFocused={isFocused} backround={COLORS.card} style={{ fontSize: 12, borderRadius: 12, backgroundColor: COLORS.input, borderColor: COLORS.inputBorder, borderWidth: 1, height: 150 }} inputicon placeholder={`e.g. Parts left unfinished`} multiline numberOfLines={10} value={booking.incompletionRemark} />
                                             </View>
                                         </View>
                                     </View>
