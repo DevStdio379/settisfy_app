@@ -233,11 +233,14 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
     }
 
     // Convert selectedAddons object to DynamicOption[] array
-    const addonsArray = Object.entries(selectedAddons).map(([category, options]) => ({
+    const addonsArray = Object.entries(selectedAddons).map(([category, options]) => {
+      const dynOpt = service.dynamicOptions?.find((d: DynamicOption) => d.name === category);
+      return {
       name: category,
-      subOptions: options,
-      multipleSelect: false, // Set appropriately if you have this info
-    }));
+      subOptions: options.map((opt) => ({ ...opt, isCompleted: true })),
+      multipleSelect: dynOpt!.multipleSelect,
+      };
+    });
 
 
     const bookingData = {

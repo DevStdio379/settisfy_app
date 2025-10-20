@@ -21,6 +21,7 @@ import { format } from 'date-fns';
 import { DynamicOption, SubOption } from '../../services/CatalogueServices';
 import { generateId } from '../../helper/HelperFunctions';
 import EvidenceForm from '../../components/Forms/EvidenceForm';
+import BookingSummaryCard from '../../components/BookingSummaryCard';
 
 type MyRequestDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyRequestDetails'>;
 
@@ -863,101 +864,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                         <View key={index} style={{ width: SIZES.width }}>
                                             <View style={{ width: '90%', }}>
                                                 {index === 0 && (
-                                                    <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
-                                                        {/* Product Info */}
-                                                        <View style={{ flexDirection: "row", marginBottom: 20 }}>
-                                                            <Image
-                                                                source={{ uri: booking.catalogueService.imageUrls[0] }}
-                                                                style={{ width: 100, height: 100, borderRadius: 8, marginRight: 16 }}
-                                                            />
-                                                            <View style={{ flex: 1, marginTop: 5 }}>
-                                                                <Text style={{ fontSize: 16, marginBottom: 5 }}>
-                                                                    <Text style={{ color: "#E63946", fontWeight: "bold" }}>RM{booking.total}</Text> / Session {" "}
-                                                                    {/* <Text style={styles.originalPrice}>£40.20</Text> */}
-                                                                </Text>
-                                                                <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }}>Cleaning Service</Text>
-                                                                <Text style={{ fontSize: 12, color: COLORS.black }}>Product ID: {booking.catalogueService.id}</Text>
-                                                            </View>
-                                                        </View>
-                                                        <View style={GlobalStyleSheet.line} />
-                                                        {/* Borrowing Period and Delivery Method */}
-                                                        <View
-                                                            style={{
-                                                                flexDirection: "row",
-                                                                justifyContent: "space-between",
-                                                                alignItems: "flex-start",
-                                                                marginBottom: 10,
-                                                                width: "100%",
-                                                                gap: 10, // optional, for small spacing between columns
-                                                            }}
-                                                        >
-                                                            {/* Left Column */}
-                                                            <View style={{ flex: 1, paddingVertical: 10 }}>
-                                                                <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Booking ID:</Text>
-                                                                <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
-                                                                    {booking.id}
-                                                                </Text>
-
-                                                                <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Location:</Text>
-                                                                <Text style={{ fontSize: 14, color: "#666" }}>
-                                                                    {booking.selectedAddress?.addressName || ""}
-                                                                </Text>
-                                                            </View>
-
-                                                            {/* Right Column */}
-                                                            <View style={{ flex: 1, paddingVertical: 10 }}>
-                                                                <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Reference Number:</Text>
-                                                                <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
-                                                                    {booking.serviceStartCode || "N/A"}
-                                                                </Text>
-
-                                                                <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Date:</Text>
-                                                                <Text style={{ fontSize: 14, color: COLORS.title }}>
-                                                                    {booking.selectedDate}
-                                                                </Text>
-                                                            </View>
-                                                        </View>
-                                                        <View style={GlobalStyleSheet.line} />
-                                                        {/* Borrowing Rate Breakdown */}
-                                                        <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Service Pricing Breakdown</Text>
-                                                        <View style={{ marginBottom: 20 }}>
-                                                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                                <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
-                                                                <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.catalogueService.basePrice}</Text>
-                                                            </View>
-                                                            {booking.addons && booking.addons.map((addon) => (
-                                                                <View key={addon.name} style={{ flexDirection: "column" }}>
-                                                                    {addon.subOptions.map((opt) => (
-                                                                        <View key={opt.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                                                                            <Text style={{ fontSize: 14, color: "#333" }}>
-                                                                                {addon.name}: {opt.label}
-                                                                            </Text>
-                                                                            <Text style={{ fontSize: 14, color: "#333", fontWeight: 'bold' }}>£{opt.additionalPrice}</Text>
-                                                                        </View>
-                                                                    ))}
-                                                                </View>
-                                                            ))}
-                                                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                                <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
-                                                                <Text style={{ fontSize: 14, color: "#333" }}></Text>
-                                                                <Text style={{ fontSize: 14, fontWeight: "bold" }}>£2.00</Text>
-                                                            </View>
-                                                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                                <View style={{ justifyContent: 'center', alignItems: 'flex-start' }}>
-                                                                    <Text style={{ fontSize: 14, color: "#333" }}>Additional Charge (by settler)</Text>
-                                                                    <Text style={{ fontSize: 14, width: SIZES.width * 0.8, marginTop: 5, color: "#333", backgroundColor: COLORS.primaryLight, padding: 10, borderRadius: 10, }}>{booking.manualQuoteDescription}</Text>
-                                                                </View>
-                                                                <View style={{ justifyContent: 'center' }}>
-                                                                    <Text style={{ fontSize: 14, fontWeight: "bold" }}>RM{booking.manualQuotePrice}</Text>
-                                                                </View>
-                                                            </View>
-                                                            <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '90%', alignSelf: 'center' },]} />
-                                                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                                                <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
-                                                                <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>£{booking.total}</Text>
-                                                            </View>
-                                                        </View>
-                                                    </View>
+                                                    <BookingSummaryCard
+                                                        booking={booking}
+                                                        isEditable={false}
+                                                    />
                                                 )}
                                                 {index === 1 && (
                                                     <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
