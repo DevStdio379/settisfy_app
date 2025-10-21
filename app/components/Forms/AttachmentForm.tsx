@@ -2,22 +2,28 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { COLORS } from '../../constants/theme';
-import Input from '../../components/Input/Input';
-import { useEvidenceForm } from '../../helper/useEvidenceForm';
+import Input from '../Input/Input';
+import { useAttachmentForm } from '../../helper/useAttachmentForm';
 
-interface EvidenceFormProps {
+interface AttachmentFormProps {
   title: string;
   description: string;
+  remarkPlaceholder?: string;
   initialImages?: string[];
   initialRemark?: string;
-  onSubmit: (data: { images: string[]; remark: string }) => Promise<void> | void;
+  showSubmitButton?: boolean;
+  onChange?: (data: { images: string[]; remark: string }) => void;
+  onSubmit?: (data: { images: string[]; remark: string }) => Promise<void> | void;
 }
 
-const EvidenceForm: React.FC<EvidenceFormProps> = ({
+const AttachmentForm: React.FC<AttachmentFormProps> = ({
   title,
   description,
+  remarkPlaceholder = '',
   initialImages = [],
   initialRemark = '',
+  showSubmitButton = true,
+  onChange, // ✅ include this prop
   onSubmit,
 }) => {
   const {
@@ -25,19 +31,19 @@ const EvidenceForm: React.FC<EvidenceFormProps> = ({
     selectedImageUrl,
     remark,
     isFocused,
-    setRemark,
     setIsFocused,
     setSelectedImageUrl,
     handleImageSelect,
     deleteImage,
-  } = useEvidenceForm(initialImages, initialRemark);
+    handleRemarkChange, // ✅ use this instead of setRemark
+  } = useAttachmentForm(initialImages, initialRemark, onChange); // ✅ pass onChange to hook
 
   const handleSubmit = async () => {
     if (imageUrls.length === 0 || !remark.trim()) {
       Alert.alert('Evidence & Remarks are required.');
       return;
     }
-    await onSubmit({ images: imageUrls, remark });
+    await onSubmit!({ images: imageUrls, remark });
   };
 
   return (
@@ -138,10 +144,10 @@ const EvidenceForm: React.FC<EvidenceFormProps> = ({
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         isFocused={isFocused}
-        onChangeText={setRemark}
+        onChangeText={handleRemarkChange} // ✅ use handleRemarkChange instead of setRemark
         value={remark}
         backround={COLORS.card}
-        placeholder="e.g. All in good conditions."
+        placeholder={remarkPlaceholder}
         multiline
         numberOfLines={10}
         style={{
@@ -154,21 +160,23 @@ const EvidenceForm: React.FC<EvidenceFormProps> = ({
         }}
       />
 
-      <TouchableOpacity
-        onPress={handleSubmit}
-        style={{
-          backgroundColor: COLORS.primary,
-          padding: 15,
-          borderRadius: 10,
-          marginVertical: 10,
-          width: '100%',
-          alignItems: 'center',
-        }}
-      >
-        <Text style={{ color: 'white', fontWeight: 'bold' }}>Submit Evidence</Text>
-      </TouchableOpacity>
+      {showSubmitButton && onSubmit && (
+        <TouchableOpacity
+          onPress={handleSubmit}
+          style={{
+            backgroundColor: COLORS.primary,
+            padding: 15,
+            borderRadius: 10,
+            marginVertical: 10,
+            width: '100%',
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>Submit Evidence</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
 
-export default EvidenceForm;
+export default AttachmentForm;

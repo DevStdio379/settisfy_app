@@ -31,8 +31,7 @@ export enum BookingActorType {
 
 export interface BookingActivity {
   id: string; // unique id
-  type: BookingActivityType,
-  message: string; // readable summary
+  type: BookingActivityType;
   timestamp: any; // Date.now()
   actor: BookingActorType; // who triggered this
 }

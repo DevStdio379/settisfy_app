@@ -25,6 +25,7 @@ import ImageViewer from "../../components/ImageViewer";
 import FeedbackPills from "../../components/FeedbackPills";
 import { BookingActivityType, BookingActorType, createBooking } from "../../services/BookingServices";
 import { generateId } from "../../helper/HelperFunctions";
+import AttachmentForm from "../../components/Forms/AttachmentForm";
 
 type QuoteServiceScreenProps = StackScreenProps<RootStackParamList, "QuoteService">;
 
@@ -236,9 +237,9 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
     const addonsArray = Object.entries(selectedAddons).map(([category, options]) => {
       const dynOpt = service.dynamicOptions?.find((d: DynamicOption) => d.name === category);
       return {
-      name: category,
-      subOptions: options.map((opt) => ({ ...opt, isCompleted: true })),
-      multipleSelect: dynOpt!.multipleSelect,
+        name: category,
+        subOptions: options.map((opt) => ({ ...opt, isCompleted: true })),
+        multipleSelect: dynOpt!.multipleSelect,
       };
     });
 
@@ -281,9 +282,8 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
         {
           id: generateId(),
           type: BookingActivityType.QUOTE_CREATED,
-          message: "Customer made a booking.",
-          timestamp: new Date(),
           actor: BookingActorType.CUSTOMER,
+          timestamp: new Date(),
         },
       ],
 
@@ -739,148 +739,16 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                 </TouchableOpacity>
               </View>
               <View style={GlobalStyleSheet.line} />
-              <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Notes to Settler</Text>
-              <Text style={{ fontSize: 14, color: COLORS.black }}>This is optional but very helpful to our settler.</Text>
-              <View
-                style={{
-                  width: '100%',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: 10,
-                  paddingTop: 0,
+              <AttachmentForm
+                title="Notes to Settler"
+                description="Show settler about your tasks."
+                remarkPlaceholder='E.g., Please be careful with the furniture.'
+                showSubmitButton={false}
+                onChange={(data) => {
+                  setNotesToSettler(data.remark)
+                  setNotesToSettlerImageUrls(data.images)
                 }}
-              >
-                {/* Large Preview Image */}
-                {selectedNotesToSettlerImageUrl ? (
-                  <View
-                    style={{
-                      flex: 1,
-                      width: '100%',
-                      justifyContent: 'flex-start',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <Image
-                      source={{ uri: selectedNotesToSettlerImageUrl }}
-                      style={{
-                        width: '100%',
-                        height: 300,
-                        borderRadius: 10,
-                        marginBottom: 10,
-                      }}
-                      resizeMode="cover"
-                    />
-
-                    {/* Delete Button */}
-                    <TouchableOpacity
-                      onPress={() => deleteImage()}
-                      style={{
-                        position: 'absolute',
-                        top: 10,
-                        right: 10,
-                        backgroundColor: 'rgba(0,0,0,0.6)',
-                        padding: 8,
-                        borderRadius: 20,
-                      }}
-                    >
-                      <Ionicons name="trash-outline" size={24} color={COLORS.white} />
-                    </TouchableOpacity>
-
-                    {/* Thumbnail List */}
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                      {notesToSettlerImageUrls.map((imageUri, index) => (
-                        <TouchableOpacity
-                          key={index}
-                          onPress={() => setSelectedNotesToSettlerImageUrl(imageUri)}
-                        >
-                          <Image
-                            source={{ uri: imageUri }}
-                            style={{
-                              width: 80,
-                              height: 80,
-                              marginRight: 10,
-                              borderRadius: 10,
-                              borderWidth: selectedNotesToSettlerImageUrl === imageUri ? 3 : 0,
-                              borderColor:
-                                selectedNotesToSettlerImageUrl === imageUri
-                                  ? COLORS.primary
-                                  : 'transparent',
-                            }}
-                          />
-                        </TouchableOpacity>
-                      ))}
-
-                      {/* Small "+" box — only visible if less than 5 images */}
-                      {notesToSettlerImageUrls.length < 5 && (
-                        <TouchableOpacity
-                          onPress={handleImageSelect}
-                          activeOpacity={0.8}
-                          style={{
-                            width: 80,
-                            height: 80,
-                            borderRadius: 10,
-                            borderWidth: 1,
-                            borderColor: COLORS.blackLight,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            backgroundColor: COLORS.card,
-                          }}
-                        >
-                          <Ionicons name="add-outline" size={28} color={COLORS.blackLight} />
-                        </TouchableOpacity>
-                      )}
-                    </ScrollView>
-
-                  </View>
-                ) : (
-                  // Placeholder when no image is selected
-                  <TouchableOpacity
-                    onPress={() => handleImageSelect()}
-                    activeOpacity={0.8}
-                    style={{
-                      width: '100%',
-                      height: 100,
-                      borderRadius: 10,
-                      marginBottom: 10,
-                      backgroundColor: COLORS.card,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      borderWidth: 1,
-                      borderColor: COLORS.blackLight,
-                    }}
-                  >
-                    <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
-                    <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>
-                      Add photos here
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-              {selectedNotesToSettlerImageUrl && (
-                <View>
-                  <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Add what do you want the settler to know here</Text>
-                  <Input
-                    onFocus={() => setisFocused(true)}
-                    onBlur={() => setisFocused(false)}
-                    isFocused={isFocused}
-                    onChangeText={setNotesToSettler}
-                    backround={COLORS.card}
-                    style={{
-                      fontSize: 12,
-                      borderRadius: 12,
-                      backgroundColor: COLORS.input,
-                      borderColor: COLORS.inputBorder,
-                      borderWidth: 1,
-                      height: 150,
-                    }}
-                    inputicon
-                    placeholder={`e.g. Got a grassy platform.`}
-                    multiline={true}  // Enable multi-line input
-                    numberOfLines={10} // Suggest the input area size
-                    value={notesToSettler ? notesToSettler : ''}
-                  />
-                </View>
-              )}
+              />
               <View style={GlobalStyleSheet.line} />
               {/* Borrowing Rate Breakdown */}
               <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Service Pricing Breakdown</Text>

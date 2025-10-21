@@ -20,7 +20,7 @@ import { Calendar } from 'react-native-calendars';
 import { format } from 'date-fns';
 import { DynamicOption, SubOption } from '../../services/CatalogueServices';
 import { generateId } from '../../helper/HelperFunctions';
-import EvidenceForm from '../../components/Forms/EvidenceForm';
+import AttachmentForm from '../../components/Forms/AttachmentForm';
 import BookingSummaryCard from '../../components/BookingSummaryCard';
 
 type MyRequestDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyRequestDetails'>;
@@ -865,8 +865,11 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             <View style={{ width: '90%', }}>
                                                 {index === 0 && (
                                                     <BookingSummaryCard
-                                                        booking={booking}
-                                                        isEditable={false}
+                                                        booking={booking}                  
+                                                        selectedAddons={booking.addons!}
+                                                        newAddons={booking.newAddons!} 
+                                                              
+                                                        isEditable={false}                 
                                                     />
                                                 )}
                                                 {index === 1 && (
@@ -976,7 +979,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     </View>
                                                 )}
                                                 {index === 2 && (
-                                                    <EvidenceForm
+                                                    <AttachmentForm
                                                         title="Service Completion Evidence"
                                                         description="Attach photos and remarks to verify your service completion."
                                                         initialImages={booking?.settlerEvidenceImageUrls ?? []}
