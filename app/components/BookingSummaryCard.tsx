@@ -206,51 +206,56 @@ const BookingSummaryCard: React.FC<Props> = ({
             </View>
 
             {/* Manual Quote Section */}
-            <View style={{ marginBottom: 10 }}>
-                <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 6 }}>Manual Quote</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                    {!hideCheckboxes && (
-                        <TouchableOpacity
-                            disabled={!isEditable}
-                            onPress={() => setIncludeManual((v) => !v)}
-                            style={{
-                                marginRight: 8,
-                                width: 22,
-                                height: 22,
-                                borderRadius: 5,
-                                borderWidth: 2,
-                                borderColor: COLORS.inputBorder,
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                backgroundColor: includeManual ? COLORS.primary : COLORS.input,
-                                opacity: isEditable ? 1 : 0.5,
-                            }}
-                        >
-                            {includeManual && <Ionicons name="checkmark" size={16} color={COLORS.white} />}
-                        </TouchableOpacity>
-                    )}
-                    <Text style={{ fontSize: 14, color: '#333' }}>Include manual quote (RM{manualPrice.toFixed(2)})</Text>
-                </View>
+            {(
+                (booking.manualQuoteDescription && booking.manualQuoteDescription.trim() !== '' && Number(booking.manualQuotePrice) > 0) ||
+                (booking.status === 7 && booking.newManualQuoteDescription && booking.newManualQuoteDescription.trim() !== '' && Number(booking.newManualQuotePrice) > 0)
+            ) && (
+                <View style={{ marginBottom: 10 }}>
+                    <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 6 }}>Manual Quote</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                        {!hideCheckboxes && (
+                            <TouchableOpacity
+                                disabled={!isEditable}
+                                onPress={() => setIncludeManual((v) => !v)}
+                                style={{
+                                    marginRight: 8,
+                                    width: 22,
+                                    height: 22,
+                                    borderRadius: 5,
+                                    borderWidth: 2,
+                                    borderColor: COLORS.inputBorder,
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    backgroundColor: includeManual ? COLORS.primary : COLORS.input,
+                                    opacity: isEditable ? 1 : 0.5,
+                                }}
+                            >
+                                {includeManual && <Ionicons name="checkmark" size={16} color={COLORS.white} />}
+                            </TouchableOpacity>
+                        )}
+                        <Text style={{ fontSize: 14, color: '#333' }}>Include manual quote (RM{manualPrice.toFixed(2)})</Text>
+                    </View>
 
-                <Input
-                    value={manualDescription}
-                    backround={COLORS.card}
-                    readOnly={true}
-                    style={{
-                        fontSize: 12,
-                        borderRadius: 12,
-                        backgroundColor: COLORS.input,
-                        borderColor: COLORS.inputBorder,
-                        borderWidth: 1,
-                        height: 80,
-                        width: '100%',
-                    }}
-                    inputicon
-                    placeholder={`e.g. Got a grassy platform.`}
-                    multiline={true}
-                    numberOfLines={4}
-                />
-            </View>
+                    <Input
+                        value={manualDescription}
+                        backround={COLORS.card}
+                        readOnly={true}
+                        style={{
+                            fontSize: 12,
+                            borderRadius: 12,
+                            backgroundColor: COLORS.input,
+                            borderColor: COLORS.inputBorder,
+                            borderWidth: 1,
+                            height: 80,
+                            width: '100%',
+                        }}
+                        inputicon
+                        placeholder={`e.g. Got a grassy platform.`}
+                        multiline={true}
+                        numberOfLines={4}
+                    />
+                </View>
+            )}
 
             {/* Total */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>

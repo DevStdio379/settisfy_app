@@ -996,7 +996,6 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                             const lastIdx = updatedTimeline.length - 1;
                                                             updatedTimeline[lastIdx] = {
                                                                 ...updatedTimeline[lastIdx],
-                                                                message: 'Customer rejected the quotation update.',
                                                                 isQuoteUpdateSuccessful: 'false',
                                                                 timestamp: new Date(),
                                                                 actor: BookingActorType.CUSTOMER,
@@ -1006,9 +1005,9 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                             updatedTimeline.push({
                                                                 id: generateId(),
                                                                 type: BookingActivityType.SETTLER_QUOTE_UPDATED,
-                                                                message: 'Customer rejected the quotation update.',
                                                                 timestamp: new Date(),
                                                                 actor: BookingActorType.CUSTOMER,
+                                                                isQuoeteUpdateSuccessful: 'false',
                                                             });
                                                         }
 
@@ -1021,7 +1020,6 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                             status: 2,
                                                             timeline: updatedTimeline,
                                                         });
-                                                        setSubScreenIndex(0);
                                                     }}
                                                 >
                                                     <Text style={{ color: 'white', fontWeight: 'bold' }}>No</Text>
@@ -1036,19 +1034,55 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         alignItems: 'center',
                                                     }}
                                                     onPress={async () => {
-                                                        await updateBooking(booking.id!, {
-                                                            addons: booking.newAddons,
-                                                            total: booking.newTotal,
-                                                            manualQuoteDescription: booking.newManualQuoteDescription,
-                                                            manualQuotePrice: booking.newManualQuotePrice,
-                                                            newAddons: deleteField(),
-                                                            newTotal: deleteField(),
-                                                            newManualQuoteDescription: deleteField(),
-                                                            newManualQuotePrice: deleteField(),
-                                                            isQuoteUpdateSuccessful: deleteField(),
-                                                            status: 3
-                                                        });
-                                                        setSubScreenIndex(0);
+                                                        // update last timeline entry to indicate customer accepted the quote
+                                                        const updatedTimeline = booking.timeline ? [...booking.timeline] : [];
+
+                                                        if (updatedTimeline.length > 0) {
+                                                            const lastIdx = updatedTimeline.length - 1;
+                                                            updatedTimeline[lastIdx] = {
+                                                                ...updatedTimeline[lastIdx],
+                                                                isQuoteUpdateSuccessful: 'true',
+                                                                timestamp: new Date(),
+                                                                actor: BookingActorType.CUSTOMER,
+                                                            };
+                                                        } else {
+                                                            // fallback: push a new timeline entry
+                                                            updatedTimeline.push({
+                                                                id: generateId(),
+                                                                type: BookingActivityType.SETTLER_QUOTE_UPDATED,
+                                                                timestamp: new Date(),
+                                                                actor: BookingActorType.CUSTOMER,
+                                                                isQuoteUpdateSuccessful: 'true',
+                                                            });
+                                                        }
+
+                                                        // Build payload conditionally to avoid sending undefined values to Firestore
+                                                        const payload: any = {
+                                                            status: 2,
+                                                            timeline: updatedTimeline,
+                                                        };
+
+                                                        if (booking.newAddons !== undefined) {
+                                                            payload.addons = booking.newAddons;
+                                                        }
+                                                        if (booking.newTotal !== undefined) {
+                                                            payload.total = booking.newTotal;
+                                                        }
+                                                        if (booking.newManualQuoteDescription !== undefined) {
+                                                            payload.manualQuoteDescription = booking.newManualQuoteDescription;
+                                                        }
+                                                        if (booking.newManualQuotePrice !== undefined) {
+                                                            payload.manualQuotePrice = booking.newManualQuotePrice;
+                                                        }
+
+                                                        // always remove the temporary new* fields and the flag
+                                                        payload.newAddons = deleteField();
+                                                        payload.newTotal = deleteField();
+                                                        payload.newManualQuoteDescription = deleteField();
+                                                        payload.newManualQuotePrice = deleteField();
+                                                        payload.isQuoteUpdateSuccessful = deleteField();
+
+                                                        await updateBooking(booking.id!, payload);
                                                     }}
                                                 >
                                                     <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
@@ -1253,7 +1287,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                             Quote updated
                                                                         </Text>
                                                                         <Text style={{ fontSize: 12, color: COLORS.black, marginTop: 4 }}>
-                                                                            Your settler has updated the quotation. Tap Review to see the changes.
+                                                                            Your settler has updated the quotation.
                                                                         </Text>
                                                                     </View>
                                                                 </View>
@@ -1264,7 +1298,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                             selectedAddons={booking.addons!}
                                                             newAddons={booking.status === 7 ? booking.newAddons! : booking.addons!}
                                                             isEditable={booking.status === 7 ? false : true}
-                                                            hideCheckboxes={booking.status === 7 ? true : false}
+                                                            hideCheckboxes={true}
                                                         />
                                                     </View>
                                                 )}

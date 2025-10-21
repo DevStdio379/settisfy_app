@@ -867,9 +867,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     <BookingSummaryCard
                                                         booking={booking}                  
                                                         selectedAddons={booking.addons!}
-                                                        newAddons={booking.newAddons!} 
-                                                              
-                                                        isEditable={false}                 
+                                                        newAddons={booking.newAddons!}     
+                                                        isEditable={false} 
+                                                        hideCheckboxes={true}
                                                     />
                                                 )}
                                                 {index === 1 && (
@@ -1245,8 +1245,14 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                             justifyContent: 'center',
                         }}
                         onPress={async () => {
+                            // ensure every subOption has isCompleted: true
+                            const addonsArrayWithCompleted = addonsArray.map(cat => ({
+                                ...cat,
+                                subOptions: cat.subOptions.map((o: SubOption) => ({ ...o, isCompleted: true })),
+                            }));
+
                             await updateBooking(booking.id!, {
-                                newAddons: addonsArray,
+                                newAddons: addonsArrayWithCompleted,
                                 newTotal: totalQuote + 2,
                                 newManualQuoteDescription: newManualQuoteDescription,
                                 newManualQuotePrice: newManualQuotePrice,
@@ -1256,11 +1262,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                     id: generateId(),
                                     actor: BookingActorType.SETTLER,
                                     type: BookingActivityType.SETTLER_QUOTE_UPDATED,
-                                    message: 'Settler updated the booking quotation.',
                                     timestamp: new Date(),
 
                                     // additional info
-                                    newAddons: addonsArray,
+                                    newAddons: addonsArrayWithCompleted,
                                     oldTotal: booking.total,
                                     newTotal: totalQuote + 2,
                                     newManualQuoteDescription: newManualQuoteDescription,
