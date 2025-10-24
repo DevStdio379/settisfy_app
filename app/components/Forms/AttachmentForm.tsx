@@ -12,6 +12,8 @@ interface AttachmentFormProps {
   initialImages?: string[];
   initialRemark?: string;
   showSubmitButton?: boolean;
+  isEditable?: boolean;
+  buttonText?: string;
   onChange?: (data: { images: string[]; remark: string }) => void;
   onSubmit?: (data: { images: string[]; remark: string }) => Promise<void> | void;
 }
@@ -23,8 +25,11 @@ const AttachmentForm: React.FC<AttachmentFormProps> = ({
   initialImages = [],
   initialRemark = '',
   showSubmitButton = true,
+  isEditable = false,
+  buttonText = '',
   onChange, // ✅ include this prop
   onSubmit,
+
 }) => {
   const {
     imageUrls,
@@ -66,19 +71,21 @@ const AttachmentForm: React.FC<AttachmentFormProps> = ({
               }}
               resizeMode="cover"
             />
-            <TouchableOpacity
-              onPress={deleteImage}
-              style={{
-                position: 'absolute',
-                top: 10,
-                right: 10,
-                backgroundColor: 'rgba(0,0,0,0.6)',
-                padding: 8,
-                borderRadius: 20,
-              }}
-            >
-              <Ionicons name="trash-outline" size={24} color={COLORS.white} />
-            </TouchableOpacity>
+            {isEditable && (
+              <TouchableOpacity
+                onPress={deleteImage}
+                style={{
+                  position: 'absolute',
+                  top: 10,
+                  right: 10,
+                  backgroundColor: 'rgba(0,0,0,0.6)',
+                  padding: 8,
+                  borderRadius: 20,
+                }}
+              >
+                <Ionicons name="trash-outline" size={24} color={COLORS.white} />
+              </TouchableOpacity>
+            )}
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {imageUrls.map((uri, idx) => (
@@ -97,7 +104,7 @@ const AttachmentForm: React.FC<AttachmentFormProps> = ({
                 </TouchableOpacity>
               ))}
 
-              {imageUrls.length < 5 && (
+              {isEditable && imageUrls.length < 5 && (
                 <TouchableOpacity
                   onPress={handleImageSelect}
                   style={{
@@ -141,6 +148,7 @@ const AttachmentForm: React.FC<AttachmentFormProps> = ({
         Remarks
       </Text>
       <Input
+        readOnly={!isEditable}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         isFocused={isFocused}
@@ -172,7 +180,7 @@ const AttachmentForm: React.FC<AttachmentFormProps> = ({
             alignItems: 'center',
           }}
         >
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>Submit Evidence</Text>
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>{buttonText}</Text>
         </TouchableOpacity>
       )}
     </View>

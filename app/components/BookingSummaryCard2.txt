@@ -2,10 +2,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Image, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { COLORS } from '../constants/theme';
-import { Booking } from '../services/BookingServices';
+import { Booking, BookingActivityType, BookingActorType, updateBooking, uploadImageIncompletionEvidence } from '../services/BookingServices';
 import { GlobalStyleSheet } from '../constants/StyleSheet';
+import AttachmentForm from './Forms/AttachmentForm';
 import { DynamicOption } from '../services/CatalogueServices';
 import Input from './Input/Input';
+import { arrayUnion } from 'firebase/firestore';
+import { generateId } from '../helper/HelperFunctions';
 
 interface Props {
     booking: Booking;
@@ -15,7 +18,7 @@ interface Props {
     hideCheckboxes?: boolean; // new prop to hide checkboxes
 }
 
-const BookingSummaryCard: React.FC<Props> = ({
+const BookingSummaryCard2: React.FC<Props> = ({
     booking,
     selectedAddons,
     newAddons,
@@ -27,7 +30,7 @@ const BookingSummaryCard: React.FC<Props> = ({
     const [calculatedTotal, setCalculatedTotal] = useState(0);
     const [includeManual, setIncludeManual] = useState<boolean>(
         // Boolean(Number(booking.status === 7 ? booking.newManualQuotePrice : booking.manualQuotePrice)) || 
-        // !booking.incompletionManualQuoteCheck
+        !booking.incompletionManualQuoteCheck
     );
 
     // keep localAddons in sync when prop changes
@@ -262,8 +265,50 @@ const BookingSummaryCard: React.FC<Props> = ({
                 <Text style={{ fontSize: 14, fontWeight: 'bold' }}>Total</Text>
                 <Text style={{ fontSize: 14, color: '#333', fontWeight: 'bold' }}>RM{calculatedTotal.toFixed(2)}</Text>
             </View>
+            
+            {/* Job Incompletion Evidence */}
+            {(anyIncomplete || !includeManual) && (
+                <View>
+                    <View style={GlobalStyleSheet.line} />
+                    <AttachmentForm
+                        title="Incompletion Evidence"
+                        description="Attach photos and remarks to verify your service incompletion."
+                        initialImages={booking?.incompletionImageUrls ?? []}
+                        initialRemark={booking?.incompletionRemark ?? ''}
+                        isEditable={isEditable}
+                        showSubmitButton={isEditable}
+                        onSubmit={async (data) => {
+                            await uploadImageIncompletionEvidence(booking.id!, data.images ?? []).then((urls => {
+                                data.images = urls;
+                            }));
+                            await updateBooking(booking.id!, {
+                                incompletionAddonsCheck: mergedAddons,
+                                // store the manual quote checkbox state (checked = includeManual)
+                                incompletionManualQuoteCheck: !includeManual,
+                                incompletionImageUrls: data.images ?? [],
+                                incompletionRemark: data.remark ?? '',
+                                status: 8,
+                                timeline: arrayUnion({
+                                    id: generateId(),
+                                    type: BookingActivityType.JOB_INCOMPLETE,
+                                    actor: BookingActorType.CUSTOMER,
+                                    timestamp: new Date(),
+                                    
+                                    // additional info
+                                    incompletionAddonsCheck: mergedAddons,
+                                    // store the manual quote checkbox state in the timeline entry too
+                                    incompletionManualQuoteCheck: !includeManual,
+                                    incompletionImageUrls: data.images,
+                                    incompletion: data.remark,
+                                    isIncompletionCompleted: false, 
+                                })
+                            });
+                        }}
+                    />
+                </View>
+            )}
         </View>
     );
 };
 
-export default BookingSummaryCard;
+export default BookingSummaryCard2;

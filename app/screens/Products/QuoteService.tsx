@@ -748,6 +748,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                   setNotesToSettler(data.remark)
                   setNotesToSettlerImageUrls(data.images)
                 }}
+                isEditable={true}
               />
               <View style={GlobalStyleSheet.line} />
               {/* Borrowing Rate Breakdown */}

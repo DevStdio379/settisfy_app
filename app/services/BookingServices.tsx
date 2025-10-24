@@ -16,9 +16,20 @@ export enum BookingActivityType {
   SETTLER_EVIDENCE_SUBMITTED = "SETTLER_EVIDENCE_SUBMITTED",
   SETTLER_EVIDENCE_UPDATED = "SETTLER_EVIDENCE_UPDATED",
   SETTLER_QUOTE_UPDATED = "SETTLER_QUOTE_UPDATED",
+
+  // incompletion & completion state
   JOB_INCOMPLETE = "JOB_INCOMPLETE",
   VISIT_AND_FIX_SCHEDULED = "VISIT_AND_FIX_SCHEDULED",
+  FIX_BY_UPDATE_EVIDENCE = "FIX_BY_UPDATE_EVIDENCE",
   JOB_COMPLETED = "JOB_COMPLETED",
+  REJECT_FLAGGED_INCOMPLETION = "REJECT_FLAGGED_INCOMPLETION",
+
+  // cooldown state
+  CUSTOMER_CONFIRM_COMPLETION = "CUSTOMER_CONFIRM_COMPLETION",
+  COOLDOWN_REPORT_SUBMITTED = "COOLDOWN_REPORT_SUBMITTED",
+  COOLDOWN_VISIT_AND_FIX_SCHEDULED = "COOLDOWN_VISIT_AND_FIX_SCHEDULED",
+  COOLDOWN_REPORT_COMPLETED = "COOLDOWN_REPORT_COMPLETED",
+  COOLDOWN_REPORT_REJECTED = "COOLDOWN_REPORT_REJECTED",
   PAYMENT_RELEASED = "PAYMENT_RELEASED",
   REPORT_SUBMITTED = "REPORT_SUBMITTED",
   STATUS_CHANGED = "STATUS_CHANGED",
@@ -67,21 +78,24 @@ export interface Booking {
   paymentMethod: string;
   paymentIntentId?: string;
 
-  // more actions
-  newAddons?: DynamicOption[];
+  // manualQuote & Addons
   manualQuoteDescription: string;
   manualQuotePrice: number;
-  isManualQuoteCompleted?: boolean,
-  newManualQuoteDescription?: string,
-  newManualQuotePrice?: number,
-  newTotal?: number,
+  isManualQuoteCompleted?: boolean;  // to be deleted
+  newAddons?: DynamicOption[]; // to be deleted
+  newManualQuoteDescription?: string; // to be deleted
+  newManualQuotePrice?: number; // to be deleted
+  newTotal?: number; // to be deleted
 
   // incompletion check
-  incompletionAddonsCheck?: DynamicOption[];
-  incompletionManualQuoteCheck?: boolean;
-  incompletionRemark?: string;
-  incompletionImageUrls?: string[];
-  incompletionTotal?: number;
+  incompletionFlagImageUrls?: string[];
+  incompletionFlagRemark?: string;
+  incompletionCompletionMethod?: string;
+
+  // cooldown report
+  cooldownReportImageUrls?: string[];
+  cooldownReportRemark?: string;
+  cooldownReportCompletionMethod?: string;
 
   // for notification
   isQuoteUpdateSuccess?: boolean,
@@ -128,7 +142,7 @@ export interface BookingWithUser extends Booking {
 
 }
 
-export const uploadImages = async (imageName: string, imagesUrl: string[]) => {
+export const uploadNoteToSettlerImages = async (imageName: string, imagesUrl: string[]) => {
   const urls: string[] = [];
 
   for (const uri of imagesUrl) {
@@ -169,7 +183,7 @@ export const uploadImages = async (imageName: string, imagesUrl: string[]) => {
   return urls; // Return all uploaded image URLs
 };
 
-export const uploadImagesEvidence = async (imageName: string, imagesUrl: string[]) => {
+export const uploadImagesCompletionEvidence = async (imageName: string, imagesUrl: string[]) => {
   const urls: string[] = [];
 
   for (const uri of imagesUrl) {
@@ -251,7 +265,7 @@ export const uploadImageIncompletionEvidence = async (imageName: string, imagesU
   return urls; // Return all uploaded image URLs
 };
 
-export const uploadImagesReport = async (imageName: string, imagesUrl: string[]) => {
+export const uploadImagesCooldownReportEvidence = async (imageName: string, imagesUrl: string[]) => {
   const urls: string[] = [];
 
   for (const uri of imagesUrl) {
@@ -261,7 +275,7 @@ export const uploadImagesReport = async (imageName: string, imagesUrl: string[])
       const blob = await response.blob();
 
       // Generate unique filename
-      const filename = `bookings/report_${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
+      const filename = `bookings/cooldown_report_${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
       const storageRef = ref(storage, filename);
 
       // Upload file
@@ -303,7 +317,7 @@ export const createBooking = async (bookingData: Booking) => {
     // Step 2: If notesToSettlerImageUrls exist (local file URIs or base64)
     if (bookingData.notesToSettlerImageUrls && bookingData.notesToSettlerImageUrls.length > 0) {
       // Upload the images and get back URLs
-      const uploadedUrls = await uploadImages(docRef.id, bookingData.notesToSettlerImageUrls);
+      const uploadedUrls = await uploadNoteToSettlerImages(docRef.id, bookingData.notesToSettlerImageUrls);
 
       // Step 3: Update the same booking doc with those URLs
       await updateDoc(doc(db, 'bookings', docRef.id), {
@@ -352,7 +366,6 @@ const mapBorrowingData = (doc: any): Booking => {
     isManualQuoteCompleted: data.isManualQuoteCompleted,
     newManualQuoteDescription: data.newManualQuoteDescription,
     newManualQuotePrice: data.newManualQuotePrice,
-    incompletionTotal: data.incompletionTotal,
 
     // for notification
     isQuoteUpdateSuccess: data.isQuoteUpdateSuccess,
@@ -361,10 +374,14 @@ const mapBorrowingData = (doc: any): Booking => {
     isDoingQuoteUpdate: data.isDoingQuoteUpdate,
 
     // incompletion check
-    incompletionAddonsCheck: data.incompletionAddonsCheck,
-    incompletionManualQuoteCheck: data.incompletionManualQuoteCheck,
-    incompletionRemark: data.incompletionRemark,
-    incompletionImageUrls: data.incompletionImageUrls,
+    incompletionFlagImageUrls: data.incompletionFlagImageUrls,
+    incompletionFlagRemark: data.incompletionFlagRemark,
+    incompletionCompletionMethod: data.incompletionCompletionMethod,
+
+    // cooldown report
+    cooldownReportImageUrls: data.cooldownReportImageUrls,
+    cooldownReportRemark: data.cooldownReportRemark,
+    cooldownReportCompletionMethod: data.cooldownReportCompletionMethod,
 
     // after broadcast
     acceptors: data.acceptors,
@@ -487,7 +504,7 @@ export const updateBooking = async (bookingId: string, updatedData: Partial<any>
     const bookingRef = doc(db, 'bookings', bookingId);
 
     if (updatedData.settlerEvidenceImageUrls && updatedData.settlerEvidenceImageUrls.length > 0) {
-      const uploadedUrls = await uploadImagesEvidence(bookingRef.id, updatedData.settlerEvidenceImageUrls);
+      const uploadedUrls = await uploadImagesCompletionEvidence(bookingRef.id, updatedData.settlerEvidenceImageUrls);
       await updateDoc(bookingRef, {
         ...updatedData,
         settlerEvidenceImageUrls: uploadedUrls

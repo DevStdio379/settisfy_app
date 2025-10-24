@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, act } from 'react'
 import { View, Text, Image, TouchableOpacity, StyleSheet, Platform, Alert, Animated, Easing, FlatList, Dimensions, ScrollView, RefreshControl, ActivityIndicator, TextInput, Linking, ActionSheetIOS } from 'react-native'
 import { COLORS, SIZES } from '../../constants/theme';
 import { StackScreenProps } from '@react-navigation/stack';
@@ -22,6 +22,7 @@ import { DynamicOption, SubOption } from '../../services/CatalogueServices';
 import { generateId } from '../../helper/HelperFunctions';
 import AttachmentForm from '../../components/Forms/AttachmentForm';
 import BookingSummaryCard from '../../components/BookingSummaryCard';
+import WarningCard from '../../components/Card/WarningCard';
 
 type MyRequestDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyRequestDetails'>;
 
@@ -35,7 +36,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
 
     const scrollViewTabHeader = useRef<any>(null);
     const scrollViewTabContent = useRef<any>(null);
-    const buttons = ['Transaction Summary', 'Service Notes', 'Service Evidence'];
+    const buttons = ['Transaction Summary', 'Service Notes', 'Service Evidence', 'Incompletion Flag', 'Cooldown Report'];
     const scrollX = useRef(new Animated.Value(0)).current;
     const onClickHeader = (i: any) => scrollViewTabHeader.current.scrollTo({ x: i * SIZES.width });
     const onClick = (i: any) => scrollViewTabContent.current.scrollTo({ x: i * SIZES.width });
@@ -66,7 +67,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     const [selectedNotesToSettlerImageUrl, setSelectedNotesToSettlerImageUrl] = useState<string | null>(null);
     const [notesToSettlerImageUrls, setNotesToSettlerImageUrls] = useState<string[]>([]);
 
-    const [incompletionImageUrls, setIncompletionImageUrls] = useState<string[]>([]);
+    const [incompletionFlagImageUrls, setIncompletionImageUrls] = useState<string[]>([]);
     const [selectedIncompletionImageUrl, setSelectedIncompletionImageUrl] = useState<string | null>();
 
     const [selectedSettlerEvidenceImageUrl, setSelectedSettlerEvidenceImageUrl] = useState<string | null>(null);
@@ -287,9 +288,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                     setSelectedNotesToSettlerImageUrl(booking.notesToSettlerImageUrls[0])
                 }
 
-                if (booking.incompletionImageUrls) {
-                    setIncompletionImageUrls(booking.incompletionImageUrls);
-                    setSelectedIncompletionImageUrl(booking.incompletionImageUrls[0])
+                if (booking.incompletionFlagImageUrls) {
+                    setIncompletionImageUrls(booking.incompletionFlagImageUrls);
+                    setSelectedIncompletionImageUrl(booking.incompletionFlagImageUrls[0])
                 }
 
                 const selectedBooking = await fetchSelectedBooking(booking.id || 'undefined');
@@ -441,6 +442,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         >
                             <View style={[GlobalStyleSheet.container, { paddingHorizontal: 10, paddingBottom: 40 }]}>
                                 {/* notification section */}
+                                
+
                                 {booking.isQuoteUpdateSuccess === true && (
                                     <View
                                         style={{
@@ -673,7 +676,6 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         timeline: arrayUnion({
                                                             id: generateId(),
                                                             type: BookingActivityType.SETTLER_SERVICE_END,
-                                                            message: "Settler marked service as completed.",
                                                             timestamp: new Date(),
                                                             actor: BookingActorType.SETTLER,
                                                         })
@@ -751,6 +753,155 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                             <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Incompletion Flagged By Customer</Text>
                                             <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Verify your job completion.</Text>
+                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingHorizontal: 10 }}>
+                                                <TouchableOpacity
+                                                    style={{
+                                                        backgroundColor: COLORS.primary,
+                                                        padding: 10,
+                                                        borderRadius: 10,
+                                                        marginVertical: 10,
+                                                        width: '31%',
+                                                        alignItems: 'center',
+                                                    }}
+                                                    onPress={async () => {
+                                                        // update last timeline entry to indicate customer rejected the quote
+                                                        const updatedTimeline = booking.timeline ? [...booking.timeline] : [];
+
+                                                        if (updatedTimeline.length > 0) {
+                                                            const lastIdx = updatedTimeline.length - 1;
+                                                            updatedTimeline[lastIdx] = {
+                                                                ...updatedTimeline[lastIdx],
+                                                                isIncompletionCompleted: 'true',
+                                                                incompletionCompletionMethod: BookingActivityType.VISIT_AND_FIX_SCHEDULED,
+                                                                timestamp: new Date(),
+                                                                actor: BookingActorType.SETTLER,
+                                                            };
+                                                        } else {
+                                                            // fallback: push a new timeline entry
+                                                            updatedTimeline.push({
+                                                                id: generateId(),
+                                                                type: BookingActivityType.VISIT_AND_FIX_SCHEDULED,
+                                                                timestamp: new Date(),
+                                                                actor: BookingActorType.SETTLER,
+                                                                isIncompletionCompleted: 'true',
+                                                                incompletionCompletionMethod: BookingActivityType.VISIT_AND_FIX_SCHEDULED,
+                                                            });
+                                                        }
+
+                                                        await updateBooking(booking.id!, {
+                                                            status: 2,
+                                                            incompletionCompletionMethod: BookingActivityType.VISIT_AND_FIX_SCHEDULED,
+                                                            timeline: arrayUnion({
+                                                                id: generateId(),
+                                                                type: BookingActivityType.VISIT_AND_FIX_SCHEDULED,
+                                                                actor: BookingActorType.SETTLER,
+                                                                timestamp: new Date(),
+
+                                                                // additional info
+                                                                isIncompletionCompleted: true,
+                                                                incompletionCompletionMethod: BookingActivityType.VISIT_AND_FIX_SCHEDULED,
+                                                            }),
+                                                        });
+                                                        onRefresh();
+                                                    }}
+                                                >
+                                                    <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Visit & Fix</Text>
+                                                </TouchableOpacity>
+
+                                                <TouchableOpacity
+                                                    style={{
+                                                        backgroundColor: COLORS.primary,
+                                                        padding: 10,
+                                                        borderRadius: 10,
+                                                        marginVertical: 10,
+                                                        width: '31%',
+                                                        alignItems: 'center',
+                                                    }}
+                                                    onPress={ async() => {
+                                                        await updateBooking(booking.id!, {
+                                                            incompletionCompletionMethod: BookingActivityType.FIX_BY_UPDATE_EVIDENCE,
+                                                        });
+                                                        onClick(2);
+                                                        onClickHeader(2);
+                                                        setActiveIndex(2);
+                                                    }}
+                                                >
+                                                    <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Update Evidence</Text>
+                                                </TouchableOpacity>
+
+                                                <TouchableOpacity
+                                                    style={{
+                                                        backgroundColor: COLORS.primary,
+                                                        padding: 10,
+                                                        borderRadius: 10,
+                                                        marginVertical: 10,
+                                                        width: '31%',
+                                                        alignItems: 'center',
+                                                    }}
+                                                    onPress={async () => await updateBooking(booking.id!, {
+                                                        incompletionCompletionMethod: BookingActivityType.REJECT_FLAGGED_INCOMPLETION,
+                                                        status: 4,
+                                                    })}>
+                                                    <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Reject Flag</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    ) : status === 9 ? (
+                                        <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Cooldown Report Uploaded by Customer</Text>
+                                            <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Select your action regarding it.</Text>
+                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '90%', gap: 10, paddingHorizontal: 10 }}>
+                                                <TouchableOpacity
+                                                    style={{
+                                                        backgroundColor: COLORS.primary,
+                                                        padding: 10,
+                                                        borderRadius: 10,
+                                                        marginVertical: 10,
+                                                        width: '50%',
+                                                        alignItems: 'center',
+                                                    }}
+                                                    onPress={async () => {
+                                                        await updateBooking(booking.id!, {
+                                                            status: 9.1,
+                                                            incompletionCompletionMethod: BookingActivityType.COOLDOWN_VISIT_AND_FIX_SCHEDULED,
+                                                            timeline: arrayUnion({
+                                                                id: generateId(),
+                                                                type: BookingActivityType.COOLDOWN_VISIT_AND_FIX_SCHEDULED,
+                                                                actor: BookingActorType.SETTLER,
+                                                                timestamp: new Date(),
+
+                                                                // additional info
+                                                                isCompleted: false,
+
+                                                            }),
+                                                        });
+                                                        onRefresh();
+                                                    }}
+                                                >
+                                                    <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Visit & Fix</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    style={{
+                                                        backgroundColor: COLORS.primary,
+                                                        padding: 10,
+                                                        borderRadius: 10,
+                                                        marginVertical: 10,
+                                                        width: '50%',
+                                                        alignItems: 'center',
+                                                    }}
+                                                    onPress={() => {
+                                                        onClick(3);
+                                                        onClickHeader(3);
+                                                        setActiveIndex(3);
+                                                    }}
+                                                >
+                                                    <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Close Report</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    ) : status === 9.1 ? (
+                                        <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                            <Text style={{ fontWeight: 'bold' }}>You're Doing Visit & Fix</Text>
                                             <TouchableOpacity
                                                 style={{
                                                     backgroundColor: COLORS.primary,
@@ -760,9 +911,22 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     width: '80%',
                                                     alignItems: 'center',
                                                 }}
-                                                onPress={() => { setSubScreenIndex(3) }}
+                                                onPress={async () => {
+                                                    await updateBooking(booking.id!, {
+                                                        status: 5,
+                                                        cooldownReportImageUrls: deleteField(),
+                                                        cooldownReportRemark: deleteField(),
+                                                        timeline: arrayUnion({
+                                                            id: generateId(),
+                                                            type: BookingActivityType.COOLDOWN_REPORT_COMPLETED,
+                                                            timestamp: new Date(),
+                                                            actor: BookingActorType.SETTLER,
+                                                        })
+                                                    });
+                                                    onRefresh();
+                                                }}
                                             >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>View Flagged Job</Text>
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Complete Cooldown Visit & Fix</Text>
                                             </TouchableOpacity>
                                         </View>
                                     ) : (
@@ -864,119 +1028,24 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                         <View key={index} style={{ width: SIZES.width }}>
                                             <View style={{ width: '90%', }}>
                                                 {index === 0 && (
-                                                    <BookingSummaryCard
-                                                        booking={booking}                  
-                                                        selectedAddons={booking.addons!}
-                                                        newAddons={booking.newAddons!}     
-                                                        isEditable={false} 
-                                                        hideCheckboxes={true}
-                                                    />
+                                                    <View>
+                                                        <BookingSummaryCard
+                                                            booking={booking}
+                                                            selectedAddons={booking.newAddons ?? booking.addons!}
+                                                            newAddons={booking.newAddons ?? booking.addons!}
+                                                            isEditable={false}
+                                                            hideCheckboxes={true}
+                                                        />
+                                                    </View>
                                                 )}
                                                 {index === 1 && (
-                                                    <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
-                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Notes to Settler</Text>
-                                                        <View
-                                                            style={{
-                                                                width: '100%',
-                                                                justifyContent: 'center',
-                                                                alignItems: 'center',
-                                                                gap: 10,
-                                                                paddingTop: 0,
-                                                            }}
-                                                        >
-                                                            {/* Large Preview Image */}
-                                                            {booking.notesToSettlerImageUrls ? (
-                                                                <View
-                                                                    style={{
-                                                                        flex: 1,
-                                                                        width: '100%',
-                                                                        justifyContent: 'flex-start',
-                                                                        alignItems: 'flex-start',
-                                                                    }}
-                                                                >
-                                                                    <Image
-                                                                        source={{ uri: selectedNotesToSettlerImageUrl || booking.notesToSettlerImageUrls[0] }}
-                                                                        style={{
-                                                                            width: '100%',
-                                                                            height: 300,
-                                                                            borderRadius: 10,
-                                                                            marginBottom: 10,
-                                                                        }}
-                                                                        resizeMode="cover"
-                                                                    />
-
-                                                                    {/* Thumbnail List */}
-                                                                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                                                        {booking.notesToSettlerImageUrls.map((imageUri, index) => (
-                                                                            <TouchableOpacity
-                                                                                key={index}
-                                                                                onPress={() => setSelectedNotesToSettlerImageUrl(imageUri)}
-                                                                            >
-                                                                                <Image
-                                                                                    source={{ uri: imageUri }}
-                                                                                    style={{
-                                                                                        width: 80,
-                                                                                        height: 80,
-                                                                                        marginRight: 10,
-                                                                                        borderRadius: 10,
-                                                                                        borderWidth: selectedNotesToSettlerImageUrl === imageUri ? 3 : 0,
-                                                                                        borderColor:
-                                                                                            selectedNotesToSettlerImageUrl === imageUri
-                                                                                                ? COLORS.primary
-                                                                                                : 'transparent',
-                                                                                    }}
-                                                                                />
-                                                                            </TouchableOpacity>
-                                                                        ))}
-                                                                    </ScrollView>
-                                                                    {selectedNotesToSettlerImageUrl && (
-                                                                        <View style={{ width: '100%' }}>
-                                                                            <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Add what do you want the settler to know here</Text>
-                                                                            <Input
-                                                                                readOnly={true}
-                                                                                backround={COLORS.card}
-                                                                                style={{
-                                                                                    fontSize: 12,
-                                                                                    borderRadius: 12,
-                                                                                    backgroundColor: COLORS.input,
-                                                                                    borderColor: COLORS.inputBorder,
-                                                                                    borderWidth: 1,
-                                                                                    height: 150,
-                                                                                }}
-                                                                                inputicon
-                                                                                placeholder={`e.g. Got a grassy platform.`}
-                                                                                multiline={true}  // Enable multi-line input
-                                                                                numberOfLines={10} // Suggest the input area size
-                                                                                value={booking.notesToSettler ? booking.notesToSettler : ''}
-                                                                            />
-                                                                        </View>
-                                                                    )}
-                                                                </View>
-                                                            ) : (
-                                                                // Placeholder when no image is selected
-                                                                <TouchableOpacity
-                                                                    onPress={() => { }}
-                                                                    activeOpacity={0.8}
-                                                                    style={{
-                                                                        width: '100%',
-                                                                        height: 100,
-                                                                        borderRadius: 10,
-                                                                        marginBottom: 10,
-                                                                        backgroundColor: COLORS.card,
-                                                                        justifyContent: 'center',
-                                                                        alignItems: 'center',
-                                                                        borderWidth: 1,
-                                                                        borderColor: COLORS.blackLight,
-                                                                    }}
-                                                                >
-                                                                    <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
-                                                                    <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>
-                                                                        No photos
-                                                                    </Text>
-                                                                </TouchableOpacity>
-                                                            )}
-                                                        </View>
-                                                    </View>
+                                                    <AttachmentForm
+                                                        title="Note to Settler"
+                                                        description="Tell the settler anything important regarding the service."
+                                                        remarkPlaceholder='e.g. Please be careful with the antique vase.'
+                                                        initialImages={booking.notesToSettlerImageUrls || []}
+                                                        initialRemark={booking.notesToSettler || ''}
+                                                    />
                                                 )}
                                                 {index === 2 && (
                                                     <AttachmentForm
@@ -984,19 +1053,69 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         description="Attach photos and remarks to verify your service completion."
                                                         initialImages={booking?.settlerEvidenceImageUrls ?? []}
                                                         initialRemark={booking?.settlerEvidenceRemark ?? ''}
+                                                        isEditable={true}
+                                                        buttonText={(booking.settlerEvidenceImageUrls && booking.settlerEvidenceImageUrls.length > 0) || (booking.settlerEvidenceRemark && booking.settlerEvidenceRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
                                                         onSubmit={async ({ images, remark }) => {
                                                             await updateBooking(booking.id!, {
                                                                 status: 4,
                                                                 settlerEvidenceImageUrls: images,
                                                                 settlerEvidenceRemark: remark,
+
+                                                                // reset incompletion fields
+                                                                incompletionAddonsCheck: deleteField(),
+                                                                incompletionCompletionMethod: deleteField(),
+                                                                isIncompletionCompleted: true,
+                                                                isManualQuoteCompleted: true,
+                                                                incompletionFlagImageUrls: deleteField(),
+                                                                incompletionRemark: deleteField(),
+
+                                                                timeline: arrayUnion({
+                                                                    id: generateId(),
+                                                                    type: BookingActivityType.SETTLER_EVIDENCE_SUBMITTED,
+                                                                    actor: BookingActorType.SETTLER,
+                                                                    timestamp: new Date(),
+
+                                                                    // additional info
+                                                                    evidenceCount: images.length,
+                                                                    evidenceImage: images,
+                                                                    evidenceRemark: remark,
+                                                                }),
+
                                                             });
                                                             onRefresh();
                                                         }}
                                                     />
-
-
                                                 )}
-
+                                                {index === 3 && (
+                                                    (booking.incompletionFlagImageUrls && booking.incompletionFlagImageUrls.length > 0 && booking.incompletionFlagRemark && booking.incompletionFlagRemark.length > 0) ? (
+                                                        <AttachmentForm
+                                                            title="Report Service Incompletion"
+                                                            description="Your customer reports about the incompletion of your service. Please provide evidence and remarks to verify your job completion."
+                                                            remarkPlaceholder='Water dripping from the faucet after the settler fixed it.'
+                                                            initialImages={booking.incompletionFlagImageUrls || []}
+                                                            initialRemark={booking.incompletionFlagRemark || ''}
+                                                        />
+                                                    ) : (
+                                                        <View style={{ padding: 20, alignItems: 'center', backgroundColor: COLORS.card, borderRadius: 10, marginTop: 20 }}>
+                                                            <Text style={{ color: COLORS.blackLight2 }}>No reports by customer</Text>
+                                                        </View>
+                                                    )
+                                                )}
+                                                {index === 4 && (
+                                                    (booking.cooldownReportImageUrls && booking.cooldownReportImageUrls.length > 0 && booking.cooldownReportRemark && booking.cooldownReportRemark.length > 0) ? (
+                                                        <AttachmentForm
+                                                            title="Report Problem during Cooldown Period"
+                                                            description="You can report any problem regarding the service during this cooldown period."
+                                                            remarkPlaceholder='Water dripping from the faucet after the settler fixed it.'
+                                                            initialImages={booking.cooldownReportImageUrls || []}
+                                                            initialRemark={booking.cooldownReportRemark || ''}
+                                                        />
+                                                    ) : (
+                                                        <View style={{ padding: 20, alignItems: 'center', backgroundColor: COLORS.card, borderRadius: 10, marginTop: 20 }}>
+                                                            <Text style={{ color: COLORS.blackLight2 }}>No reports by customer</Text>
+                                                        </View>
+                                                    )
+                                                )}
                                             </View>
                                         </View>
                                     ))}
@@ -1284,357 +1403,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
             {/* Partial Booking Completion Flag Subscreen  */}
             {subScreenIndex === 3 && (
                 <View>
-                    {booking ? (
-                        <ScrollView
-                            showsVerticalScrollIndicator={false}
-                            contentContainerStyle={{ paddingBottom: 70, alignItems: 'center' }}
-                            refreshControl={
-                                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-                            }
-                        >
-                            <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40 }]}>
-                                {/* Settler Details Card */}
-                                <View style={{ backgroundColor: "#f3f3f3", padding: 16, borderRadius: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, marginVertical: 20, marginHorizontal: 10 }}>
-                                    <View style={{ width: "100%", alignItems: "center", justifyContent: "center", paddingTop: 10 }}>
-                                        <Text style={{ fontWeight: 'bold' }}>Job Partial Completion Flag</Text>
-                                        <Text style={{ color: COLORS.blackLight2, textAlign: 'center' }}>Kindly discuss with your customer regarding this. You can choose any of these options:</Text>
-                                        <TouchableOpacity
-                                            style={{
-                                                backgroundColor: COLORS.primary,
-                                                padding: 10,
-                                                borderRadius: 10,
-                                                marginVertical: 10,
-                                                width: '80%',
-                                                alignItems: 'center',
-                                            }}
-                                            onPress={async () => {
-                                                await updateBooking(booking.id!, {
-                                                    status: 4,
-                                                    timeline: arrayUnion({
-                                                        id: generateId(),
-                                                        actor: BookingActorType.SETTLER,
-                                                        type: BookingActivityType.VISIT_AND_FIX_SCHEDULED,
-                                                        message: "Visit and fix scheduled",
-                                                        timestamp: Date.now(),
-                                                    }),
-                                                });
-                                                onRefresh();
-                                                setSubScreenIndex(0);
-                                            }}
-                                        >
-                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Visit & Fix</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={{
-                                                backgroundColor: COLORS.primary,
-                                                padding: 10,
-                                                borderRadius: 10,
-                                                marginVertical: 10,
-                                                width: '80%',
-                                                alignItems: 'center',
-                                            }}
-                                            onPress={async () => {
-                                                await updateBooking(booking.id!, {
-                                                    status: 4,
-                                                    timeline: arrayUnion({
-                                                        id: generateId(),
-                                                        actor: BookingActorType.SETTLER,
-                                                        type: BookingActivityType.VISIT_AND_FIX_SCHEDULED,
-                                                        message: "Visit and fix scheduled",
-                                                        timestamp: Date.now(),
-                                                    }),
-                                                });
-                                                onRefresh();
-                                                setSubScreenIndex(0);
-                                            }}
-                                        >
-                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Update Evidence</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={{
-                                                backgroundColor: COLORS.primary,
-                                                padding: 10,
-                                                borderRadius: 10,
-                                                marginVertical: 10,
-                                                width: '80%',
-                                                alignItems: 'center',
-                                            }}
-                                            onPress={async () => {
-                                                setSubScreenIndex(2);
-                                            }}
-                                        >
-                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Update Quotation</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                                <View style={[GlobalStyleSheet.line]} />
-                                <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
-                                    {/* Product Info */}
-                                    <View style={{ flexDirection: "row", marginBottom: 20 }}>
-                                        <Image
-                                            source={{ uri: images[0] }}
-                                            style={{ width: 100, height: 100, borderRadius: 8, marginRight: 16 }}
-                                        />
-                                        <View style={{ flex: 1, marginTop: 5 }}>
-                                            <Text style={{ fontSize: 16, marginBottom: 5 }}>
-                                                <Text style={{ color: "#E63946", fontWeight: "bold" }}>£{booking.total}</Text> / Session {" "}
-                                                {/* <Text style={styles.originalPrice}>£40.20</Text> */}
-                                            </Text>
-                                            <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }}>{booking.catalogueService.title}</Text>
-                                            <Text style={{ fontSize: 12, color: COLORS.black }}>Product ID: {booking.catalogueService.id}</Text>
-                                        </View>
-                                    </View>
-                                    <View style={GlobalStyleSheet.line} />
-                                    {/* Borrowing Period and Delivery Method */}
-                                    <View
-                                        style={{
-                                            flexDirection: "row",
-                                            justifyContent: "space-between",
-                                            alignItems: "flex-start",
-                                            marginBottom: 10,
-                                            width: "100%",
-                                            gap: 10, // optional, for small spacing between columns
-                                        }}
-                                    >
-                                        {/* Left Column */}
-                                        <View style={{ flex: 1, paddingVertical: 10 }}>
-                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Booking ID:</Text>
-                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
-                                                {booking.id}
-                                            </Text>
-
-                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Location:</Text>
-                                            <Text style={{ fontSize: 14, color: "#666" }}>
-                                                {booking.selectedAddress?.addressName || ""}
-                                            </Text>
-                                        </View>
-
-                                        {/* Right Column */}
-                                        <View style={{ flex: 1, paddingVertical: 10 }}>
-                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Reference Number:</Text>
-                                            <Text style={{ fontSize: 14, color: "#666", marginBottom: 20 }}>
-                                                {booking.serviceStartCode || "N/A"}
-                                            </Text>
-
-                                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title }}>Service Date:</Text>
-                                            <Text style={{ fontSize: 14, color: COLORS.title }}>
-                                                {booking.selectedDate}
-                                            </Text>
-                                        </View>
-                                    </View>
-                                    <View style={GlobalStyleSheet.line} />
-                                    {/* Borrowing Rate Breakdown */}
-                                    <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Service Pricing Breakdown</Text>
-                                    <View style={{ marginBottom: 20 }}>
-                                        {/* Base Service */}
-                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                            <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
-                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.catalogueService.basePrice}</Text>
-                                        </View>
-
-                                        {/* Addons */}
-                                        {/* <TouchableOpacity onPress={toggleAllCompletion}>
-                                                            <Text style={{ color: COLORS.primary, fontWeight: 'bold' }}>
-                                                                {localAddons.every(addon => addon.subOptions.every(opt => opt.isCompleted))
-                                                                    ? 'Mark All Incomplete'
-                                                                    : 'Mark All Complete'}
-                                                            </Text>
-                                                        </TouchableOpacity> */}
-
-                                        {booking.incompletionAddonsCheck!.map((addon, addonIndex) => (
-                                            <View key={addon.name}>
-                                                {addon.subOptions.map((opt, subIndex) => (
-                                                    <View
-                                                        key={opt.label}
-                                                        style={{
-                                                            flexDirection: 'row',
-                                                            justifyContent: 'space-between',
-                                                            alignItems: 'center',
-                                                            marginBottom: 6,
-                                                            opacity: opt.isCompleted ? 1 : 0.4, // 🔘 grey out unchecked
-                                                        }}
-                                                    >
-                                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                                            <TouchableOpacity
-                                                                onPress={() => { }}
-                                                                style={{
-                                                                    width: 22,
-                                                                    height: 22,
-                                                                    borderRadius: 5,
-                                                                    borderWidth: 2,
-                                                                    borderColor: COLORS.inputBorder,
-                                                                    justifyContent: 'center',
-                                                                    alignItems: 'center',
-                                                                    marginRight: 8,
-                                                                    backgroundColor: opt.isCompleted ? COLORS.primary : COLORS.input,
-                                                                }}
-                                                            >
-                                                                {opt.isCompleted && (
-                                                                    <Ionicons name="checkmark" size={16} color={COLORS.white} />
-                                                                )}
-                                                            </TouchableOpacity>
-
-                                                            <Text style={{ fontSize: 14, color: '#333' }}>
-                                                                {addon.name}: {opt.label}
-                                                            </Text>
-                                                        </View>
-
-                                                        <Text style={{ fontSize: 14, fontWeight: 'bold' }}>
-                                                            £{opt.additionalPrice}
-                                                        </Text>
-                                                    </View>
-                                                ))}
-                                            </View>
-                                        ))}
-
-
-
-                                        {/* Platform Fee */}
-                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                            <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
-                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>£2.00</Text>
-                                        </View>
-
-                                        {/* Additional Quote */}
-                                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, opacity: booking.incompletionManualQuoteCheck ? 1 : 0.4 }}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                                <TouchableOpacity
-                                                    onPress={() => { }}
-                                                    style={{
-                                                        width: 22,
-                                                        height: 22,
-                                                        borderRadius: 5,
-                                                        borderWidth: 2,
-                                                        borderColor: COLORS.inputBorder,
-                                                        justifyContent: 'center',
-                                                        alignItems: 'center',
-                                                        marginRight: 8,
-                                                        backgroundColor: booking && booking.incompletionManualQuoteCheck ? COLORS.primary : COLORS.input,
-                                                    }}
-                                                >
-                                                    {booking.incompletionManualQuoteCheck && <Ionicons name="checkmark" size={16} color={COLORS.white} />}
-                                                </TouchableOpacity>
-
-                                                <View style={{ flex: 1 }}>
-                                                    <Text style={{ fontSize: 14, color: "#333" }}>Additional Charge (by settler)</Text>
-                                                    <Text
-                                                        style={{
-                                                            fontSize: 14,
-                                                            width: SIZES.width * 0.75,
-                                                            marginTop: 5,
-                                                            color: "#333",
-                                                            backgroundColor: COLORS.primaryLight,
-                                                            padding: 10,
-                                                            borderRadius: 10,
-                                                        }}
-                                                    >
-                                                        {booking.manualQuoteDescription || 'N/A'}
-                                                    </Text>
-                                                </View>
-                                            </View>
-
-                                            <Text style={{ fontSize: 14, fontWeight: 'bold' }}>
-                                                £{booking.manualQuotePrice || 0}
-                                            </Text>
-                                        </View>
-
-
-                                        {/* Divider */}
-                                        <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '90%', alignSelf: 'center' }]} />
-
-                                        {/* Total */}
-                                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-                                            <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
-                                            <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>
-                                                RM{booking.incompletionTotal || 0}
-                                            </Text>
-                                        </View>
-                                        <View style={[GlobalStyleSheet.line]} />
-                                        <View>
-                                            <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Job Incompletion Evidence</Text>
-                                            <Text style={{ paddingBottom: 10 }}>Please provide evidence of the job incompletion.</Text>
-                                            <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', gap: 10, paddingTop: 0 }}>
-                                                {booking.incompletionImageUrls!.length > 0 ? (
-                                                    <View style={{ flex: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
-                                                        <Image source={{ uri: selectedIncompletionImageUrl! }} style={{ width: '100%', height: 300, borderRadius: 10, marginBottom: 10 }} resizeMode="cover" />
-
-                                                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                                                            {booking.incompletionImageUrls!.map((u, idx) => (
-                                                                <TouchableOpacity key={idx} onPress={() => setSelectedIncompletionImageUrl(u)}>
-                                                                    <Image source={{ uri: u }} style={{ width: 80, height: 80, marginRight: 10, borderRadius: 10, borderWidth: selectedIncompletionImageUrl === u ? 3 : 0, borderColor: selectedIncompletionImageUrl === u ? COLORS.primary : 'transparent' }} />
-                                                                </TouchableOpacity>
-                                                            ))}
-                                                        </ScrollView>
-                                                    </View>
-                                                ) : (
-                                                    <TouchableOpacity
-                                                        onPress={() => { }}
-                                                        activeOpacity={0.8}
-                                                        style={{ width: '100%', height: 100, borderRadius: 10, marginBottom: 10, backgroundColor: COLORS.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.blackLight }}>
-                                                        <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
-                                                        <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>No photos here</Text>
-                                                    </TouchableOpacity>
-                                                )}
-                                            </View>
-
-                                            <View>
-                                                <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Job Incompletion Remarks</Text>
-                                                <Input onFocus={() => setisFocused(true)} onBlur={() => setisFocused(false)} isFocused={isFocused} backround={COLORS.card} style={{ fontSize: 12, borderRadius: 12, backgroundColor: COLORS.input, borderColor: COLORS.inputBorder, borderWidth: 1, height: 150 }} inputicon placeholder={`e.g. Parts left unfinished`} multiline numberOfLines={10} value={booking.incompletionRemark} />
-                                            </View>
-                                        </View>
-                                    </View>
-                                </View>
-
-                                <View style={[GlobalStyleSheet.line, { marginTop: 15 }]} />
-                                <View style={{ width: '100%', }}>
-                                    <Text style={{ fontSize: 18, fontWeight: 'bold', marginTop: 20 }}>Quick Actions</Text>
-                                    <FlatList
-                                        scrollEnabled={false}
-                                        data={actions}
-                                        keyExtractor={(item, index) => index.toString()}
-                                        numColumns={2}
-                                        columnWrapperStyle={{ justifyContent: 'space-between', marginTop: 20 }}
-                                        renderItem={({ item }) => (
-                                            <TouchableOpacity
-                                                style={{
-                                                    backgroundColor: COLORS.background,
-                                                    padding: 10,
-                                                    borderRadius: 10,
-                                                    borderWidth: 1,
-                                                    borderColor: COLORS.blackLight,
-                                                    width: '48%',
-                                                    alignItems: 'center',
-                                                }}
-                                                onPress={item.onPressAction}
-                                            >
-                                                <Text style={{ color: COLORS.black, fontWeight: 'bold' }}>{item.buttonTitle}</Text>
-                                            </TouchableOpacity>
-                                        )}
-                                    />
-                                    <View style={{ marginTop: 40 }} >
-                                        <TouchableOpacity
-                                            activeOpacity={0.8}
-                                            style={{
-                                                paddingHorizontal: 20,
-                                                borderRadius: 30,
-                                                flexDirection: 'row',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: 10
-                                            }}
-                                            onPress={() => { }}
-                                        >
-                                            <Text style={{ fontSize: 14, color: COLORS.danger, lineHeight: 21, fontWeight: 'bold', textDecorationLine: 'underline' }}>Cancel Booking</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                            </View>
-                        </ScrollView>
-                    ) : (
-                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                            <Text style={{ color: COLORS.black }}>Product not found 404</Text>
-                        </View>
-                    )}
+                    {/* mehh */}
                 </View>
             )}
 

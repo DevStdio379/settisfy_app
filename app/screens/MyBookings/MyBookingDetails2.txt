@@ -13,7 +13,7 @@ import { fetchSelectedUser, User, useUser } from '../../context/UserContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { createReview, getReviewByBookingId, Review } from '../../services/ReviewServices';
 import axios from 'axios';
-import { Booking, BookingActivityType, BookingActorType, BookingWithUser, deleteProblemReportByIndex, fetchSelectedBooking, subscribeToBookings, subscribeToOneBooking, updateBooking, uploadImageIncompletionEvidence, uploadImagesCompletionEvidence, uploadImagesCooldownReportEvidence, uploadNoteToSettlerImages } from '../../services/BookingServices';
+import { Booking, BookingActivityType, BookingActorType, BookingWithUser, deleteProblemReportByIndex, fetchSelectedBooking, subscribeToBookings, subscribeToOneBooking, updateBooking, uploadImagesCompletionEvidence, uploadImagesCooldownReportEvidence } from '../../services/BookingServices';
 import { getOrCreateChat } from '../../services/ChatServices';
 import Input from '../../components/Input/Input';
 import { fetchSelectedSettlerService, fetchSettlerServices, updateSettlerService } from '../../services/SettlerServiceServices';
@@ -463,35 +463,34 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                         >
                             <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40 }]}>
                                 {/* notification section */}
-                                {booking.incompletionCompletionMethod && (
+                                {booking.isDoingVisitAndFix === true && (
                                     <View
                                         style={{
-                                            flexDirection: 'row',
+                                            backgroundColor: booking.isDoingVisitAndFix ? COLORS.primary : COLORS.placeholder,
+                                            borderRadius: 20,
+                                            paddingVertical: 8,
+                                            paddingHorizontal: 14,
+                                            marginTop: 10,
                                             alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            backgroundColor: COLORS.primaryLight || '#FFF8E1',
-                                            borderRadius: 12,
-                                            padding: 12,
-                                            marginVertical: 10,
-                                            borderWidth: 1,
-                                            borderColor: COLORS.primary,
+                                            width: '100%',
                                         }}
                                     >
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                            <Ionicons name="alert-circle-outline" size={20} color={COLORS.primary} />
-                                            <View style={{ paddingLeft: 10, flex: 1 }}>
-                                                <Text style={{ fontSize: 14, color: COLORS.title, fontWeight: '600' }}>
-                                                    {booking.incompletionCompletionMethod === BookingActivityType.VISIT_AND_FIX_SCHEDULED ? 'Visit & Fix Scheduled' : ''}
-                                                    {booking.incompletionCompletionMethod === BookingActivityType.FIX_BY_UPDATE_EVIDENCE ? 'Settler Updated the Evidence.' : ''}
-                                                    {booking.incompletionCompletionMethod === BookingActivityType.REJECT_FLAGGED_INCOMPLETION ? 'Settler rejected the incompletion flag.' : ''}
-                                                </Text>
-                                                <Text style={{ fontSize: 12, color: COLORS.black, marginTop: 4 }}>
-                                                    {booking.incompletionCompletionMethod === BookingActivityType.VISIT_AND_FIX_SCHEDULED ? 'Your settler has scheduled a visit & fix to complete the job.' : ''}
-                                                    {booking.incompletionCompletionMethod === BookingActivityType.FIX_BY_UPDATE_EVIDENCE ? 'Your settler has updated the evidence.' : ''}
-                                                    {booking.incompletionCompletionMethod === BookingActivityType.REJECT_FLAGGED_INCOMPLETION ? 'Your settler has rejected your incompletion flag.' : ''}
-                                                </Text>
-                                            </View>
-                                        </View>
+                                        <Text style={{ justifyContent: 'center', textAlign: 'center', color: COLORS.white, fontSize: 14, fontWeight: '600' }}> Your settler is coming to visit & fix</Text>
+                                    </View>
+                                )}
+                                {booking.isDoingUpdateEvidence === true && (
+                                    <View
+                                        style={{
+                                            backgroundColor: booking.isDoingVisitAndFix ? COLORS.primary : COLORS.placeholder,
+                                            borderRadius: 20,
+                                            paddingVertical: 8,
+                                            paddingHorizontal: 14,
+                                            marginTop: 10,
+                                            alignItems: 'center',
+                                            width: '100%',
+                                        }}
+                                    >
+                                        <Text style={{ justifyContent: 'center', textAlign: 'center', color: COLORS.white, fontSize: 14, fontWeight: '600' }}> Your settler has updated the evidence. Have a check.</Text>
                                     </View>
                                 )}
                                 {/* Progress Section */}
@@ -785,9 +784,9 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         alignItems: 'center',
                                                     }}
                                                     onPress={async () => {
-                                                        onClick(3);
-                                                        onClickHeader(3);
-                                                        setActiveIndex(3);
+                                                        onClick(0);
+                                                        onClickHeader(0);
+                                                        setActiveIndex(0);
                                                         setStatus(8.1);
                                                     }}
                                                 >
@@ -806,8 +805,10 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         if (booking.id) {
                                                             await updateBooking(booking.id, {
                                                                 status: 5,
-                                                                incompletionFlagImageUrls: deleteField(),
-                                                                incompletionFlagRemark: deleteField(),
+                                                                incompletionAddonsCheck: deleteField(),
+                                                                incompletionManualQuoteCheck: deleteField(),
+                                                                incompletionImageUrls: deleteField(),
+                                                                incompletionRemark: deleteField(),
                                                                 incompletionCompletionMethod: deleteField(),
                                                                 timeline: arrayUnion({
                                                                     id: generateId(),
@@ -868,9 +869,9 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                     alignItems: 'center',
                                                 }}
                                                 onPress={() => {
-                                                    onClick(4);
-                                                    onClickHeader(4);
-                                                    setActiveIndex(4);
+                                                    onClick(3);
+                                                    onClickHeader(3);
+                                                    setActiveIndex(3);
                                                 }}
                                             >
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Report Problem</Text>
@@ -1079,13 +1080,10 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                     alignItems: 'center',
                                                 }}
                                                 onPress={() => {
-                                                    onClick(2);
-                                                    onClickHeader(2);
-                                                    setActiveIndex(2);
-                                                    setStatus(4);
+                                                    setStatus(4)
                                                 }}
                                             >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Cancel Job Incompletion Flag</Text>
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Back</Text>
                                             </TouchableOpacity>
                                         </View>
                                     ) : (
@@ -1254,36 +1252,152 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                 </View>
                                                             </View>
                                                         )}
+
+                                                        {/* for job incompletion flag */}
+                                                        {booking.incompletionCompletionMethod && (
+                                                            <View
+                                                                style={{
+                                                                    flexDirection: 'row',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'space-between',
+                                                                    backgroundColor: COLORS.primaryLight || '#FFF8E1',
+                                                                    borderRadius: 12,
+                                                                    padding: 12,
+                                                                    marginVertical: 10,
+                                                                    borderWidth: 1,
+                                                                    borderColor: COLORS.primary,
+                                                                }}
+                                                            >
+                                                                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                                                    <Ionicons name="alert-circle-outline" size={20} color={COLORS.primary} />
+                                                                    <View style={{ paddingLeft: 10, flex: 1 }}>
+                                                                        <Text style={{ fontSize: 14, color: COLORS.title, fontWeight: '600' }}>
+                                                                            {booking.incompletionCompletionMethod === BookingActivityType.VISIT_AND_FIX_SCHEDULED ? 'Visit & Fix Scheduled' : 'Incompletion Flagged'}
+                                                                            {booking.incompletionCompletionMethod === BookingActivityType.SETTLER_QUOTE_UPDATED ? 'Updating Evidence.' : ''}
+                                                                            {booking.incompletionCompletionMethod === BookingActivityType.SETTLER_EVIDENCE_UPDATED ? 'Adjusting Quotation' : ''}
+                                                                        </Text>
+                                                                        <Text style={{ fontSize: 12, color: COLORS.black, marginTop: 4 }}>
+                                                                            {booking.incompletionCompletionMethod === BookingActivityType.VISIT_AND_FIX_SCHEDULED ? 'Your settler has scheduled a visit & fix to complete the job.' : 'You have flagged this job as incomplete.'}
+                                                                            {booking.incompletionCompletionMethod === BookingActivityType.SETTLER_QUOTE_UPDATED ? 'Your settler has updated the quotation.' : ''}
+                                                                            {booking.incompletionCompletionMethod === BookingActivityType.SETTLER_EVIDENCE_UPDATED ? 'Your settler has updated the evidence.' : ''}
+                                                                        </Text>
+                                                                    </View>
+                                                                </View>
+                                                            </View>
+                                                        )}
+
                                                         <BookingSummaryCard
                                                             booking={booking}
                                                             selectedAddons={booking.newAddons ?? booking.addons ?? []}
-                                                            newAddons={booking.newAddons ?? booking.addons ?? []}
-                                                            hideCheckboxes={true}
-                                                            isEditable={false}
+                                                            newAddons={ booking.newAddons ?? booking.addons ?? []}
                                                         />
                                                     </View>
                                                 )}
                                                 {index === 1 && (
-                                                    <AttachmentForm
-                                                        title="Note to Settler"
-                                                        description="Tell the settler anything important regarding the service."
-                                                        remarkPlaceholder='e.g. Please be careful with the antique vase.'
-                                                        initialImages={booking.notesToSettlerImageUrls || []}
-                                                        initialRemark={booking.notesToSettler || ''}
-                                                        isEditable={true}
-                                                        buttonText={(booking.notesToSettlerImageUrls && booking.notesToSettlerImageUrls.length > 0) || (booking.notesToSettler && booking.notesToSettler.length > 0) ? 'Update Note' : 'Send Note'}
-                                                        onSubmit={async (data) => {
-                                                            await uploadNoteToSettlerImages(booking.id!, data.images ?? []).then((urls => {
-                                                                data.images = urls;
-                                                            }));
+                                                    <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
+                                                        <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Notes to Settler</Text>
+                                                        <View
+                                                            style={{
+                                                                width: '100%',
+                                                                justifyContent: 'center',
+                                                                alignItems: 'center',
+                                                                gap: 10,
+                                                                paddingTop: 0,
+                                                            }}
+                                                        >
+                                                            {/* Large Preview Image */}
+                                                            {booking.notesToSettlerImageUrls ? (
+                                                                <View
+                                                                    style={{
+                                                                        flex: 1,
+                                                                        width: '100%',
+                                                                        justifyContent: 'flex-start',
+                                                                        alignItems: 'flex-start',
+                                                                    }}
+                                                                >
+                                                                    <Image
+                                                                        source={{ uri: selectedNotesToSettlerImageUrl || booking.notesToSettlerImageUrls[0] }}
+                                                                        style={{
+                                                                            width: '100%',
+                                                                            height: 300,
+                                                                            borderRadius: 10,
+                                                                            marginBottom: 10,
+                                                                        }}
+                                                                        resizeMode="cover"
+                                                                    />
 
-                                                            await updateBooking(booking.id!, {
-                                                                notesToSettler: data.remark,
-                                                                notesToSettlerImageUrls: data.images,
-                                                            });
-                                                            onRefresh();
-                                                        }}
-                                                    />
+                                                                    {/* Thumbnail List */}
+                                                                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                                                        {booking.notesToSettlerImageUrls.map((imageUri, index) => (
+                                                                            <TouchableOpacity
+                                                                                key={index}
+                                                                                onPress={() => setSelectedNotesToSettlerImageUrl(imageUri)}
+                                                                            >
+                                                                                <Image
+                                                                                    source={{ uri: imageUri }}
+                                                                                    style={{
+                                                                                        width: 80,
+                                                                                        height: 80,
+                                                                                        marginRight: 10,
+                                                                                        borderRadius: 10,
+                                                                                        borderWidth: selectedNotesToSettlerImageUrl === imageUri ? 3 : 0,
+                                                                                        borderColor:
+                                                                                            selectedNotesToSettlerImageUrl === imageUri
+                                                                                                ? COLORS.primary
+                                                                                                : 'transparent',
+                                                                                    }}
+                                                                                />
+                                                                            </TouchableOpacity>
+                                                                        ))}
+                                                                    </ScrollView>
+                                                                    {selectedNotesToSettlerImageUrl && (
+                                                                        <View style={{ width: '100%' }}>
+                                                                            <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Add what do you want the settler to know here</Text>
+                                                                            <Input
+                                                                                readOnly={true}
+                                                                                backround={COLORS.card}
+                                                                                style={{
+                                                                                    fontSize: 12,
+                                                                                    borderRadius: 12,
+                                                                                    backgroundColor: COLORS.input,
+                                                                                    borderColor: COLORS.inputBorder,
+                                                                                    borderWidth: 1,
+                                                                                    height: 150,
+                                                                                }}
+                                                                                inputicon
+                                                                                placeholder={`e.g. Got a grassy platform.`}
+                                                                                multiline={true}  // Enable multi-line input
+                                                                                numberOfLines={10} // Suggest the input area size
+                                                                                value={booking.notesToSettler ? booking.notesToSettler : ''}
+                                                                            />
+                                                                        </View>
+                                                                    )}
+                                                                </View>
+                                                            ) : (
+                                                                // Placeholder when no image is selected
+                                                                <TouchableOpacity
+                                                                    onPress={() => { }}
+                                                                    activeOpacity={0.8}
+                                                                    style={{
+                                                                        width: '100%',
+                                                                        height: 100,
+                                                                        borderRadius: 10,
+                                                                        marginBottom: 10,
+                                                                        backgroundColor: COLORS.card,
+                                                                        justifyContent: 'center',
+                                                                        alignItems: 'center',
+                                                                        borderWidth: 1,
+                                                                        borderColor: COLORS.blackLight,
+                                                                    }}
+                                                                >
+                                                                    <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
+                                                                    <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>
+                                                                        No photos
+                                                                    </Text>
+                                                                </TouchableOpacity>
+                                                            )}
+                                                        </View>
+                                                    </View>
                                                 )}
                                                 {index === 2 && (
                                                     <AttachmentForm
@@ -1308,25 +1422,22 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         description="If you find that the job is incomplete, please report here with evidence."
                                                         remarkPlaceholder='The faucet is still leaking water after the settler fixed it.'
                                                         isEditable={true}
-                                                        initialImages={booking.incompletionFlagImageUrls || []}
-                                                        initialRemark={booking.incompletionFlagRemark || ''}
-                                                        buttonText={(booking.incompletionFlagImageUrls && booking.incompletionFlagImageUrls.length > 0) || (booking.incompletionFlagRemark && booking.incompletionFlagRemark.length > 0) ? 'Update Report' : 'Submit Report'}
                                                         onSubmit={async (data) => {
-                                                            await uploadImageIncompletionEvidence(booking.id!, data.images ?? []).then((urls => {
+                                                            await uploadImagesCompletionEvidence(booking.id!, data.images ?? []).then((urls => {
                                                                 data.images = urls;
                                                             }));
                                                             await updateBooking(booking.id!, {
-                                                                status: 8,
-                                                                incompletionFlagImageUrls: data.images,
-                                                                incompletionFlagRemark: data.remark,
+                                                                status: 9,
+                                                                cooldownReportImageUrls: data.images,
+                                                                cooldownReportRemark: data.remark,
                                                                 timeline: arrayUnion({
                                                                     id: generateId(),
-                                                                    type: BookingActivityType.JOB_INCOMPLETE,
+                                                                    type: BookingActivityType.COOLDOWN_REPORT_SUBMITTED,
                                                                     timestamp: new Date(),
 
                                                                     // additional info
-                                                                    incompletionFlagImageUrls: data.images,
-                                                                    incompletionFlagRemark: data.remark,
+                                                                    cooldownReportImageUrls: data.images,
+                                                                    cooldownReportRemark: data.remark,
                                                                     isCompleted: false,
                                                                 }),
                                                             });
@@ -1339,10 +1450,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         title="Report Problem during Cooldown Period"
                                                         description="You can report any problem regarding the service during this cooldown period."
                                                         remarkPlaceholder='Water dripping from the faucet after the settler fixed it.'
-                                                        initialImages={booking.cooldownReportImageUrls || []}
-                                                        initialRemark={booking.cooldownReportRemark || ''}
                                                         isEditable={true}
-                                                        buttonText={(booking.cooldownReportImageUrls && booking.cooldownReportImageUrls.length > 0) || (booking.cooldownReportRemark && booking.cooldownReportRemark.length > 0) ? 'Update Report' : 'Submit Report'}
                                                         onSubmit={async (data) => {
                                                             await uploadImagesCooldownReportEvidence(booking.id!, data.images ?? []).then((urls => {
                                                                 data.images = urls;
@@ -1570,6 +1678,641 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                         booking={booking!}
                         selectedAddons={booking.status === 7 ? booking.newAddons! : booking.addons!}
                     />
+                </View>
+            )}
+            {/* Job Incompletion Subscreen */}
+            {subScreenIndex === 4 && (
+                <View>
+                    {booking ? (
+                        <ScrollView
+                            showsVerticalScrollIndicator={false}
+                            contentContainerStyle={{ paddingBottom: 70, alignItems: 'center' }}
+                            refreshControl={
+                                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                            }
+                        >
+                            {/* Job Incompletion Form (supports create & update) */}
+                            {(() => {
+                                const JobIncompletionForm: React.FC = () => {
+                                    const [formAddons, setFormAddons] = useState<DynamicOption[]>(() =>
+                                        booking.incompletionAddonsCheck && booking.incompletionAddonsCheck.length
+                                            ? booking.incompletionAddonsCheck
+                                            : (booking.addons || []).map(addon => ({
+                                                ...addon,
+                                                subOptions: addon.subOptions.map(opt => ({ ...opt, isCompleted: !!opt.isCompleted })),
+                                            }))
+                                    );
+                                    const [formIsManualComplete, setFormIsManualComplete] = useState<boolean>(
+                                        booking.incompletionManualQuoteCheck ?? (booking.manualQuoteDescription && booking.manualQuotePrice ? true : true)
+                                    );
+                                    const [formAdjustedTotal, setFormAdjustedTotal] = useState<number>(adjustedTotal ?? Number(booking.total || 0));
+                                    const [formIncompletionImageUrls, setFormIncompletionImageUrls] = useState<string[]>(
+                                        booking.incompletionImageUrls && booking.incompletionImageUrls.length ? booking.incompletionImageUrls : incompletionImageUrls || []
+                                    );
+                                    const [formSelectedImage, setFormSelectedImage] = useState<string | null>(
+                                        (booking.incompletionImageUrls && booking.incompletionImageUrls[0]) || (incompletionImageUrls && incompletionImageUrls[0]) || null
+                                    );
+                                    const [formRemark, setFormRemark] = useState<string>(booking.incompletionRemark ?? incompletionRemark ?? '');
+                                    const [submitting, setSubmitting] = useState(false);
+
+                                    useEffect(() => {
+                                        // keep total in sync whenever selection changes
+                                        const recalc = () => {
+                                            const basePrice = Number(booking.catalogueService.basePrice || 0);
+                                            const platformFee = 2;
+                                            const addonSum = formAddons
+                                                .flatMap(a => a.subOptions)
+                                                .filter(o => o.isCompleted)
+                                                .reduce((s, o) => s + Number(o.additionalPrice || 0), 0);
+                                            const manualSum = formIsManualComplete ? Number(booking.newManualQuotePrice ?? booking.manualQuotePrice ?? 0) : 0;
+                                            const total = basePrice + addonSum + manualSum + platformFee;
+                                            setFormAdjustedTotal(total);
+                                        };
+                                        recalc();
+                                        // eslint-disable-next-line react-hooks/exhaustive-deps
+                                    }, [formAddons, formIsManualComplete]);
+
+                                    const toggleFormSubOption = (addonIdx: number, subIdx: number) => {
+                                        setFormAddons(prev => {
+                                            const updated = prev.map((a, i) =>
+                                                i === addonIdx
+                                                    ? { ...a, subOptions: a.subOptions.map((s, j) => (j === subIdx ? { ...s, isCompleted: !s.isCompleted } : s)) }
+                                                    : a
+                                            );
+                                            return updated;
+                                        });
+                                    };
+
+                                    const toggleFormManualQuote = () => {
+                                        setFormIsManualComplete(prev => !prev);
+                                    };
+
+                                    // reuse parent's handleImageSelect/camera/selectImages if desired, but we keep local handlers to manage form images
+                                    const onPickImages = async () => {
+                                        // reuse parent's functions: they update incompletionImageUrls and selectedIncompletionImageUrl,
+                                        // but here we implement a lightweight selection using launchImageLibrary to keep form-local.
+                                        const options = {
+                                            mediaType: 'photo' as const,
+                                            includeBase64: false,
+                                            maxHeight: 2000,
+                                            maxWidth: 2000,
+                                            selectionLimit: 5 - formIncompletionImageUrls.length,
+                                        };
+                                        launchImageLibrary(options, (response) => {
+                                            if (response.didCancel) return;
+                                            if (response.errorMessage) {
+                                                console.warn('ImagePicker error', response.errorMessage);
+                                                return;
+                                            }
+                                            const assets = response.assets?.map(a => a.uri).filter(Boolean) as string[] || [];
+                                            const updated = [...formIncompletionImageUrls, ...assets].slice(0, 5);
+                                            setFormIncompletionImageUrls(updated);
+                                            setFormSelectedImage(updated[0] ?? null);
+                                        });
+                                    };
+
+                                    const onTakeCamera = async () => {
+                                        const options = {
+                                            mediaType: 'photo' as const,
+                                            includeBase64: false,
+                                            maxHeight: 2000,
+                                            maxWidth: 2000,
+                                        };
+                                        launchCamera(options, (response: any) => {
+                                            if (response.didCancel) return;
+                                            if (response.errorCode) {
+                                                console.warn('Camera error', response.errorMessage);
+                                                return;
+                                            }
+                                            const uri = response.assets?.[0]?.uri;
+                                            if (uri) {
+                                                const updated = [...formIncompletionImageUrls, uri].slice(0, 5);
+                                                setFormIncompletionImageUrls(updated);
+                                                setFormSelectedImage(updated[0] ?? null);
+                                            }
+                                        });
+                                    };
+
+                                    const handleDeleteSelectedImage = () => {
+                                        if (!formSelectedImage) return;
+                                        const updated = formIncompletionImageUrls.filter(u => u !== formSelectedImage);
+                                        setFormIncompletionImageUrls(updated);
+                                        setFormSelectedImage(updated.length ? updated[0] : null);
+                                    };
+
+                                    const handleSubmit = async () => {
+                                        if (formIncompletionImageUrls.length === 0 || !formRemark) {
+                                            Alert.alert('Evidence & Remarks are required.');
+                                            return;
+                                        }
+                                        if (!booking.id) {
+                                            Alert.alert('Missing booking id.');
+                                            return;
+                                        }
+                                        setSubmitting(true);
+                                        try {
+                                            // upload images if they look like local URIs (uri not already hosted) — we can't easily detect, so attempt upload for any uri not starting with http
+                                            const needUpload = formIncompletionImageUrls.filter(u => !u.startsWith('http'));
+                                            let uploadedUrls: string[] = booking.incompletionImageUrls ?? [];
+                                            if (needUpload.length > 0) {
+                                                const uploaded = await uploadImagesCooldownReportEvidence(booking.id, needUpload);
+                                                // replace local URIs with uploaded ones
+                                                uploadedUrls = [
+                                                    ...formIncompletionImageUrls.map(u => (u.startsWith('http') ? u : uploaded.shift() || u))
+                                                ];
+                                            } else {
+                                                uploadedUrls = formIncompletionImageUrls;
+                                            }
+
+                                            const timelineEntry = {
+                                                id: generateId(),
+                                                message: `Customer marked the job as incomplete.`,
+                                                timestamp: new Date(),
+                                                actor: BookingActorType.CUSTOMER,
+                                                type: BookingActivityType.JOB_INCOMPLETE,
+                                                incompleteJobNumber: formAddons.reduce((count, addon) => {
+                                                    addon.subOptions.forEach(opt => { if (!opt.isCompleted) count += 1; });
+                                                    return count;
+                                                }, 0),
+                                                incompletionAddonsCheck: formAddons,
+                                                incompletionManualQuoteCheck: formIsManualComplete,
+                                                incompletionTotal: formAdjustedTotal,
+                                                incompletionRemark: formRemark,
+                                                incompletionImageUrls: uploadedUrls,
+                                            };
+
+                                            // Build update payload. If booking already had an incompletion (status 8), we update fields; otherwise set status 8.
+                                            const payload: any = {
+                                                incompletionAddonsCheck: formAddons,
+                                                incompletionManualQuoteCheck: formIsManualComplete,
+                                                incompletionTotal: formAdjustedTotal,
+                                                incompletionRemark: formRemark,
+                                                incompletionImageUrls: uploadedUrls,
+                                                timeline: arrayUnion(timelineEntry),
+                                            };
+                                            if (booking.status !== 8) {
+                                                payload.status = 8;
+                                            }
+                                            await updateBooking(booking.id, payload);
+
+                                            // refresh parent & go back
+                                            onRefresh();
+                                            setSubScreenIndex(0);
+                                        } catch (err) {
+                                            console.error('Failed to submit incompletion:', err);
+                                            Alert.alert('Submission failed', 'Please try again.');
+                                        } finally {
+                                            setSubmitting(false);
+                                        }
+                                    };
+
+                                    const handleDeleteIncompletion = async () => {
+                                        if (!booking.id) return;
+                                        Alert.alert('Confirm', 'Delete job incompletion report?', [
+                                            { text: 'Cancel', style: 'cancel' },
+                                            {
+                                                text: 'Yes', style: 'destructive', onPress: async () => {
+                                                    try {
+                                                        await updateBooking(booking.id!, {
+                                                            incompletionAddonsCheck: deleteField(),
+                                                            incompletionManualQuoteCheck: deleteField(),
+                                                            incompletionTotal: deleteField(),
+                                                            incompletionRemark: deleteField(),
+                                                            incompletionImageUrls: deleteField(),
+                                                            newTotal: deleteField(),
+                                                            status: 3, // revert to service-completed state (adjust as needed)
+                                                        });
+                                                        onRefresh();
+                                                        setSubScreenIndex(0);
+                                                    } catch (err) {
+                                                        console.error('Failed to delete incompletion:', err);
+                                                        Alert.alert('Delete failed', 'Please try again.');
+                                                    }
+                                                }
+                                            }
+                                        ]);
+                                    };
+
+                                    return (
+                                        <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40 }]}>
+                                            <View style={{ backgroundColor: "#f3f3f3", padding: 16, borderRadius: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, marginVertical: 20, marginHorizontal: 10 }}>
+                                                <View style={{ width: "100%", alignItems: "center", justifyContent: "center", paddingTop: 10 }}>
+                                                    <Text style={{ fontWeight: 'bold' }}>{booking.status === 8 ? 'Update Job Incompletion' : 'Marking Job Incompletion'}</Text>
+                                                    <Text style={{ color: COLORS.blackLight2, textAlign: 'center' }}>Uncheck any of the jobs that you find incomplete.</Text>
+                                                </View>
+                                            </View>
+
+                                            <View style={[GlobalStyleSheet.line]} />
+                                            <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
+                                                {/* Product Info */}
+                                                <View style={{ flexDirection: "row", marginBottom: 20 }}>
+                                                    <Image source={{ uri: images[0] }} style={{ width: 100, height: 100, borderRadius: 8, marginRight: 16 }} />
+                                                    <View style={{ flex: 1, marginTop: 5 }}>
+                                                        <Text style={{ fontSize: 16, marginBottom: 5 }}>
+                                                            <Text style={{ color: "#E63946", fontWeight: "bold" }}>£{booking.total}</Text> / Session{" "}
+                                                        </Text>
+                                                        <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title }}>{booking.catalogueService.title}</Text>
+                                                        <Text style={{ fontSize: 12, color: COLORS.black }}>Product ID: {booking.catalogueService.id}</Text>
+                                                    </View>
+                                                </View>
+
+                                                <View style={GlobalStyleSheet.line} />
+
+                                                {/* Booking Info */}
+                                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
+                                                    <View style={{ flex: 1 }}>
+                                                        <Text style={{ fontSize: 16, fontWeight: 'bold', color: COLORS.title }}>
+                                                            Booking ID:
+                                                        </Text>
+                                                        <Text style={{ fontSize: 14, color: '#666', marginBottom: 20 }}>
+                                                            {booking.id}
+                                                        </Text>
+                                                        <Text style={{ fontSize: 16, fontWeight: 'bold', color: COLORS.title }}>
+                                                            Service Location:
+                                                        </Text>
+                                                        <Text style={{ fontSize: 14, color: '#666' }}>
+                                                            {booking.selectedAddress?.addressName || ''}
+                                                        </Text>
+                                                    </View>
+                                                    <View style={{ flex: 1 }}>
+                                                        <Text style={{ fontSize: 16, fontWeight: 'bold', color: COLORS.title }}>
+                                                            Reference Number:
+                                                        </Text>
+                                                        <Text style={{ fontSize: 14, color: '#666', marginBottom: 20 }}>
+                                                            {booking.serviceStartCode || 'N/A'}
+                                                        </Text>
+                                                        <Text style={{ fontSize: 16, fontWeight: 'bold', color: COLORS.title }}>
+                                                            Service Date:
+                                                        </Text>
+                                                        <Text style={{ fontSize: 14, color: COLORS.title }}>
+                                                            {booking.selectedDate}
+                                                        </Text>
+                                                    </View>
+                                                </View>
+
+                                                <View style={GlobalStyleSheet.line} />
+
+                                                <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 5, color: COLORS.title, marginTop: 10 }}>Service Pricing Breakdown</Text>
+                                                <View style={{ marginBottom: 20 }}>
+                                                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                                        <Text style={{ fontSize: 14, color: "#333" }}>Service Price</Text>
+                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>£{booking.catalogueService.basePrice}</Text>
+                                                    </View>
+
+                                                    {formAddons.map((addon, addonIndex) => (
+                                                        <View key={addon.name}>
+                                                            {addon.subOptions.map((opt, subIndex) => (
+                                                                <View key={opt.label} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, opacity: opt.isCompleted ? 1 : 0.4 }}>
+                                                                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                                                        <TouchableOpacity onPress={() => toggleFormSubOption(addonIndex, subIndex)} style={{ width: 22, height: 22, borderRadius: 5, borderWidth: 2, borderColor: COLORS.inputBorder, justifyContent: 'center', alignItems: 'center', marginRight: 8, backgroundColor: opt.isCompleted ? COLORS.primary : COLORS.input }}>
+                                                                            {opt.isCompleted && <Ionicons name="checkmark" size={16} color={COLORS.white} />}
+                                                                        </TouchableOpacity>
+                                                                        <Text style={{ fontSize: 14, color: '#333' }}>{addon.name}: {opt.label}</Text>
+                                                                    </View>
+                                                                    <Text style={{ fontSize: 14, fontWeight: 'bold' }}>£{opt.additionalPrice}</Text>
+                                                                </View>
+                                                            ))}
+                                                        </View>
+                                                    ))}
+
+                                                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                                        <Text style={{ fontSize: 14, color: "#333" }}>Platform Fee</Text>
+                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>£2.00</Text>
+                                                    </View>
+
+                                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, opacity: formIsManualComplete ? 1 : 0.4 }}>
+                                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                                            <TouchableOpacity onPress={toggleFormManualQuote} style={{ width: 22, height: 22, borderRadius: 5, borderWidth: 2, borderColor: COLORS.inputBorder, justifyContent: 'center', alignItems: 'center', marginRight: 8, backgroundColor: formIsManualComplete ? COLORS.primary : COLORS.input }}>
+                                                                {formIsManualComplete && <Ionicons name="checkmark" size={16} color={COLORS.white} />}
+                                                            </TouchableOpacity>
+                                                            <View style={{ flex: 1 }}>
+                                                                <Text style={{ fontSize: 14, color: "#333" }}>Additional Charge (by settler)</Text>
+                                                                <Text style={{ fontSize: 14, width: SIZES.width * 0.75, marginTop: 5, color: "#333", backgroundColor: COLORS.primaryLight, padding: 10, borderRadius: 10 }}>
+                                                                    {booking.manualQuoteDescription || 'N/A'}
+                                                                </Text>
+                                                            </View>
+                                                        </View>
+                                                        <Text style={{ fontSize: 14, fontWeight: 'bold' }}>£{booking.manualQuotePrice || 0}</Text>
+                                                    </View>
+
+                                                    <View style={[{ backgroundColor: COLORS.black, height: 1, margin: 10, width: '90%', alignSelf: 'center' }]} />
+
+                                                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                                                        <Text style={{ fontSize: 14, fontWeight: "bold" }}>Total</Text>
+                                                        <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>£{formAdjustedTotal}</Text>
+                                                    </View>
+                                                </View>
+
+                                                {(formAddons.some(a => a.subOptions.some(o => !o.isCompleted)) || !formIsManualComplete) && (
+                                                    <>
+                                                        <View style={[GlobalStyleSheet.line]} />
+                                                        <View>
+                                                            <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Job Incompletion Evidence</Text>
+                                                            <Text style={{ paddingBottom: 10 }}>Please provide evidence of the job incompletion.</Text>
+                                                            <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', gap: 10, paddingTop: 0 }}>
+                                                                {formSelectedImage ? (
+                                                                    <View style={{ flex: 1, width: '100%', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
+                                                                        <Image source={{ uri: formSelectedImage }} style={{ width: '100%', height: 300, borderRadius: 10, marginBottom: 10 }} resizeMode="cover" />
+                                                                        <TouchableOpacity onPress={handleDeleteSelectedImage} style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.6)', padding: 8, borderRadius: 20 }}>
+                                                                            <Ionicons name="trash-outline" size={24} color={COLORS.white} />
+                                                                        </TouchableOpacity>
+
+                                                                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                                                            {formIncompletionImageUrls.map((u, idx) => (
+                                                                                <TouchableOpacity key={idx} onPress={() => setFormSelectedImage(u)}>
+                                                                                    <Image source={{ uri: u }} style={{ width: 80, height: 80, marginRight: 10, borderRadius: 10, borderWidth: formSelectedImage === u ? 3 : 0, borderColor: formSelectedImage === u ? COLORS.primary : 'transparent' }} />
+                                                                                </TouchableOpacity>
+                                                                            ))}
+                                                                            {formIncompletionImageUrls.length < 5 && (
+                                                                                <TouchableOpacity onPress={() => {
+                                                                                    if (Platform.OS === 'ios') {
+                                                                                        ActionSheetIOS.showActionSheetWithOptions({ options: ['Cancel', 'Choose from Gallery', 'Use Camera'], cancelButtonIndex: 0 }, (btn) => {
+                                                                                            if (btn === 1) onPickImages();
+                                                                                            if (btn === 2) onTakeCamera();
+                                                                                        });
+                                                                                    } else {
+                                                                                        Alert.alert('Add Photo', 'Choose an option', [{ text: 'Choose from Gallery', onPress: onPickImages }, { text: 'Use Camera', onPress: onTakeCamera }, { text: 'Cancel', style: 'cancel' }]);
+                                                                                    }
+                                                                                }} activeOpacity={0.8} style={{ width: 80, height: 80, borderRadius: 10, borderWidth: 1, borderColor: COLORS.blackLight, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.card }}>
+                                                                                    <Ionicons name="add-outline" size={28} color={COLORS.blackLight} />
+                                                                                </TouchableOpacity>
+                                                                            )}
+                                                                        </ScrollView>
+                                                                    </View>
+                                                                ) : (
+                                                                    <TouchableOpacity onPress={() => {
+                                                                        if (Platform.OS === 'ios') {
+                                                                            ActionSheetIOS.showActionSheetWithOptions({ options: ['Cancel', 'Choose from Gallery', 'Use Camera'], cancelButtonIndex: 0 }, (btn) => {
+                                                                                if (btn === 1) onPickImages();
+                                                                                if (btn === 2) onTakeCamera();
+                                                                            });
+                                                                        } else {
+                                                                            Alert.alert('Add Photo', 'Choose an option', [{ text: 'Choose from Gallery', onPress: onPickImages }, { text: 'Use Camera', onPress: onTakeCamera }, { text: 'Cancel', style: 'cancel' }]);
+                                                                        }
+                                                                    }} activeOpacity={0.8} style={{ width: '100%', height: 100, borderRadius: 10, marginBottom: 10, backgroundColor: COLORS.card, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.blackLight }}>
+                                                                        <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
+                                                                        <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>Add photos here</Text>
+                                                                    </TouchableOpacity>
+                                                                )}
+                                                            </View>
+
+                                                            <View>
+                                                                <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Job Incompletion Remarks</Text>
+                                                                <Input onFocus={() => setisFocused(true)} onBlur={() => setisFocused(false)} isFocused={isFocused} onChangeText={setFormRemark} backround={COLORS.card} style={{ fontSize: 12, borderRadius: 12, backgroundColor: COLORS.input, borderColor: COLORS.inputBorder, borderWidth: 1, height: 150 }} inputicon placeholder={`e.g. Parts left unfinished`} multiline numberOfLines={10} value={formRemark} />
+                                                            </View>
+
+                                                            <TouchableOpacity disabled={submitting} style={{ backgroundColor: COLORS.primary, padding: 15, borderRadius: 10, marginVertical: 10, width: '100%', alignItems: 'center' }} onPress={handleSubmit}>
+                                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>{submitting ? 'Submitting...' : (booking.status === 8 ? 'Update Incompletion' : 'Confirm Job Incompletion')}</Text>
+                                                            </TouchableOpacity>
+
+                                                            {booking.status === 8 && (
+                                                                <TouchableOpacity style={{ backgroundColor: COLORS.danger, padding: 12, borderRadius: 10, marginVertical: 8, width: '100%', alignItems: 'center' }} onPress={handleDeleteIncompletion}>
+                                                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete Incompletion</Text>
+                                                                </TouchableOpacity>
+                                                            )}
+                                                        </View>
+                                                    </>
+                                                )}
+                                            </View>
+
+                                            <View style={[GlobalStyleSheet.line, { marginTop: 15 }]} />
+                                            <View style={{ width: '100%' }}>
+                                                <Text style={{ fontSize: 18, fontWeight: 'bold', marginTop: 20 }}>Quick Actions</Text>
+                                                <FlatList scrollEnabled={false} data={actions} keyExtractor={(item, idx) => idx.toString()} numColumns={2} columnWrapperStyle={{ justifyContent: 'space-between', marginTop: 20 }} renderItem={({ item }) => (
+                                                    <TouchableOpacity style={{ backgroundColor: COLORS.background, padding: 10, borderRadius: 10, borderWidth: 1, borderColor: COLORS.blackLight, width: '48%', alignItems: 'center' }} onPress={item.onPressAction}>
+                                                        <Text style={{ color: COLORS.black, fontWeight: 'bold' }}>{item.buttonTitle}</Text>
+                                                    </TouchableOpacity>
+                                                )} />
+                                                <View style={{ marginTop: 40 }} >
+                                                    <TouchableOpacity activeOpacity={0.8} style={{ paddingHorizontal: 20, borderRadius: 30, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }} onPress={() => { }}>
+                                                        <Text style={{ fontSize: 14, color: COLORS.danger, lineHeight: 21, fontWeight: 'bold', textDecorationLine: 'underline' }}>Cancel Booking</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </View>
+                                        </View>
+                                    );
+                                };
+
+                                return <JobIncompletionForm />;
+                            })()}
+                        </ScrollView>
+                    ) : (
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                            <Text style={{ color: COLORS.black }}>Product not found 404</Text>
+                        </View>
+                    )}
+                </View>
+            )}
+            {/* Create/Delete/ Report */}
+            {subScreenIndex === 5 && (
+                <View>
+                    <ScrollView
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={{ paddingBottom: 70, alignItems: 'center' }}
+                        refreshControl={
+                            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                        }
+                    >
+                        <View style={{ width: '100%', paddingTop: 20, paddingHorizontal: 15, gap: 10, paddingBottom: 200 }}>
+                            <Text style={{ fontSize: 16, fontWeight: "bold", color: COLORS.title, marginTop: 10 }}>Submit a Problem Report</Text>
+                            <Text style={{ fontSize: 13, color: COLORS.blackLight2 }}>Complete this form to report any identified problem during cooldown period. You won't be charged for reporting.</Text>
+                            <View
+                                style={{
+                                    width: '100%',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    gap: 10,
+                                    paddingTop: 0,
+                                }}
+                            >
+                                {/* Large Preview Image */}
+                                {selectedProblemReportImageUrl ? (
+                                    <View
+                                        style={{
+                                            flex: 1,
+                                            width: '100%',
+                                            justifyContent: 'flex-start',
+                                            alignItems: 'flex-start',
+                                        }}
+                                    >
+                                        <Image
+                                            source={{ uri: selectedProblemReportImageUrl }}
+                                            style={{
+                                                width: '100%',
+                                                height: 300,
+                                                borderRadius: 10,
+                                                marginBottom: 10,
+                                            }}
+                                            resizeMode="cover"
+                                        />
+
+                                        {/* Delete Button */}
+                                        {!booking.problemReportImageUrls && (
+                                            <TouchableOpacity
+                                                onPress={() => deleteImage()}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: 10,
+                                                    right: 10,
+                                                    backgroundColor: 'rgba(0,0,0,0.6)',
+                                                    padding: 8,
+                                                    borderRadius: 20,
+                                                }}
+                                            >
+                                                <Ionicons name="trash-outline" size={24} color={COLORS.white} />
+                                            </TouchableOpacity>
+                                        )}
+
+                                        {/* Thumbnail List */}
+                                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                            {problemReportImageUrls.map((imageUri, index) => (
+                                                <TouchableOpacity
+                                                    key={index}
+                                                    onPress={() => setSelectedSettlerEvidenceImageUrl(imageUri)}
+                                                >
+                                                    <Image
+                                                        source={{ uri: imageUri }}
+                                                        style={{
+                                                            width: 80,
+                                                            height: 80,
+                                                            marginRight: 10,
+                                                            borderRadius: 10,
+                                                            borderWidth: selectedProblemReportImageUrl === imageUri ? 3 : 0,
+                                                            borderColor:
+                                                                selectedProblemReportImageUrl === imageUri
+                                                                    ? COLORS.primary
+                                                                    : 'transparent',
+                                                        }}
+                                                    />
+                                                </TouchableOpacity>
+                                            ))}
+                                            {/* Small "+" box — only visible if less than 5 images */}
+                                            {!booking.problemReportImageUrls && (
+                                                <TouchableOpacity
+                                                    onPress={handleImageSelect}
+                                                    activeOpacity={0.8}
+                                                    style={{
+                                                        width: 80,
+                                                        height: 80,
+                                                        borderRadius: 10,
+                                                        borderWidth: 1,
+                                                        borderColor: COLORS.blackLight,
+                                                        justifyContent: 'center',
+                                                        alignItems: 'center',
+                                                        backgroundColor: COLORS.card,
+                                                    }}
+                                                >
+                                                    <Ionicons name="add-outline" size={28} color={COLORS.blackLight} />
+                                                </TouchableOpacity>
+                                            )}
+                                        </ScrollView>
+
+                                    </View>
+                                ) : (
+                                    // Placeholder when no image is selected
+                                    <TouchableOpacity
+                                        onPress={() => handleImageSelect()}
+                                        activeOpacity={0.8}
+                                        style={{
+                                            width: '100%',
+                                            height: 100,
+                                            borderRadius: 10,
+                                            marginBottom: 10,
+                                            backgroundColor: COLORS.card,
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            borderWidth: 1,
+                                            borderColor: COLORS.blackLight,
+                                        }}
+                                    >
+                                        <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
+                                        <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>
+                                            Add photos here
+                                        </Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                            <View>
+                                <Text style={{ fontSize: 15, fontWeight: "bold", color: COLORS.title, marginVertical: 10 }}>Problem Report Remarks</Text>
+                                <Input
+                                    onFocus={() => setisFocused(true)}
+                                    onBlur={() => setisFocused(false)}
+                                    isFocused={isFocused}
+                                    onChangeText={setProblemReportRemark}
+                                    backround={COLORS.card}
+                                    style={{
+                                        fontSize: 12,
+                                        borderRadius: 12,
+                                        backgroundColor: COLORS.input,
+                                        borderColor: COLORS.inputBorder,
+                                        borderWidth: 1,
+                                        height: 150,
+                                    }}
+                                    inputicon
+                                    placeholder={`e.g. All good`}
+                                    multiline={true}  // Enable multi-line input
+                                    numberOfLines={10} // Suggest the input area size
+                                    value={booking.problemReportRemark ? booking.problemReportRemark : ''}
+                                    readOnly={booking.problemReportRemark ? true : false}
+                                />
+                            </View>
+
+                            {(!booking.problemReportRemark) ? (
+                                <View>
+                                    <TouchableOpacity
+                                        style={{
+                                            backgroundColor: COLORS.primary,
+                                            padding: 15,
+                                            borderRadius: 10,
+                                            marginVertical: 10,
+                                            width: '100%',
+                                            alignItems: 'center',
+                                        }}
+                                        onPress={async () => {
+                                            if (problemReportImageUrls.length === 0 || !problemReportRemark) {
+                                                Alert.alert('Evidence & Remarks are Required');
+                                                return
+                                            }
+
+                                            const uploadedUrls = await uploadImagesCooldownReportEvidence(booking.id!, problemReportImageUrls);
+
+                                            if (booking.id) {
+                                                await updateBooking(booking.id, {
+                                                    problemReportRemark: problemReportRemark,
+                                                    problemReportImageUrls: uploadedUrls,
+                                                    problemReportIsCompleted: false,
+                                                });
+                                            }
+                                            setStatus(3);
+                                            onRefresh();
+                                            setSubScreenIndex(0);
+                                        }}
+                                    >
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Submit Report</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                <TouchableOpacity
+                                    style={{
+                                        backgroundColor: COLORS.primary,
+                                        padding: 15,
+                                        borderRadius: 10,
+                                        marginVertical: 10,
+                                        width: '100%',
+                                        alignItems: 'center',
+                                    }}
+                                    onPress={async () => {
+                                        await deleteProblemReportByIndex(booking.id!, reportIndex)
+                                        setStatus(3);
+                                        onRefresh();
+                                        setSubScreenIndex(0);
+                                    }}
+                                >
+                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete Report</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+                    </ScrollView>
                 </View>
             )}
             {/* Timeline Subscreen */}
