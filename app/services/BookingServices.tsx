@@ -8,22 +8,24 @@ import { SettlerService } from './SettlerServiceServices';
 import { Alert } from 'react-native';
 
 export enum BookingActivityType {
+  // initial booking state
   QUOTE_CREATED = "QUOTE_CREATED",
   SETTLER_ACCEPT = "SETTLER_ACCEPT",
   SETTLER_SELECTED = "SETTLER_SELECTED",
+
+  // active service state
   SETTLER_SERVICE_START = "SETTLER_SERVICE_START",
   SETTLER_SERVICE_END = "SETTLER_SERVICE_END",
   SETTLER_EVIDENCE_SUBMITTED = "SETTLER_EVIDENCE_SUBMITTED",
   SETTLER_EVIDENCE_UPDATED = "SETTLER_EVIDENCE_UPDATED",
-  SETTLER_QUOTE_UPDATED = "SETTLER_QUOTE_UPDATED",
 
   // incompletion & completion state
+  JOB_COMPLETED = "JOB_COMPLETED",
   JOB_INCOMPLETE = "JOB_INCOMPLETE",
   CUSTOMER_JOB_INCOMPLETE_UPDATED = "CUSTOMER_JOB_INCOMPLETE_UPDATED",
   SETTLER_RESOLVE_INCOMPLETION = "SETTLER_RESOLVE_INCOMPLETION",
   SETTLER_UPDATE_INCOMPLETION_EVIDENCE = "SETTLER_UPDATE_INCOMPLETION_EVIDENCE",
-  JOB_COMPLETED = "JOB_COMPLETED",
-  REJECT_FLAGGED_INCOMPLETION = "REJECT_FLAGGED_INCOMPLETION",
+  SETTLER_REJECT_INCOMPLETION = "SETTLER_REJECT_INCOMPLETION",
 
   // cooldown state
   CUSTOMER_CONFIRM_COMPLETION = "CUSTOMER_CONFIRM_COMPLETION",
@@ -37,6 +39,9 @@ export enum BookingActivityType {
   PAYMENT_RELEASED = "PAYMENT_RELEASED",
   REPORT_SUBMITTED = "REPORT_SUBMITTED",
   STATUS_CHANGED = "STATUS_CHANGED",
+
+  // extra states
+  SETTLER_QUOTE_UPDATED = "SETTLER_QUOTE_UPDATED",
 }
 
 export enum BookingActorType {
@@ -92,24 +97,21 @@ export interface Booking {
   newTotal?: number; // to be deleted
 
   // incompletion check
-  incompletionFlagImageUrls?: string[];
-  incompletionFlagRemark?: string;
-  incompletionCompletionMethod?: string;
-  resolveIncompletionEvidenceImageUrls?: string[];
-  resolveIncompletionEvidenceRemark?: string;
+  incompletionReportImageUrls?: string[];
+  incompletionReportRemark?: string;
+  incompletionStatus?: string;
+  incompletionResolvedImageUrls?: string[];
+  incompletionResolvedRemark?: string;
 
   // cooldown report
   cooldownReportImageUrls?: string[];
   cooldownReportRemark?: string;
-  cooldownReportCompletionMethod?: string;
-  resolveCooldownReportEvidenceImageUrls?: string[];
-  resolveCooldownReportEvidenceRemark?: string;
+  cooldownStatus?: string;
+  cooldownResolvedImageUrls?: string[];
+  cooldownResolvedRemark?: string;
 
   // for notification
   isQuoteUpdateSuccess?: boolean,
-  isDoingVisitAndFix?: boolean,
-  isDoingUpdateEvidence?: boolean,
-  isDoingQuoteUpdate?: boolean,
 
   // after broadcast
   acceptors?: Acceptor[];
@@ -418,23 +420,20 @@ const mapBorrowingData = (doc: any): Booking => {
 
     // for notification
     isQuoteUpdateSuccess: data.isQuoteUpdateSuccess,
-    isDoingVisitAndFix: data.isDoingVisitAndFix,
-    isDoingUpdateEvidence: data.isDoingUpdateEvidence,
-    isDoingQuoteUpdate: data.isDoingQuoteUpdate,
 
     // incompletion check
-    incompletionFlagImageUrls: data.incompletionFlagImageUrls,
-    incompletionFlagRemark: data.incompletionFlagRemark,
-    incompletionCompletionMethod: data.incompletionCompletionMethod,
-    resolveIncompletionEvidenceImageUrls: data.resolveIncompletionEvidenceImageUrls,
-    resolveIncompletionEvidenceRemark: data.resolveIncompletionEvidenceRemark,
+    incompletionReportImageUrls: data.incompletionReportImageUrls,
+    incompletionReportRemark: data.incompletionReportRemark,
+    incompletionStatus: data.incompletionStatus,
+    incompletionResolvedImageUrls: data.incompletionResolvedImageUrls,
+    incompletionResolvedRemark: data.incompletionResolvedRemark,
 
     // cooldown report
     cooldownReportImageUrls: data.cooldownReportImageUrls,
     cooldownReportRemark: data.cooldownReportRemark,
-    cooldownReportCompletionMethod: data.cooldownReportCompletionMethod,
-    resolveCooldownReportEvidenceImageUrls: data.resolveCooldownReportEvidenceImageUrls,
-    resolveCooldownReportEvidenceRemark: data.resolveCooldownReportEvidenceRemark,
+    cooldownStatus: data.cooldownStatus,
+    cooldownResolvedImageUrls: data.cooldownResolvedImageUrls,
+    cooldownResolvedRemark: data.cooldownResolvedRemark,
 
 
     // after broadcast

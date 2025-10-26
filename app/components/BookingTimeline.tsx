@@ -231,7 +231,7 @@ return (
                                             </View>
                                         )}
 
-                                        {item.type == 'REJECT_FLAGGED_INCOMPLETION' && (
+                                        {item.type == 'SETTLER_REJECT_INCOMPLETION' && (
                                             <View style={styles.block}>
                                                 <Text style={styles.text}>
                                                     Settler has rejected the incompletion flag.

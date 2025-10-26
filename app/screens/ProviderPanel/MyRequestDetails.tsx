@@ -68,7 +68,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     const [selectedNotesToSettlerImageUrl, setSelectedNotesToSettlerImageUrl] = useState<string | null>(null);
     const [notesToSettlerImageUrls, setNotesToSettlerImageUrls] = useState<string[]>([]);
 
-    const [incompletionFlagImageUrls, setIncompletionImageUrls] = useState<string[]>([]);
+    const [incompletionReportImageUrls, setIncompletionImageUrls] = useState<string[]>([]);
     const [selectedIncompletionImageUrl, setSelectedIncompletionImageUrl] = useState<string | null>();
 
     const [selectedSettlerEvidenceImageUrl, setSelectedSettlerEvidenceImageUrl] = useState<string | null>(null);
@@ -289,9 +289,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                     setSelectedNotesToSettlerImageUrl(booking.notesToSettlerImageUrls[0])
                 }
 
-                if (booking.incompletionFlagImageUrls) {
-                    setIncompletionImageUrls(booking.incompletionFlagImageUrls);
-                    setSelectedIncompletionImageUrl(booking.incompletionFlagImageUrls[0])
+                if (booking.incompletionReportImageUrls) {
+                    setIncompletionImageUrls(booking.incompletionReportImageUrls);
+                    setSelectedIncompletionImageUrl(booking.incompletionReportImageUrls[0])
                 }
 
                 const selectedBooking = await fetchSelectedBooking(booking.id || 'undefined');
@@ -453,8 +453,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         >
                             <View style={[GlobalStyleSheet.container, { paddingHorizontal: 10, paddingBottom: 40 }]}>
                                 {/* notification section */}
-
-                                {booking.cooldownReportCompletionMethod === 'CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED' && booking.cooldownReportImageUrls && booking.cooldownReportRemark && (
+                                {/* for Cooldown Reported */}
+                                {booking.cooldownStatus === 'CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED' && booking.cooldownReportImageUrls && booking.cooldownReportRemark && (
                                     <View
                                         style={{
                                             flexDirection: 'row',
@@ -480,6 +480,19 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             </View>
                                         </View>
                                     </View>
+                                )}
+
+                                {booking.cooldownReportImageUrls && booking.cooldownReportRemark && (
+                                    <WarningCard
+                                        text={'Cooldown Problem Reported'}
+                                        remark={'Customer has submitted the evidence to resolve the cooldown problem.'}
+                                        imageUrls={booking.cooldownReportImageUrls || []}
+                                        onPress={() => {
+                                            onClick(4);
+                                            onClickHeader(4);
+                                            setActiveIndex(4);
+                                        }}
+                                    />
                                 )}
 
 
@@ -508,11 +521,13 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                         </Text>
                                     </View>
                                 )}
-                                {booking.incompletionCompletionMethod && booking.incompletionCompletionMethod === 'SETTLER_UPDATE_INCOMPLETION_EVIDENCE' && (
+
+                                {/* for Incompletion Reported */}
+                                {booking.incompletionStatus && booking.incompletionStatus === 'SETTLER_UPDATE_INCOMPLETION_EVIDENCE' && (
                                     <WarningCard
-                                        text={'Incompletion Resolved - Evidence Updated'}
-                                        remark={'You have submitted the evidence to resolve the incompletion flag.'}
-                                        imageUrls={booking.resolveIncompletionEvidenceImageUrls || []}
+                                        text={'Incompletion Reported'}
+                                        remark={'Customer has submitted the evidence to resolve the incompletion flag.'}
+                                        imageUrls={booking.incompletionResolvedImageUrls || []}
                                         onPress={() => {
                                             onClick(3);
                                             onClickHeader(3);
@@ -808,7 +823,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                             updatedTimeline[lastIdx] = {
                                                                 ...updatedTimeline[lastIdx],
                                                                 isIncompletionCompleted: 'true',
-                                                                incompletionCompletionMethod: BookingActivityType.SETTLER_RESOLVE_INCOMPLETION,
+                                                                incompletionStatus: BookingActivityType.SETTLER_RESOLVE_INCOMPLETION,
                                                                 timestamp: new Date(),
                                                                 actor: BookingActorType.SETTLER,
                                                             };
@@ -820,13 +835,13 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                 timestamp: new Date(),
                                                                 actor: BookingActorType.SETTLER,
                                                                 isIncompletionCompleted: 'true',
-                                                                incompletionCompletionMethod: BookingActivityType.SETTLER_RESOLVE_INCOMPLETION,
+                                                                incompletionStatus: BookingActivityType.SETTLER_RESOLVE_INCOMPLETION,
                                                             });
                                                         }
 
                                                         await updateBooking(booking.id!, {
                                                             status: 8.2,
-                                                            incompletionCompletionMethod: BookingActivityType.SETTLER_RESOLVE_INCOMPLETION,
+                                                            incompletionStatus: BookingActivityType.SETTLER_RESOLVE_INCOMPLETION,
                                                             timeline: arrayUnion({
                                                                 id: generateId(),
                                                                 type: BookingActivityType.SETTLER_RESOLVE_INCOMPLETION,
@@ -834,7 +849,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                 timestamp: new Date(),
 
                                                                 // additional info
-                                                                incompletionCompletionMethod: BookingActivityType.SETTLER_RESOLVE_INCOMPLETION,
+                                                                incompletionStatus: BookingActivityType.SETTLER_RESOLVE_INCOMPLETION,
                                                             }),
                                                         });
                                                         onRefresh();
@@ -853,7 +868,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         alignItems: 'center',
                                                     }}
                                                     onPress={async () => await updateBooking(booking.id!, {
-                                                        incompletionCompletionMethod: BookingActivityType.REJECT_FLAGGED_INCOMPLETION,
+                                                        incompletionStatus: BookingActivityType.SETTLER_REJECT_INCOMPLETION,
                                                     })}>
                                                     <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Reject Flag</Text>
                                                 </TouchableOpacity>
@@ -918,7 +933,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     onPress={async () => {
                                                         await updateBooking(booking.id!, {
                                                             status: 9.1,
-                                                            cooldownReportCompletionMethod: BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT,
+                                                            cooldownStatus: BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT,
                                                             timeline: arrayUnion({
                                                                 id: generateId(),
                                                                 type: BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT,
@@ -1145,25 +1160,25 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     />
                                                 )}
                                                 {index === 3 && (
-                                                    (booking.incompletionFlagImageUrls && booking.incompletionFlagImageUrls.length > 0 && booking.incompletionFlagRemark && booking.incompletionFlagRemark.length > 0) ? (
+                                                    (booking.incompletionReportImageUrls && booking.incompletionReportImageUrls.length > 0 && booking.incompletionReportRemark && booking.incompletionReportRemark.length > 0) ? (
                                                         <View>
                                                             <AttachmentForm
                                                                 title="Report Service Incompletion"
                                                                 description="Your customer reports about the incompletion of your service. Please provide evidence and remarks to verify your job completion."
                                                                 remarkPlaceholder='Water dripping from the faucet after the settler fixed it.'
-                                                                initialImages={booking.incompletionFlagImageUrls || []}
-                                                                initialRemark={booking.incompletionFlagRemark || ''}
+                                                                initialImages={booking.incompletionReportImageUrls || []}
+                                                                initialRemark={booking.incompletionReportRemark || ''}
                                                             />
-                                                            {booking.incompletionCompletionMethod && (
+                                                            {booking.incompletionStatus && (
                                                                 <View>
                                                                     <View style={[GlobalStyleSheet.line, { marginTop: 20 }]} />
                                                                     <AttachmentForm
                                                                         title="Provide Incompletion Resolved Evidence"
                                                                         description="Show the completion of the reported incompletion job."
                                                                         remarkPlaceholder='e.g. Problem fixed, all in good condition.'
-                                                                        initialImages={booking.resolveIncompletionEvidenceImageUrls || []}
-                                                                        initialRemark={booking.resolveIncompletionEvidenceRemark || ''}
-                                                                        buttonText={(booking.resolveIncompletionEvidenceImageUrls && booking.resolveIncompletionEvidenceImageUrls.length > 0) || (booking.resolveIncompletionEvidenceRemark && booking.resolveIncompletionEvidenceRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
+                                                                        initialImages={booking.incompletionResolvedImageUrls || []}
+                                                                        initialRemark={booking.incompletionResolvedRemark || ''}
+                                                                        buttonText={(booking.incompletionResolvedImageUrls && booking.incompletionResolvedImageUrls.length > 0) || (booking.incompletionResolvedRemark && booking.incompletionResolvedRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
                                                                         isEditable={true}
                                                                         onSubmit={async (data) => {
                                                                             await uploadImageIncompletionResolveEvidence(booking.id!, data.images ?? []).then((urls => {
@@ -1171,9 +1186,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                             }));
                                                                             await updateBooking(booking.id!, {
                                                                                 status: 4,
-                                                                                resolveIncompletionEvidenceImageUrls: data.images,
-                                                                                resolveIncompletionEvidenceRemark: data.remark,
-                                                                                incompletionCompletionMethod: BookingActivityType.SETTLER_UPDATE_INCOMPLETION_EVIDENCE,
+                                                                                incompletionResolvedImageUrls: data.images,
+                                                                                incompletionResolvedRemark: data.remark,
+                                                                                incompletionStatus: BookingActivityType.SETTLER_UPDATE_INCOMPLETION_EVIDENCE,
                                                                                 timeline: arrayUnion({
                                                                                     id: generateId(),
                                                                                     type: BookingActivityType.SETTLER_UPDATE_INCOMPLETION_EVIDENCE,
@@ -1181,8 +1196,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                                     actor: BookingActorType.SETTLER,
 
                                                                                     // additional info
-                                                                                    resolveIncompletionEvidenceImageUrls: data.images,
-                                                                                    resolveIncompletionEvidenceRemark: data.remark,
+                                                                                    incompletionResolvedImageUrls: data.images,
+                                                                                    incompletionResolvedRemark: data.remark,
                                                                                     isCompleted: false,
                                                                                 }),
                                                                             });
@@ -1208,16 +1223,16 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                 initialImages={booking.cooldownReportImageUrls || []}
                                                                 initialRemark={booking.cooldownReportRemark || ''}
                                                             />
-                                                            {booking.cooldownReportCompletionMethod && (
+                                                            {booking.cooldownStatus && (
                                                                 <View>
                                                                     <View style={[GlobalStyleSheet.line, { marginTop: 20 }]} />
                                                                     <AttachmentForm
                                                                         title="Report Resolved Evidence"
                                                                         description="Show the completion of the reported problem during cooldown."
                                                                         remarkPlaceholder='e.g. Problem fixed, all in good condition.'
-                                                                        initialImages={booking.resolveCooldownReportEvidenceImageUrls || []}
-                                                                        initialRemark={booking.resolveCooldownReportEvidenceRemark || ''}
-                                                                        buttonText={(booking.resolveCooldownReportEvidenceImageUrls && booking.resolveCooldownReportEvidenceImageUrls.length > 0) || (booking.resolveCooldownReportEvidenceRemark && booking.resolveCooldownReportEvidenceRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
+                                                                        initialImages={booking.cooldownResolvedImageUrls || []}
+                                                                        initialRemark={booking.cooldownResolvedRemark || ''}
+                                                                        buttonText={(booking.cooldownResolvedImageUrls && booking.cooldownResolvedImageUrls.length > 0) || (booking.cooldownResolvedRemark && booking.cooldownResolvedRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
                                                                         isEditable={true}
                                                                         onSubmit={async (data) => {
                                                                             await uploadImagesCooldownReportEvidence(booking.id!, data.images ?? []).then((urls => {
@@ -1225,9 +1240,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                             }));
                                                                             await updateBooking(booking.id!, {
                                                                                 status: 5,
-                                                                                resolveCooldownReportEvidenceImageUrls: data.images,
-                                                                                resolveCooldownReportEvidenceRemark: data.remark,
-                                                                                cooldownReportCompletionMethod: BookingActivityType.SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE,
+                                                                                cooldownResolvedImageUrls: data.images,
+                                                                                cooldownResolvedRemark: data.remark,
+                                                                                cooldownStatus: BookingActivityType.SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE,
                                                                                 timeline: arrayUnion({
                                                                                     id: generateId(),
                                                                                     type: BookingActivityType.SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE,
@@ -1235,8 +1250,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                                     actor: BookingActorType.SETTLER,
 
                                                                                     // additional info
-                                                                                    resolveCooldownReportEvidenceImageUrls: data.images,
-                                                                                    resolveCooldownReportEvidenceRemark: data.remark,
+                                                                                    cooldownResolvedImageUrls: data.images,
+                                                                                    cooldownResolvedRemark: data.remark,
                                                                                     isCompleted: false,
                                                                                 }),
                                                                             });

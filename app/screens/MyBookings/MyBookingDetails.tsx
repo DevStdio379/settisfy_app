@@ -26,6 +26,7 @@ import BookingSummaryCard from '../../components/BookingSummaryCard';
 import AttachmentForm from '../../components/Forms/AttachmentForm';
 import BookingTimeline from '../../components/BookingTimeline';
 import WarningCard from '../../components/Card/WarningCard';
+import InfoBar from '../../components/InfoBar';
 
 type MyBookingDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyBookingDetails'>;
 
@@ -472,41 +473,31 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                 {/* notification section */}
 
                                 {/* FOR COOLDOWN REPORT */}
-                                {(booking.cooldownReportCompletionMethod === 'SETTLER_RESOLVE_COOLDOWN_REPORT' ||  booking.cooldownReportCompletionMethod === 'COOLDOWN_REPORT_REJECTED') && (
-                                    <View
-                                        style={{
-                                            flexDirection: 'row',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            backgroundColor: COLORS.primaryLight || '#FFF8E1',
-                                            borderRadius: 12,
-                                            padding: 12,
-                                            marginVertical: 10,
-                                            borderWidth: 1,
-                                            borderColor: COLORS.primary,
-                                        }}
-                                    >
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                            <Ionicons name="alert-circle-outline" size={20} color={COLORS.primary} />
-                                            <View style={{ paddingLeft: 10, flex: 1 }}>
-                                                <Text style={{ fontSize: 14, color: COLORS.title, fontWeight: '600' }}>
-                                                    {booking.cooldownReportCompletionMethod === BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT ? 'Visit & Fix Scheduled' : ''}
-                                                    {booking.cooldownReportCompletionMethod === BookingActivityType.COOLDOWN_REPORT_REJECTED ? 'Settler rejected the cooldown report.' : ''}
-                                                </Text>
-                                                <Text style={{ fontSize: 12, color: COLORS.black, marginTop: 4 }}>
-                                                    {booking.cooldownReportCompletionMethod === BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT ? 'Your settler is on the way to resolve the issue.' : ''}
-                                                    {booking.cooldownReportCompletionMethod === BookingActivityType.COOLDOWN_REPORT_REJECTED ? 'Your settler has rejected your cooldown report.' : ''}
-                                                </Text>
-                                            </View>
-                                        </View>
-                                    </View>
+                                {(booking.cooldownStatus === 'SETTLER_RESOLVE_COOLDOWN_REPORT' || booking.cooldownStatus === 'COOLDOWN_REPORT_REJECTED') && (
+                                    <InfoBar
+                                        title={
+                                            booking.cooldownStatus === BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT
+                                                ? 'Visit & Fix Scheduled'
+                                                : booking.cooldownStatus === BookingActivityType.COOLDOWN_REPORT_REJECTED
+                                                    ? 'Settler rejected the cooldown report.'
+                                                    : ''
+                                        }
+                                        subtitle={
+                                            booking.cooldownStatus === BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT
+                                                ? 'Your settler is on the way to resolve the issue.'
+                                                : booking.cooldownStatus === BookingActivityType.COOLDOWN_REPORT_REJECTED
+                                                    ? 'Your settler has rejected your cooldown report.'
+                                                    : ''
+                                        }
+                                    />
+
                                 )}
 
-                                {booking.cooldownReportCompletionMethod && booking.cooldownReportCompletionMethod === 'SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE' && (
+                                {booking.cooldownStatus && booking.cooldownStatus === 'SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE' && (
                                     <WarningCard
                                         text={'Cooldown Report Resolved - Evidence Updated'}
                                         remark={'Your settler has updated the cooldown report evidence. Please review the new evidence provided.'}
-                                        imageUrls={booking.resolveCooldownReportEvidenceImageUrls || []}
+                                        imageUrls={booking.cooldownResolvedImageUrls || []}
                                         onPress={() => {
                                             onClick(4);
                                             onClickHeader(4);
@@ -516,41 +507,29 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                 )}
 
                                 {/* FOR INCOMPLETION */}
-                                {(booking.incompletionCompletionMethod === 'SETTLER_RESOLVE_INCOMPLETION' || booking.incompletionCompletionMethod === 'REJECT_FLAGGED_INCOMPLETION') && (
-                                    <View
-                                        style={{
-                                            flexDirection: 'row',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            backgroundColor: COLORS.primaryLight || '#FFF8E1',
-                                            borderRadius: 12,
-                                            padding: 12,
-                                            marginVertical: 10,
-                                            borderWidth: 1,
-                                            borderColor: COLORS.primary,
-                                        }}
-                                    >
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                                            <Ionicons name="alert-circle-outline" size={20} color={COLORS.primary} />
-                                            <View style={{ paddingLeft: 10, flex: 1 }}>
-                                                <Text style={{ fontSize: 14, color: COLORS.title, fontWeight: '600' }}>
-                                                    {booking.incompletionCompletionMethod === BookingActivityType.SETTLER_RESOLVE_INCOMPLETION ? 'Visit & Fix Scheduled' : ''}
-                                                    {booking.incompletionCompletionMethod === BookingActivityType.REJECT_FLAGGED_INCOMPLETION ? 'Settler rejected the incompletion flag.' : ''}
-                                                </Text>
-                                                <Text style={{ fontSize: 12, color: COLORS.black, marginTop: 4 }}>
-                                                    {booking.incompletionCompletionMethod === BookingActivityType.SETTLER_RESOLVE_INCOMPLETION ? 'Your settler is on the way to resolve the issue.' : ''}
-                                                    {booking.incompletionCompletionMethod === BookingActivityType.REJECT_FLAGGED_INCOMPLETION ? 'Your settler has rejected your incompletion flag.' : ''}
-                                                </Text>
-                                            </View>
-                                        </View>
-                                    </View>
-
+                                {(booking.incompletionStatus === 'SETTLER_RESOLVE_INCOMPLETION' || booking.incompletionStatus === 'SETTLER_REJECT_INCOMPLETION') && (
+                                    <InfoBar
+                                        title={
+                                            booking.incompletionStatus === BookingActivityType.SETTLER_RESOLVE_INCOMPLETION
+                                                ? 'Visit & Fix Scheduled'
+                                                : booking.incompletionStatus === BookingActivityType.SETTLER_REJECT_INCOMPLETION
+                                                    ? 'Settler rejected the incompletion flag.'
+                                                    : ''
+                                        }
+                                        subtitle={
+                                            booking.incompletionStatus === BookingActivityType.SETTLER_RESOLVE_INCOMPLETION
+                                                ? 'Your settler is on the way to resolve the issue.'
+                                                : booking.incompletionStatus === BookingActivityType.SETTLER_REJECT_INCOMPLETION
+                                                    ? 'Your settler has rejected your incompletion flag.'
+                                                    : ''
+                                        }
+                                    />
                                 )}
-                                {booking.incompletionCompletionMethod && booking.incompletionCompletionMethod === 'SETTLER_UPDATE_INCOMPLETION_EVIDENCE' && (
+                                {booking.incompletionStatus && booking.incompletionStatus === 'SETTLER_UPDATE_INCOMPLETION_EVIDENCE' && (
                                     <WarningCard
                                         text={'Incompletion Resolved - Evidence Updated'}
                                         remark={'Your settler has updated the incompletion evidence. Please review the new evidence provided.'}
-                                        imageUrls={booking.resolveIncompletionEvidenceImageUrls || []}
+                                        imageUrls={booking.incompletionResolvedImageUrls || []}
                                         onPress={() => {
                                             onClick(3);
                                             onClickHeader(3);
@@ -868,11 +847,11 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         if (booking.id) {
                                                             await updateBooking(booking.id, {
                                                                 status: 5,
-                                                                incompletionFlagImageUrls: deleteField(),
-                                                                incompletionFlagRemark: deleteField(),
-                                                                incompletionCompletionMethod: deleteField(),
-                                                                resolveIncompletionEvidenceImageUrls: deleteField(),
-                                                                resolveIncompletionEvidenceRemark: deleteField(),
+                                                                incompletionReportImageUrls: deleteField(),
+                                                                incompletionReportRemark: deleteField(),
+                                                                incompletionStatus: deleteField(),
+                                                                incompletionResolvedImageUrls: deleteField(),
+                                                                incompletionResolvedRemark: deleteField(),
                                                                 timeline: arrayUnion({
                                                                     id: generateId(),
                                                                     type: BookingActivityType.CUSTOMER_CONFIRM_COMPLETION,
@@ -931,13 +910,13 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                 width: '40%',
                                                                 alignItems: 'center',
                                                             }}
-                                                            onPress={async () => { 
+                                                            onPress={async () => {
                                                                 onClick(4);
                                                                 onClickHeader(4);
                                                                 setActiveIndex(4);
 
                                                                 await updateBooking(booking.id!, {
-                                                                    cooldownReportCompletionMethod: BookingActivityType.CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED,
+                                                                    cooldownStatus: BookingActivityType.CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED,
                                                                     status: 9,
                                                                     timeline: arrayUnion({
                                                                         id: generateId(),
@@ -964,9 +943,9 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                     await updateBooking(booking.id, {
                                                                         cooldownReportImageUrls: deleteField(),
                                                                         cooldownReportRemark: deleteField(),
-                                                                        cooldownReportCompletionMethod: deleteField(),
-                                                                        resolveCooldownReportEvidenceImageUrls: deleteField(),
-                                                                        resolveCooldownReportEvidenceRemark: deleteField(),
+                                                                        cooldownStatus: deleteField(),
+                                                                        cooldownResolvedImageUrls: deleteField(),
+                                                                        cooldownResolvedRemark: deleteField(),
                                                                         status: 6
                                                                     });
                                                                 }
@@ -978,7 +957,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                     </View>
                                                 </View>
                                             ) : (
-                                                <View>
+                                                <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%' }}>
                                                     <Text style={{ fontSize: 16, fontWeight: 'bold' }}>You're in cooldown period.</Text>
                                                     <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Take this time to review the service and let us know if something doesn’t look right.</Text>
                                                     <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>
@@ -1471,42 +1450,42 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                             description="If you find that the job is incomplete, please report here with evidence."
                                                             remarkPlaceholder='The faucet is still leaking water after the settler fixed it.'
                                                             isEditable={true}
-                                                            initialImages={booking.incompletionFlagImageUrls || []}
-                                                            initialRemark={booking.incompletionFlagRemark || ''}
-                                                            buttonText={(booking.incompletionFlagImageUrls && booking.incompletionFlagImageUrls.length > 0) || (booking.incompletionFlagRemark && booking.incompletionFlagRemark.length > 0) ? 'Update Incompletion Report' : 'Submit Incompletion Report'}
+                                                            initialImages={booking.incompletionReportImageUrls || []}
+                                                            initialRemark={booking.incompletionReportRemark || ''}
+                                                            buttonText={(booking.incompletionReportImageUrls && booking.incompletionReportImageUrls.length > 0) || (booking.incompletionReportRemark && booking.incompletionReportRemark.length > 0) ? 'Update Incompletion Report' : 'Submit Incompletion Report'}
                                                             onSubmit={async (data) => {
                                                                 await uploadImageIncompletionEvidence(booking.id!, data.images ?? []).then((urls => {
                                                                     data.images = urls;
                                                                 }));
                                                                 await updateBooking(booking.id!, {
                                                                     status: 8,
-                                                                    incompletionFlagImageUrls: data.images,
-                                                                    incompletionFlagRemark: data.remark,
-                                                                    incompletionCompletionMethod: deleteField(),
+                                                                    incompletionReportImageUrls: data.images,
+                                                                    incompletionReportRemark: data.remark,
+                                                                    incompletionStatus: deleteField(),
                                                                     timeline: arrayUnion({
                                                                         id: generateId(),
-                                                                        type: (booking.incompletionFlagImageUrls && booking.incompletionFlagImageUrls.length > 0) || (booking.incompletionFlagRemark && booking.incompletionFlagRemark.length > 0) ? BookingActivityType.CUSTOMER_JOB_INCOMPLETE_UPDATED : BookingActivityType.JOB_INCOMPLETE,
+                                                                        type: (booking.incompletionReportImageUrls && booking.incompletionReportImageUrls.length > 0) || (booking.incompletionReportRemark && booking.incompletionReportRemark.length > 0) ? BookingActivityType.CUSTOMER_JOB_INCOMPLETE_UPDATED : BookingActivityType.JOB_INCOMPLETE,
                                                                         timestamp: new Date(),
 
                                                                         // additional info
-                                                                        incompletionFlagImageUrls: data.images,
-                                                                        incompletionFlagRemark: data.remark,
+                                                                        incompletionReportImageUrls: data.images,
+                                                                        incompletionReportRemark: data.remark,
                                                                         isCompleted: false,
                                                                     }),
                                                                 });
                                                                 onRefresh();
                                                             }}
                                                         />
-                                                        {booking.incompletionCompletionMethod && (
+                                                        {booking.incompletionStatus && (
                                                             <View>
                                                                 <View style={[GlobalStyleSheet.line, { marginTop: 20 }]} />
                                                                 <AttachmentForm
                                                                     title="Provide Incompletion Resolved Evidence"
                                                                     description="Show the completion of the reported incompletion job."
                                                                     remarkPlaceholder='e.g. Problem fixed, all in good condition.'
-                                                                    initialImages={booking.resolveIncompletionEvidenceImageUrls || []}
-                                                                    initialRemark={booking.resolveIncompletionEvidenceRemark || ''}
-                                                                    buttonText={(booking.resolveIncompletionEvidenceImageUrls && booking.resolveIncompletionEvidenceImageUrls.length > 0) || (booking.resolveIncompletionEvidenceRemark && booking.resolveIncompletionEvidenceRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
+                                                                    initialImages={booking.incompletionResolvedImageUrls || []}
+                                                                    initialRemark={booking.incompletionResolvedRemark || ''}
+                                                                    buttonText={(booking.incompletionResolvedImageUrls && booking.incompletionResolvedImageUrls.length > 0) || (booking.incompletionResolvedRemark && booking.incompletionResolvedRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
                                                                     isEditable={false}
                                                                 />
                                                             </View>
@@ -1545,16 +1524,16 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                 onRefresh();
                                                             }}
                                                         />
-                                                        {booking.cooldownReportCompletionMethod && (
+                                                        {booking.cooldownStatus && (
                                                             <View>
                                                                 <View style={[GlobalStyleSheet.line, { marginTop: 20 }]} />
                                                                 <AttachmentForm
                                                                     title="Report Resolved Evidence"
                                                                     description="Show the completion of the reported problem during cooldown."
                                                                     remarkPlaceholder='e.g. Problem fixed, all in good condition.'
-                                                                    initialImages={booking.resolveCooldownReportEvidenceImageUrls || []}
-                                                                    initialRemark={booking.resolveCooldownReportEvidenceRemark || ''}
-                                                                    buttonText={(booking.resolveCooldownReportEvidenceImageUrls && booking.resolveCooldownReportEvidenceImageUrls.length > 0) || (booking.resolveCooldownReportEvidenceRemark && booking.resolveCooldownReportEvidenceRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
+                                                                    initialImages={booking.cooldownResolvedImageUrls || []}
+                                                                    initialRemark={booking.cooldownResolvedRemark || ''}
+                                                                    buttonText={(booking.cooldownResolvedImageUrls && booking.cooldownResolvedImageUrls.length > 0) || (booking.cooldownResolvedRemark && booking.cooldownResolvedRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
                                                                     isEditable={false}
                                                                 />
                                                             </View>

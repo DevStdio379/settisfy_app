@@ -809,7 +809,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                 incompletionManualQuoteCheck: deleteField(),
                                                                 incompletionImageUrls: deleteField(),
                                                                 incompletionRemark: deleteField(),
-                                                                incompletionCompletionMethod: deleteField(),
+                                                                incompletionStatus: deleteField(),
                                                                 timeline: arrayUnion({
                                                                     id: generateId(),
                                                                     type: BookingActivityType.CUSTOMER_CONFIRM_COMPLETION,
@@ -1254,7 +1254,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         )}
 
                                                         {/* for job incompletion flag */}
-                                                        {booking.incompletionCompletionMethod && (
+                                                        {booking.incompletionStatus && (
                                                             <View
                                                                 style={{
                                                                     flexDirection: 'row',
@@ -1272,14 +1272,14 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                     <Ionicons name="alert-circle-outline" size={20} color={COLORS.primary} />
                                                                     <View style={{ paddingLeft: 10, flex: 1 }}>
                                                                         <Text style={{ fontSize: 14, color: COLORS.title, fontWeight: '600' }}>
-                                                                            {booking.incompletionCompletionMethod === BookingActivityType.VISIT_AND_FIX_SCHEDULED ? 'Visit & Fix Scheduled' : 'Incompletion Flagged'}
-                                                                            {booking.incompletionCompletionMethod === BookingActivityType.SETTLER_QUOTE_UPDATED ? 'Updating Evidence.' : ''}
-                                                                            {booking.incompletionCompletionMethod === BookingActivityType.SETTLER_EVIDENCE_UPDATED ? 'Adjusting Quotation' : ''}
+                                                                            {booking.incompletionStatus === BookingActivityType.VISIT_AND_FIX_SCHEDULED ? 'Visit & Fix Scheduled' : 'Incompletion Flagged'}
+                                                                            {booking.incompletionStatus === BookingActivityType.SETTLER_QUOTE_UPDATED ? 'Updating Evidence.' : ''}
+                                                                            {booking.incompletionStatus === BookingActivityType.SETTLER_EVIDENCE_UPDATED ? 'Adjusting Quotation' : ''}
                                                                         </Text>
                                                                         <Text style={{ fontSize: 12, color: COLORS.black, marginTop: 4 }}>
-                                                                            {booking.incompletionCompletionMethod === BookingActivityType.VISIT_AND_FIX_SCHEDULED ? 'Your settler has scheduled a visit & fix to complete the job.' : 'You have flagged this job as incomplete.'}
-                                                                            {booking.incompletionCompletionMethod === BookingActivityType.SETTLER_QUOTE_UPDATED ? 'Your settler has updated the quotation.' : ''}
-                                                                            {booking.incompletionCompletionMethod === BookingActivityType.SETTLER_EVIDENCE_UPDATED ? 'Your settler has updated the evidence.' : ''}
+                                                                            {booking.incompletionStatus === BookingActivityType.VISIT_AND_FIX_SCHEDULED ? 'Your settler has scheduled a visit & fix to complete the job.' : 'You have flagged this job as incomplete.'}
+                                                                            {booking.incompletionStatus === BookingActivityType.SETTLER_QUOTE_UPDATED ? 'Your settler has updated the quotation.' : ''}
+                                                                            {booking.incompletionStatus === BookingActivityType.SETTLER_EVIDENCE_UPDATED ? 'Your settler has updated the evidence.' : ''}
                                                                         </Text>
                                                                     </View>
                                                                 </View>
