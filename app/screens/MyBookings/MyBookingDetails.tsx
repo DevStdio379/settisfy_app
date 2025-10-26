@@ -24,6 +24,8 @@ import { formatAnyTimestamp, generateId } from '../../helper/HelperFunctions';
 import { db } from '../../services/firebaseConfig';
 import BookingSummaryCard from '../../components/BookingSummaryCard';
 import AttachmentForm from '../../components/Forms/AttachmentForm';
+import BookingTimeline from '../../components/BookingTimeline';
+import WarningCard from '../../components/Card/WarningCard';
 
 type MyBookingDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyBookingDetails'>;
 
@@ -100,6 +102,11 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                 if (selectedBooking) {
                     setBooking(selectedBooking)
                     setStatus(selectedBooking.status);
+
+                    const fetchedSettler = await fetchSelectedUser(selectedBooking.userId);
+                    if (fetchedSettler) {
+                        setSettler(fetchedSettler);
+                    }
 
                     if (booking.notesToSettlerImageUrls) {
                         setSelectedNotesToSettlerImageUrl(booking.notesToSettlerImageUrls[0])
@@ -463,7 +470,9 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                         >
                             <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15, paddingBottom: 40 }]}>
                                 {/* notification section */}
-                                {booking.incompletionCompletionMethod && (
+
+                                {/* FOR COOLDOWN REPORT */}
+                                {(booking.cooldownReportCompletionMethod === 'SETTLER_RESOLVE_COOLDOWN_REPORT' ||  booking.cooldownReportCompletionMethod === 'COOLDOWN_REPORT_REJECTED') && (
                                     <View
                                         style={{
                                             flexDirection: 'row',
@@ -481,18 +490,73 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                             <Ionicons name="alert-circle-outline" size={20} color={COLORS.primary} />
                                             <View style={{ paddingLeft: 10, flex: 1 }}>
                                                 <Text style={{ fontSize: 14, color: COLORS.title, fontWeight: '600' }}>
-                                                    {booking.incompletionCompletionMethod === BookingActivityType.VISIT_AND_FIX_SCHEDULED ? 'Visit & Fix Scheduled' : ''}
-                                                    {booking.incompletionCompletionMethod === BookingActivityType.FIX_BY_UPDATE_EVIDENCE ? 'Settler Updated the Evidence.' : ''}
+                                                    {booking.cooldownReportCompletionMethod === BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT ? 'Visit & Fix Scheduled' : ''}
+                                                    {booking.cooldownReportCompletionMethod === BookingActivityType.COOLDOWN_REPORT_REJECTED ? 'Settler rejected the cooldown report.' : ''}
+                                                </Text>
+                                                <Text style={{ fontSize: 12, color: COLORS.black, marginTop: 4 }}>
+                                                    {booking.cooldownReportCompletionMethod === BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT ? 'Your settler is on the way to resolve the issue.' : ''}
+                                                    {booking.cooldownReportCompletionMethod === BookingActivityType.COOLDOWN_REPORT_REJECTED ? 'Your settler has rejected your cooldown report.' : ''}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    </View>
+                                )}
+
+                                {booking.cooldownReportCompletionMethod && booking.cooldownReportCompletionMethod === 'SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE' && (
+                                    <WarningCard
+                                        text={'Cooldown Report Resolved - Evidence Updated'}
+                                        remark={'Your settler has updated the cooldown report evidence. Please review the new evidence provided.'}
+                                        imageUrls={booking.resolveCooldownReportEvidenceImageUrls || []}
+                                        onPress={() => {
+                                            onClick(4);
+                                            onClickHeader(4);
+                                            setActiveIndex(4);
+                                        }}
+                                    />
+                                )}
+
+                                {/* FOR INCOMPLETION */}
+                                {(booking.incompletionCompletionMethod === 'SETTLER_RESOLVE_INCOMPLETION' || booking.incompletionCompletionMethod === 'REJECT_FLAGGED_INCOMPLETION') && (
+                                    <View
+                                        style={{
+                                            flexDirection: 'row',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            backgroundColor: COLORS.primaryLight || '#FFF8E1',
+                                            borderRadius: 12,
+                                            padding: 12,
+                                            marginVertical: 10,
+                                            borderWidth: 1,
+                                            borderColor: COLORS.primary,
+                                        }}
+                                    >
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                            <Ionicons name="alert-circle-outline" size={20} color={COLORS.primary} />
+                                            <View style={{ paddingLeft: 10, flex: 1 }}>
+                                                <Text style={{ fontSize: 14, color: COLORS.title, fontWeight: '600' }}>
+                                                    {booking.incompletionCompletionMethod === BookingActivityType.SETTLER_RESOLVE_INCOMPLETION ? 'Visit & Fix Scheduled' : ''}
                                                     {booking.incompletionCompletionMethod === BookingActivityType.REJECT_FLAGGED_INCOMPLETION ? 'Settler rejected the incompletion flag.' : ''}
                                                 </Text>
                                                 <Text style={{ fontSize: 12, color: COLORS.black, marginTop: 4 }}>
-                                                    {booking.incompletionCompletionMethod === BookingActivityType.VISIT_AND_FIX_SCHEDULED ? 'Your settler has scheduled a visit & fix to complete the job.' : ''}
-                                                    {booking.incompletionCompletionMethod === BookingActivityType.FIX_BY_UPDATE_EVIDENCE ? 'Your settler has updated the evidence.' : ''}
+                                                    {booking.incompletionCompletionMethod === BookingActivityType.SETTLER_RESOLVE_INCOMPLETION ? 'Your settler is on the way to resolve the issue.' : ''}
                                                     {booking.incompletionCompletionMethod === BookingActivityType.REJECT_FLAGGED_INCOMPLETION ? 'Your settler has rejected your incompletion flag.' : ''}
                                                 </Text>
                                             </View>
                                         </View>
                                     </View>
+
+                                )}
+                                {booking.incompletionCompletionMethod && booking.incompletionCompletionMethod === 'SETTLER_UPDATE_INCOMPLETION_EVIDENCE' && (
+                                    <WarningCard
+                                        text={'Incompletion Resolved - Evidence Updated'}
+                                        remark={'Your settler has updated the incompletion evidence. Please review the new evidence provided.'}
+                                        imageUrls={booking.resolveIncompletionEvidenceImageUrls || []}
+                                        onPress={() => {
+                                            onClick(3);
+                                            onClickHeader(3);
+                                            setActiveIndex(3);
+                                        }}
+                                    />
                                 )}
                                 {/* Progress Section */}
                                 <View style={{ alignItems: "center", marginVertical: 20 }}>
@@ -667,7 +731,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                         width: '40%',
                                                                         alignItems: 'center',
                                                                     }}
-                                                                    onPress={() => { }}
+                                                                    onPress={() => { setSubScreenIndex(1) }}
                                                                 >
                                                                     <Text style={{ color: 'white', fontWeight: 'bold' }}>No</Text>
                                                                 </TouchableOpacity>
@@ -685,14 +749,13 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                             Alert.alert('No settlers found.');
                                                                             return;
                                                                         }
-
                                                                         const selectedAcceptor = booking.acceptors[profileIndex];
                                                                         if (!selectedAcceptor) {
                                                                             Alert.alert('Select a settler');
                                                                             return;
                                                                         }
                                                                         await updateBooking(booking.id || '', {
-                                                                            status: status! + 1,
+                                                                            status: 1,
                                                                             settlerId: booking.acceptors[profileIndex].settlerId,
                                                                             settlerServiceId: booking.acceptors[profileIndex].settlerServiceId,
                                                                             settlerFirstName: booking.acceptors[profileIndex].firstName,
@@ -701,7 +764,6 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                             timeline: arrayUnion({
                                                                                 id: generateId(),
                                                                                 type: BookingActivityType.SETTLER_SELECTED,
-                                                                                message: "Customer selected the settler.",
                                                                                 timestamp: new Date(),
                                                                                 actor: BookingActorType.CUSTOMER,
 
@@ -751,7 +813,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Settler</Text>
                                             </TouchableOpacity>
                                         </View>
-                                    ) : status === 2 ? (
+                                    ) : status === 2 || status === 3 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                             <Text>The service is now in progress</Text>
                                             <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>
@@ -771,7 +833,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Settler</Text>
                                             </TouchableOpacity>
                                         </View>
-                                    ) : status === 3 || status === 4 ? (
+                                    ) : status === 4 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                             <Text style={{ fontWeight: 'bold' }}>Please confirm job completion</Text>
                                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
@@ -809,6 +871,8 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                 incompletionFlagImageUrls: deleteField(),
                                                                 incompletionFlagRemark: deleteField(),
                                                                 incompletionCompletionMethod: deleteField(),
+                                                                resolveIncompletionEvidenceImageUrls: deleteField(),
+                                                                resolveIncompletionEvidenceRemark: deleteField(),
                                                                 timeline: arrayUnion({
                                                                     id: generateId(),
                                                                     type: BookingActivityType.CUSTOMER_CONFIRM_COMPLETION,
@@ -824,7 +888,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                 await updateSettlerService(booking.settlerServiceId, { jobsCount: updatedJobsCount })
                                                             }
                                                         }
-                                                        setStatus(status! + 1);
+                                                        setStatus(5);
                                                     }}
                                                 >
                                                     <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
@@ -853,28 +917,92 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                         </View>
                                     ) : status === 5 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                            <Text style={{ fontSize: 16, fontWeight: 'bold' }}>You're in cooldown period.</Text>
-                                            <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Take this time to review the service and let us know if something doesn’t look right.</Text>
-                                            <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>
-                                                {booking?.selectedDate ? `${Math.ceil((new Date(booking.selectedDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left` : "N/A"}
-                                            </Text>
-                                            <TouchableOpacity
-                                                style={{
-                                                    backgroundColor: COLORS.primary,
-                                                    padding: 10,
-                                                    borderRadius: 10,
-                                                    marginVertical: 10,
-                                                    width: '80%',
-                                                    alignItems: 'center',
-                                                }}
-                                                onPress={() => {
-                                                    onClick(4);
-                                                    onClickHeader(4);
-                                                    setActiveIndex(4);
-                                                }}
-                                            >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Report Problem</Text>
-                                            </TouchableOpacity>
+
+                                            {(booking.cooldownReportImageUrls && booking.cooldownReportImageUrls.length > 0) || (booking.cooldownReportRemark && booking.cooldownReportRemark.length > 0) ? (
+                                                <View>
+                                                    <Text style={{ fontWeight: 'bold', textAlign: 'center' }}>Cooldown Report Resolved?</Text>
+                                                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
+                                                        <TouchableOpacity
+                                                            style={{
+                                                                backgroundColor: COLORS.primary,
+                                                                padding: 10,
+                                                                borderRadius: 10,
+                                                                marginVertical: 10,
+                                                                width: '40%',
+                                                                alignItems: 'center',
+                                                            }}
+                                                            onPress={async () => { 
+                                                                onClick(4);
+                                                                onClickHeader(4);
+                                                                setActiveIndex(4);
+
+                                                                await updateBooking(booking.id!, {
+                                                                    cooldownReportCompletionMethod: BookingActivityType.CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED,
+                                                                    status: 9,
+                                                                    timeline: arrayUnion({
+                                                                        id: generateId(),
+                                                                        type: BookingActivityType.CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED,
+                                                                        timestamp: Date.now(),
+                                                                        actor: BookingActorType.CUSTOMER
+                                                                    })
+                                                                });
+                                                            }}
+                                                        >
+                                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>No</Text>
+                                                        </TouchableOpacity>
+                                                        <TouchableOpacity
+                                                            style={{
+                                                                backgroundColor: COLORS.primary,
+                                                                padding: 10,
+                                                                borderRadius: 10,
+                                                                marginVertical: 10,
+                                                                width: '40%',
+                                                                alignItems: 'center',
+                                                            }}
+                                                            onPress={async () => {
+                                                                if (booking.id) {
+                                                                    await updateBooking(booking.id, {
+                                                                        cooldownReportImageUrls: deleteField(),
+                                                                        cooldownReportRemark: deleteField(),
+                                                                        cooldownReportCompletionMethod: deleteField(),
+                                                                        resolveCooldownReportEvidenceImageUrls: deleteField(),
+                                                                        resolveCooldownReportEvidenceRemark: deleteField(),
+                                                                        status: 6
+                                                                    });
+                                                                }
+                                                                setStatus(6);
+                                                            }}
+                                                        >
+                                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </View>
+                                            ) : (
+                                                <View>
+                                                    <Text style={{ fontSize: 16, fontWeight: 'bold' }}>You're in cooldown period.</Text>
+                                                    <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Take this time to review the service and let us know if something doesn’t look right.</Text>
+                                                    <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>
+                                                        {booking?.selectedDate ? `${Math.ceil((new Date(booking.selectedDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left` : "N/A"}
+                                                    </Text>
+                                                    <TouchableOpacity
+                                                        style={{
+                                                            backgroundColor: COLORS.primary,
+                                                            padding: 10,
+                                                            borderRadius: 10,
+                                                            marginVertical: 10,
+                                                            width: '80%',
+                                                            alignItems: 'center',
+                                                        }}
+                                                        onPress={() => {
+                                                            onClick(4);
+                                                            onClickHeader(4);
+                                                            setActiveIndex(4);
+                                                        }}
+                                                    >
+                                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Report Problem</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            )}
                                             <View style={[GlobalStyleSheet.line, { marginVertical: 10 }]} />
                                             <Text style={{ fontWeight: 'bold' }}>Release payment to settler?</Text>
                                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
@@ -902,9 +1030,9 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                     }}
                                                     onPress={async () => {
                                                         if (booking.id) {
-                                                            await updateBooking(booking.id, { status: status! + 1 });
+                                                            await updateBooking(booking.id, { status: 6 });
                                                         }
-                                                        setStatus(status! + 1);
+                                                        setStatus(6);
                                                     }}
                                                 >
                                                     <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
@@ -1086,6 +1214,40 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                 }}
                                             >
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Cancel Job Incompletion Flag</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    ) : status === 8.2 ? (
+                                        <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                            <Text style={{ fontWeight: 'bold' }}>Settler Incoming to Resolve the Incompletion</Text>
+                                            <TouchableOpacity
+                                                style={{
+                                                    backgroundColor: COLORS.primary,
+                                                    padding: 10,
+                                                    borderRadius: 10,
+                                                    marginVertical: 10,
+                                                    width: '80%',
+                                                    alignItems: 'center',
+                                                }}
+                                                onPress={() => { if (user && settler) handleChat(user.uid, settler.uid) }}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Settler</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    ) : status === 9 || status === 9.1 ? (
+                                        <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                            <Text style={{ fontWeight: 'bold' }}>{status === 9 ? 'Awaiting for Settler Response' : 'Settler will Resolve the Reported Problem'}</Text>
+                                            <TouchableOpacity
+                                                style={{
+                                                    backgroundColor: COLORS.primary,
+                                                    padding: 10,
+                                                    borderRadius: 10,
+                                                    marginVertical: 10,
+                                                    width: '80%',
+                                                    alignItems: 'center',
+                                                }}
+                                                onPress={() => { }}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete Cooldown Report</Text>
                                             </TouchableOpacity>
                                         </View>
                                     ) : (
@@ -1303,68 +1465,101 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                     />
                                                 )}
                                                 {index === 3 && (
-                                                    <AttachmentForm
-                                                        title="Report Service Incompletion"
-                                                        description="If you find that the job is incomplete, please report here with evidence."
-                                                        remarkPlaceholder='The faucet is still leaking water after the settler fixed it.'
-                                                        isEditable={true}
-                                                        initialImages={booking.incompletionFlagImageUrls || []}
-                                                        initialRemark={booking.incompletionFlagRemark || ''}
-                                                        buttonText={(booking.incompletionFlagImageUrls && booking.incompletionFlagImageUrls.length > 0) || (booking.incompletionFlagRemark && booking.incompletionFlagRemark.length > 0) ? 'Update Report' : 'Submit Report'}
-                                                        onSubmit={async (data) => {
-                                                            await uploadImageIncompletionEvidence(booking.id!, data.images ?? []).then((urls => {
-                                                                data.images = urls;
-                                                            }));
-                                                            await updateBooking(booking.id!, {
-                                                                status: 8,
-                                                                incompletionFlagImageUrls: data.images,
-                                                                incompletionFlagRemark: data.remark,
-                                                                timeline: arrayUnion({
-                                                                    id: generateId(),
-                                                                    type: BookingActivityType.JOB_INCOMPLETE,
-                                                                    timestamp: new Date(),
-
-                                                                    // additional info
+                                                    <View>
+                                                        <AttachmentForm
+                                                            title="Report Service Incompletion"
+                                                            description="If you find that the job is incomplete, please report here with evidence."
+                                                            remarkPlaceholder='The faucet is still leaking water after the settler fixed it.'
+                                                            isEditable={true}
+                                                            initialImages={booking.incompletionFlagImageUrls || []}
+                                                            initialRemark={booking.incompletionFlagRemark || ''}
+                                                            buttonText={(booking.incompletionFlagImageUrls && booking.incompletionFlagImageUrls.length > 0) || (booking.incompletionFlagRemark && booking.incompletionFlagRemark.length > 0) ? 'Update Incompletion Report' : 'Submit Incompletion Report'}
+                                                            onSubmit={async (data) => {
+                                                                await uploadImageIncompletionEvidence(booking.id!, data.images ?? []).then((urls => {
+                                                                    data.images = urls;
+                                                                }));
+                                                                await updateBooking(booking.id!, {
+                                                                    status: 8,
                                                                     incompletionFlagImageUrls: data.images,
                                                                     incompletionFlagRemark: data.remark,
-                                                                    isCompleted: false,
-                                                                }),
-                                                            });
-                                                            onRefresh();
-                                                        }}
-                                                    />
+                                                                    incompletionCompletionMethod: deleteField(),
+                                                                    timeline: arrayUnion({
+                                                                        id: generateId(),
+                                                                        type: (booking.incompletionFlagImageUrls && booking.incompletionFlagImageUrls.length > 0) || (booking.incompletionFlagRemark && booking.incompletionFlagRemark.length > 0) ? BookingActivityType.CUSTOMER_JOB_INCOMPLETE_UPDATED : BookingActivityType.JOB_INCOMPLETE,
+                                                                        timestamp: new Date(),
+
+                                                                        // additional info
+                                                                        incompletionFlagImageUrls: data.images,
+                                                                        incompletionFlagRemark: data.remark,
+                                                                        isCompleted: false,
+                                                                    }),
+                                                                });
+                                                                onRefresh();
+                                                            }}
+                                                        />
+                                                        {booking.incompletionCompletionMethod && (
+                                                            <View>
+                                                                <View style={[GlobalStyleSheet.line, { marginTop: 20 }]} />
+                                                                <AttachmentForm
+                                                                    title="Provide Incompletion Resolved Evidence"
+                                                                    description="Show the completion of the reported incompletion job."
+                                                                    remarkPlaceholder='e.g. Problem fixed, all in good condition.'
+                                                                    initialImages={booking.resolveIncompletionEvidenceImageUrls || []}
+                                                                    initialRemark={booking.resolveIncompletionEvidenceRemark || ''}
+                                                                    buttonText={(booking.resolveIncompletionEvidenceImageUrls && booking.resolveIncompletionEvidenceImageUrls.length > 0) || (booking.resolveIncompletionEvidenceRemark && booking.resolveIncompletionEvidenceRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
+                                                                    isEditable={false}
+                                                                />
+                                                            </View>
+                                                        )}
+                                                    </View>
                                                 )}
                                                 {index === 4 && (
-                                                    <AttachmentForm
-                                                        title="Report Problem during Cooldown Period"
-                                                        description="You can report any problem regarding the service during this cooldown period."
-                                                        remarkPlaceholder='Water dripping from the faucet after the settler fixed it.'
-                                                        initialImages={booking.cooldownReportImageUrls || []}
-                                                        initialRemark={booking.cooldownReportRemark || ''}
-                                                        isEditable={true}
-                                                        buttonText={(booking.cooldownReportImageUrls && booking.cooldownReportImageUrls.length > 0) || (booking.cooldownReportRemark && booking.cooldownReportRemark.length > 0) ? 'Update Report' : 'Submit Report'}
-                                                        onSubmit={async (data) => {
-                                                            await uploadImagesCooldownReportEvidence(booking.id!, data.images ?? []).then((urls => {
-                                                                data.images = urls;
-                                                            }));
-                                                            await updateBooking(booking.id!, {
-                                                                status: 9,
-                                                                cooldownReportImageUrls: data.images,
-                                                                cooldownReportRemark: data.remark,
-                                                                timeline: arrayUnion({
-                                                                    id: generateId(),
-                                                                    type: BookingActivityType.COOLDOWN_REPORT_SUBMITTED,
-                                                                    timestamp: new Date(),
-
-                                                                    // additional info
+                                                    <View>
+                                                        <AttachmentForm
+                                                            title="Report Problem during Cooldown Period"
+                                                            description="You can report any problem regarding the service during this cooldown period."
+                                                            remarkPlaceholder='Water dripping from the faucet after the settler fixed it.'
+                                                            initialImages={booking.cooldownReportImageUrls || []}
+                                                            initialRemark={booking.cooldownReportRemark || ''}
+                                                            isEditable={true}
+                                                            buttonText={(booking.cooldownReportImageUrls && booking.cooldownReportImageUrls.length > 0) || (booking.cooldownReportRemark && booking.cooldownReportRemark.length > 0) ? 'Update Report' : 'Submit Report'}
+                                                            onSubmit={async (data) => {
+                                                                await uploadImagesCooldownReportEvidence(booking.id!, data.images ?? []).then((urls => {
+                                                                    data.images = urls;
+                                                                }));
+                                                                await updateBooking(booking.id!, {
+                                                                    status: 9,
                                                                     cooldownReportImageUrls: data.images,
                                                                     cooldownReportRemark: data.remark,
-                                                                    isCompleted: false,
-                                                                }),
-                                                            });
-                                                            onRefresh();
-                                                        }}
-                                                    />
+                                                                    timeline: arrayUnion({
+                                                                        id: generateId(),
+                                                                        type: (booking.cooldownReportImageUrls && booking.cooldownReportImageUrls.length > 0) || (booking.cooldownReportRemark && booking.cooldownReportRemark.length > 0) ? BookingActivityType.CUSTOMER_COOLDOWN_REPORT_UPDATED : BookingActivityType.COOLDOWN_REPORT_SUBMITTED,
+                                                                        timestamp: new Date(),
+
+                                                                        // additional info
+                                                                        cooldownReportImageUrls: data.images,
+                                                                        cooldownReportRemark: data.remark,
+                                                                        isCompleted: false,
+                                                                    }),
+                                                                });
+                                                                onRefresh();
+                                                            }}
+                                                        />
+                                                        {booking.cooldownReportCompletionMethod && (
+                                                            <View>
+                                                                <View style={[GlobalStyleSheet.line, { marginTop: 20 }]} />
+                                                                <AttachmentForm
+                                                                    title="Report Resolved Evidence"
+                                                                    description="Show the completion of the reported problem during cooldown."
+                                                                    remarkPlaceholder='e.g. Problem fixed, all in good condition.'
+                                                                    initialImages={booking.resolveCooldownReportEvidenceImageUrls || []}
+                                                                    initialRemark={booking.resolveCooldownReportEvidenceRemark || ''}
+                                                                    buttonText={(booking.resolveCooldownReportEvidenceImageUrls && booking.resolveCooldownReportEvidenceImageUrls.length > 0) || (booking.resolveCooldownReportEvidenceRemark && booking.resolveCooldownReportEvidenceRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
+                                                                    isEditable={false}
+                                                                />
+                                                            </View>
+                                                        )}
+                                                    </View>
                                                 )}
                                             </View>
                                         </View>
@@ -1574,168 +1769,10 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
             )}
             {/* Timeline Subscreen */}
             {subScreenIndex === 6 && (
-                <View>
-                    <ScrollView
-                        showsVerticalScrollIndicator={false}
-                        contentContainerStyle={{ paddingBottom: 70, alignItems: 'center' }}
-                        refreshControl={
-                            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-                        }
-                    >
-                        <View style={{ marginVertical: 10, width: '100%', paddingHorizontal: 15 }}>
-                            <Text style={{ fontSize: 16, fontWeight: "bold", marginBottom: 10 }}>
-                                Activity Timeline
-                            </Text>
-                            {booking.timeline?.length ? (
-                                <View>
-                                    {booking.timeline.slice().reverse().map((item, idx, arr) => (
-                                        <View key={item.timestamp ?? item.id ?? idx} style={{ marginBottom: 16, flexDirection: 'row' }}>
-                                            {/* dot column */}
-                                            <View style={{ width: 24, alignItems: 'center' }}>
-                                                <View
-                                                    style={{
-                                                        width: 10,
-                                                        height: 10,
-                                                        borderRadius: 5,
-                                                        backgroundColor: item.actor === 'SETTLER' ? '#007AFF' : '#FF9500',
-                                                        marginTop: 4,
-                                                        zIndex: 2,
-                                                    }}
-                                                />
-                                            </View>
-
-                                            {/* content */}
-                                            <View style={{ flex: 1, paddingLeft: 6 }}>
-                                                {item.type === 'QUOTE_CREATED' && (
-                                                    <View style={{ marginBottom: 6 }}>
-                                                        <Text style={{ color: '#333', fontSize: 14 }}>Booking created.</Text>
-                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
-                                                    </View>
-                                                )}
-
-                                                {item.type === 'SETTLER_ACCEPT' && (
-                                                    <View style={{ marginBottom: 6 }}>
-                                                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
-                                                            <Text style={{ color: '#333', fontSize: 14 }}>Job accepted by </Text>
-                                                            <TouchableOpacity activeOpacity={1} onPress={() => { }}>
-                                                                <Text style={{ textDecorationLine: 'underline', fontWeight: 'bold', color: '#333', fontSize: 14 }}>
-                                                                    {item.firstName} {item.lastName}
-                                                                </Text>
-                                                            </TouchableOpacity>
-                                                        </View>
-                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
-                                                    </View>
-                                                )}
-
-                                                {item.type === 'SETTLER_SELECTED' && (
-                                                    <View style={{ marginBottom: 6 }}>
-                                                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
-                                                            <Text style={{ color: '#333', fontSize: 14 }}>Customer selected </Text>
-                                                            <TouchableOpacity activeOpacity={1} onPress={() => { }}>
-                                                                <Text style={{ textDecorationLine: 'underline', fontWeight: 'bold', color: '#333', fontSize: 14 }}>
-                                                                    {item.firstName} {item.lastName}
-                                                                </Text>
-                                                            </TouchableOpacity>
-                                                            <Text style={{ color: '#333', fontSize: 14 }}> as settler.</Text>
-                                                        </View>
-                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
-                                                    </View>
-                                                )}
-
-                                                {item.type === 'SETTLER_SERVICE_START' && (
-                                                    <View style={{ marginBottom: 6 }}>
-                                                        <Text style={{ color: '#333', fontSize: 14 }}>{item.message}</Text>
-                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
-                                                    </View>
-                                                )}
-
-                                                {item.type === 'SETTLER_SERVICE_END' && (
-                                                    <View style={{ marginBottom: 6 }}>
-                                                        <Text style={{ color: '#333', fontSize: 14 }}>{item.message}</Text>
-                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
-                                                    </View>
-                                                )}
-
-                                                {item.type === 'SETTLER_EVIDENCE_SUBMITTED' && (
-                                                    <View style={{ marginBottom: 6 }}>
-                                                        <Text style={{ color: '#333', fontSize: 14 }}>Settler submitted {item.evidenceCount} evidence for job completion.</Text>
-                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
-                                                    </View>
-                                                )}
-
-                                                {item.type === 'JOB_INCOMPLETE' && (
-                                                    <View style={{ marginBottom: 6 }}>
-                                                        <Text style={{ color: '#333', fontSize: 14 }}>Customer reported job as incomplete.</Text>
-                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
-                                                    </View>
-                                                )}
-
-                                                {item.type === 'SETTLER_EVIDENCE_UPDATED' && (
-                                                    <View style={{ marginBottom: 6 }}>
-                                                        <Text style={{ color: '#333', fontSize: 14 }}>Settler updated {item.evidenceCount} evidence for job completion.</Text>
-                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
-                                                    </View>
-                                                )}
-
-                                                {item.type === 'VISIT_AND_FIX_SCHEDULED' && (
-                                                    <View style={{ marginBottom: 6 }}>
-                                                        <Text style={{ color: '#333', fontSize: 14 }}>Settler has scheduled a visit & fix for job completion.</Text>
-                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
-                                                    </View>
-                                                )}
-
-                                                {item.type === 'SETTLER_QUOTE_UPDATED' && (
-                                                    <View style={{ marginBottom: 6 }}>
-                                                        <Text style={{ color: '#333', fontSize: 14 }}>
-                                                            Settler updated the quote from <Text style={{ fontWeight: 'bold' }}>RM{item.oldTotal}</Text> to <Text style={{ fontWeight: 'bold' }}>RM{item.newTotal}</Text>.
-                                                        </Text>
-                                                        {(() => {
-                                                            const addons = (item as any).newAddons ?? (item as any).addons ?? booking.newAddons ?? booking.addons ?? [];
-                                                            const count = Array.isArray(addons)
-                                                                ? addons.reduce((acc: number, addon: any) => acc + (Array.isArray(addon.subOptions) ? addon.subOptions.length : 0), 0)
-                                                                : 0;
-                                                            const manualPrice = (item as any).newManualQuotePrice ?? (item as any).manualQuotePrice ?? booking.newManualQuotePrice ?? booking.manualQuotePrice;
-                                                            return (
-                                                                <Text style={{ color: '#333', fontSize: 14 }}>
-                                                                    Consists of <Text style={{ fontWeight: 'bold' }}>{count}</Text> selected suboption{count === 1 ? '' : 's'}
-                                                                    {manualPrice != null && (
-                                                                        <>
-                                                                            {' with a manual quote of '}
-                                                                            <Text style={{ fontWeight: 'bold' }}>RM{manualPrice}. </Text>
-                                                                            <Text>
-                                                                                {(item as any).isQuoteUpdateSuccessful === '' ? (
-                                                                                    <Text style={{ color: COLORS.secondary, fontWeight: 'bold' }}>[Awaiting Customer Response]</Text>
-                                                                                ) : (item as any).isQuoteUpdateSuccessful === 'false' ? (
-                                                                                    <Text style={{ color: COLORS.danger, fontWeight: 'bold' }}>[Customer Rejected]</Text>
-                                                                                ) : (
-                                                                                    <Text style={{ color: COLORS.primary, fontWeight: 'bold' }}>[Customer Accepted]</Text>
-                                                                                )}
-                                                                            </Text>
-                                                                        </>
-                                                                    )}
-                                                                </Text>
-                                                            );
-                                                        })()}
-                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
-                                                    </View>
-                                                )}
-
-                                                {item.type === 'JOB_COMPLETED' && (
-                                                    <View style={{ marginBottom: 6 }}>
-                                                        <Text style={{ color: '#333', fontSize: 14 }}>{item.message}</Text>
-                                                        <Text style={{ color: '#999', fontSize: 12 }}>{formatAnyTimestamp(item.timestamp)}</Text>
-                                                    </View>
-                                                )}
-                                            </View>
-                                        </View>
-                                    ))}
-                                </View>
-                            ) : (
-                                <Text style={{ color: "#999" }}>No activity recorded yet.</Text>
-                            )}
-                        </View>
-                    </ScrollView>
-                </View>
+                <BookingTimeline
+                    booking={booking}
+                    onPressUser={(item) => console.log(item)}
+                />
             )}
         </View>
     )

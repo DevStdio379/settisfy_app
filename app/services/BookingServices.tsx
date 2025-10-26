@@ -19,15 +19,19 @@ export enum BookingActivityType {
 
   // incompletion & completion state
   JOB_INCOMPLETE = "JOB_INCOMPLETE",
-  VISIT_AND_FIX_SCHEDULED = "VISIT_AND_FIX_SCHEDULED",
-  FIX_BY_UPDATE_EVIDENCE = "FIX_BY_UPDATE_EVIDENCE",
+  CUSTOMER_JOB_INCOMPLETE_UPDATED = "CUSTOMER_JOB_INCOMPLETE_UPDATED",
+  SETTLER_RESOLVE_INCOMPLETION = "SETTLER_RESOLVE_INCOMPLETION",
+  SETTLER_UPDATE_INCOMPLETION_EVIDENCE = "SETTLER_UPDATE_INCOMPLETION_EVIDENCE",
   JOB_COMPLETED = "JOB_COMPLETED",
   REJECT_FLAGGED_INCOMPLETION = "REJECT_FLAGGED_INCOMPLETION",
 
   // cooldown state
   CUSTOMER_CONFIRM_COMPLETION = "CUSTOMER_CONFIRM_COMPLETION",
   COOLDOWN_REPORT_SUBMITTED = "COOLDOWN_REPORT_SUBMITTED",
-  COOLDOWN_VISIT_AND_FIX_SCHEDULED = "COOLDOWN_VISIT_AND_FIX_SCHEDULED",
+  CUSTOMER_COOLDOWN_REPORT_UPDATED = "CUSTOMER_COOLDOWN_REPORT_UPDATED",
+  SETTLER_RESOLVE_COOLDOWN_REPORT = "SETTLER_RESOLVE_COOLDOWN_REPORT",
+  SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE = "SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE",
+  CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED = "CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED",
   COOLDOWN_REPORT_COMPLETED = "COOLDOWN_REPORT_COMPLETED",
   COOLDOWN_REPORT_REJECTED = "COOLDOWN_REPORT_REJECTED",
   PAYMENT_RELEASED = "PAYMENT_RELEASED",
@@ -91,11 +95,15 @@ export interface Booking {
   incompletionFlagImageUrls?: string[];
   incompletionFlagRemark?: string;
   incompletionCompletionMethod?: string;
+  resolveIncompletionEvidenceImageUrls?: string[];
+  resolveIncompletionEvidenceRemark?: string;
 
   // cooldown report
   cooldownReportImageUrls?: string[];
   cooldownReportRemark?: string;
   cooldownReportCompletionMethod?: string;
+  resolveCooldownReportEvidenceImageUrls?: string[];
+  resolveCooldownReportEvidenceRemark?: string;
 
   // for notification
   isQuoteUpdateSuccess?: boolean,
@@ -265,6 +273,47 @@ export const uploadImageIncompletionEvidence = async (imageName: string, imagesU
   return urls; // Return all uploaded image URLs
 };
 
+export const uploadImageIncompletionResolveEvidence = async (imageName: string, imagesUrl: string[]) => {
+  const urls: string[] = [];
+
+  for (const uri of imagesUrl) {
+    try {
+      // Convert to Blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // Generate unique filename
+      const filename = `bookings/incompletion_resolve_evidence_${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
+      const storageRef = ref(storage, filename);
+
+      // Upload file
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          snapshot => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Upload ${filename}: ${progress.toFixed(2)}% done`);
+          },
+          reject, // Handle error
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            urls.push(downloadURL);
+            resolve();
+          }
+        );
+      });
+
+    } catch (error) {
+      console.error("Upload failed:", error);
+    }
+  }
+
+  console.log("All images uploaded:", urls);
+  return urls; // Return all uploaded image URLs
+};
+
 export const uploadImagesCooldownReportEvidence = async (imageName: string, imagesUrl: string[]) => {
   const urls: string[] = [];
 
@@ -377,11 +426,16 @@ const mapBorrowingData = (doc: any): Booking => {
     incompletionFlagImageUrls: data.incompletionFlagImageUrls,
     incompletionFlagRemark: data.incompletionFlagRemark,
     incompletionCompletionMethod: data.incompletionCompletionMethod,
+    resolveIncompletionEvidenceImageUrls: data.resolveIncompletionEvidenceImageUrls,
+    resolveIncompletionEvidenceRemark: data.resolveIncompletionEvidenceRemark,
 
     // cooldown report
     cooldownReportImageUrls: data.cooldownReportImageUrls,
     cooldownReportRemark: data.cooldownReportRemark,
     cooldownReportCompletionMethod: data.cooldownReportCompletionMethod,
+    resolveCooldownReportEvidenceImageUrls: data.resolveCooldownReportEvidenceImageUrls,
+    resolveCooldownReportEvidenceRemark: data.resolveCooldownReportEvidenceRemark,
+
 
     // after broadcast
     acceptors: data.acceptors,

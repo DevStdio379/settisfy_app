@@ -259,8 +259,12 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
 
       // booking details
       addons: addonsArray,
+
+      // notes to settler
       notesToSettlerImageUrls: notesToSettlerImageUrls,
       notesToSettler: notesToSettler,
+
+      
       total: grandTotal || 0,
       paymentMethod: paymentMethod,
       paymentIntentId: paymentIntentId,
@@ -741,7 +745,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
               <View style={GlobalStyleSheet.line} />
               <AttachmentForm
                 title="Notes to Settler"
-                description="Show settler about your tasks."
+                description="Tell settler about your tasks."
                 remarkPlaceholder='E.g., Please be careful with the furniture.'
                 showSubmitButton={false}
                 onChange={(data) => {
