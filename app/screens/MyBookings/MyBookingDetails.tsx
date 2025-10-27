@@ -618,7 +618,23 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                     {status === 0.1 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                             <Text style={{ fontWeight: 'bold' }}>Your Booking Undergoes Settisfy Review</Text>
-                                             
+                                             <TouchableOpacity
+                                                style={{
+                                                    backgroundColor: COLORS.primary,
+                                                    padding: 10,
+                                                    borderRadius: 10,
+                                                    marginVertical: 10,
+                                                    width: '80%',
+                                                    alignItems: 'center',
+                                                }}
+                                                onPress={async () => { 
+                                                    updateBooking(booking.id!, { status: 0 });
+                                                    setStatus(0);
+                                                 }}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>[ADMIN: MANUAL APPROVE]</Text>
+                                                <Text>for simulation only</Text>
+                                            </TouchableOpacity>
                                         </View>
                                     ) : status === 0 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
