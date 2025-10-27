@@ -8,6 +8,11 @@ import { SettlerService } from './SettlerServiceServices';
 import { Alert } from 'react-native';
 
 export enum BookingActivityType {
+
+  // booking process states
+  NOTES_TO_SETTLER_CREATED = "NOTES_TO_SETTLER_CREATED",
+  NOTES_TO_SETTLER_UPDATED = "NOTES_TO_SETTLER_UPDATED",
+
   // initial booking state
   QUOTE_CREATED = "QUOTE_CREATED",
   SETTLER_ACCEPT = "SETTLER_ACCEPT",
@@ -23,6 +28,7 @@ export enum BookingActivityType {
   JOB_COMPLETED = "JOB_COMPLETED",
   JOB_INCOMPLETE = "JOB_INCOMPLETE",
   CUSTOMER_JOB_INCOMPLETE_UPDATED = "CUSTOMER_JOB_INCOMPLETE_UPDATED",
+  CUSTOMER_REJECT_INCOMPLETION_RESOLVE = "CUSTOMER_REJECT_INCOMPLETION_RESOLVE",
   SETTLER_RESOLVE_INCOMPLETION = "SETTLER_RESOLVE_INCOMPLETION",
   SETTLER_UPDATE_INCOMPLETION_EVIDENCE = "SETTLER_UPDATE_INCOMPLETION_EVIDENCE",
   SETTLER_REJECT_INCOMPLETION = "SETTLER_REJECT_INCOMPLETION",
@@ -36,6 +42,10 @@ export enum BookingActivityType {
   CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED = "CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED",
   COOLDOWN_REPORT_COMPLETED = "COOLDOWN_REPORT_COMPLETED",
   COOLDOWN_REPORT_REJECTED = "COOLDOWN_REPORT_REJECTED",
+  
+  // final states
+  BOOKING_COMPLETED = "BOOKING_COMPLETED",
+  
   PAYMENT_RELEASED = "PAYMENT_RELEASED",
   REPORT_SUBMITTED = "REPORT_SUBMITTED",
   STATUS_CHANGED = "STATUS_CHANGED",
@@ -82,10 +92,13 @@ export interface Booking {
   // booking details
   total: number;
   addons?: DynamicOption[];
-  notesToSettlerImageUrls?: string[];
-  notesToSettler?: string;
   paymentMethod: string;
   paymentIntentId?: string;
+
+  // notes to settler
+  notesToSettlerImageUrls?: string[];
+  notesToSettler?: string;
+  notesToSettlerStatus?: string;
 
   // manualQuote & Addons
   manualQuoteDescription: string;
@@ -405,10 +418,13 @@ const mapBorrowingData = (doc: any): Booking => {
     // booking details
     total: data.total,
     addons: data.addons,
-    notesToSettlerImageUrls: data.notesToSettlerImageUrls,
-    notesToSettler: data.notesToSettler,
     paymentMethod: data.paymentMethod,
     paymentIntentId: data.paymentIntentId || '',  // Ensure paymentIntentId is always a string
+
+    // notes to settler
+    notesToSettlerImageUrls: data.notesToSettlerImageUrls,
+    notesToSettler: data.notesToSettler,
+    notesToSettlerStatus: data.notesToSettlerStatus,
 
     // quick actions
     newAddons: data.newAddons,

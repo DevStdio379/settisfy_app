@@ -32,7 +32,7 @@ const MyRequests = ({ navigation, route }: MyRequestsScreenProps) => {
     if (user?.uid) {
       const setRequestsData = await fetchBookingsAsSettler(user.uid);
       const activeJobs = setRequestsData.filter(booking => booking.status < 5 || booking.status > 6 );
-      const inactiveJobs = setRequestsData.filter(booking => booking.status == 5 && booking.settlerId === user.uid);
+      const inactiveJobs = setRequestsData.filter(booking => booking.status == 6 && booking.settlerId === user.uid);
       setActiveJobs(activeJobs);
       setInactiveJobs(inactiveJobs);
     }

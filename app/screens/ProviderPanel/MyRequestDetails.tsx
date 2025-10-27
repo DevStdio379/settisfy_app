@@ -523,11 +523,11 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 )}
 
                                 {/* for Incompletion Reported */}
-                                {booking.incompletionStatus && booking.incompletionStatus === 'SETTLER_UPDATE_INCOMPLETION_EVIDENCE' && (
+                                {booking.incompletionReportImageUrls && booking.incompletionReportRemark && (
                                     <WarningCard
-                                        text={'Incompletion Reported'}
+                                        text={(booking.incompletionStatus === 'CUSTOMER_JOB_INCOMPLETE_UPDATED') ? 'Incompletion Report - Updated' : 'Incompletion Reported'}
                                         remark={'Customer has submitted the evidence to resolve the incompletion flag.'}
-                                        imageUrls={booking.incompletionResolvedImageUrls || []}
+                                        imageUrls={booking.incompletionReportImageUrls || []}
                                         onPress={() => {
                                             onClick(3);
                                             onClickHeader(3);
@@ -855,7 +855,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         onRefresh();
                                                     }}
                                                 >
-                                                    <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Resolve Incompletion</Text>
+                                                    <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Resolve</Text>
                                                 </TouchableOpacity>
 
                                                 <TouchableOpacity
@@ -869,8 +869,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     }}
                                                     onPress={async () => await updateBooking(booking.id!, {
                                                         incompletionStatus: BookingActivityType.SETTLER_REJECT_INCOMPLETION,
+                                                        status: 4
                                                     })}>
-                                                    <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Reject Flag</Text>
+                                                    <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Reject</Text>
                                                 </TouchableOpacity>
                                             </View>
                                             <TouchableOpacity

@@ -946,7 +946,14 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                         cooldownStatus: deleteField(),
                                                                         cooldownResolvedImageUrls: deleteField(),
                                                                         cooldownResolvedRemark: deleteField(),
-                                                                        status: 6
+                                                                        status: 6,
+
+                                                                        timeline: arrayUnion({
+                                                                            id: generateId(),
+                                                                            type: BookingActivityType.BOOKING_COMPLETED,
+                                                                            timestamp: new Date(),
+                                                                            actor: BookingActorType.CUSTOMER,
+                                                                        })
                                                                     });
                                                                 }
                                                                 setStatus(6);
@@ -980,9 +987,41 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                     >
                                                         <Text style={{ color: 'white', fontWeight: 'bold' }}>Report Problem</Text>
                                                     </TouchableOpacity>
+                                                    <TouchableOpacity
+                                                        style={{
+                                                            width: '80%',
+                                                            alignItems: 'center',
+                                                        }}
+                                                        onPress={async () => {
+                                                            if (booking.id) {
+                                                                await updateBooking(booking.id, {
+                                                                    cooldownReportImageUrls: deleteField(),
+                                                                    cooldownReportRemark: deleteField(),
+                                                                    cooldownStatus: deleteField(),
+                                                                    cooldownResolvedImageUrls: deleteField(),
+                                                                    cooldownResolvedRemark: deleteField(),
+                                                                    status: 6,
+
+                                                                    timeline: arrayUnion({
+                                                                        id: generateId(),
+                                                                        type: BookingActivityType.BOOKING_COMPLETED,
+                                                                        timestamp: new Date(),
+                                                                        actor: BookingActorType.CUSTOMER,
+                                                                    })
+                                                                });
+                                                            }
+                                                            setStatus(6);
+                                                        }}
+                                                    >
+                                                        <View style={{ flexDirection: 'row' }}>
+                                                            <Text>Mark this service as completed. Tap </Text>
+                                                            <Text style={{ color: COLORS.primary, fontWeight: 'bold' }}>HERE</Text>
+                                                        </View>
+                                                    </TouchableOpacity>
                                                 </View>
                                             )}
-                                            <View style={[GlobalStyleSheet.line, { marginVertical: 10 }]} />
+                                            {/* HOLD DULU BIAR LE BEI DECIDE */}
+                                            {/* <View style={[GlobalStyleSheet.line, { marginVertical: 10 }]} />
                                             <Text style={{ fontWeight: 'bold' }}>Release payment to settler?</Text>
                                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                                 <TouchableOpacity
@@ -1016,7 +1055,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                 >
                                                     <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
                                                 </TouchableOpacity>
-                                            </View>
+                                            </View> */}
                                         </View>
                                     ) : status === 7 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center", paddingTop: 10 }}>
@@ -1461,7 +1500,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                     status: 8,
                                                                     incompletionReportImageUrls: data.images,
                                                                     incompletionReportRemark: data.remark,
-                                                                    incompletionStatus: deleteField(),
+                                                                    incompletionStatus: ((booking.incompletionStatus === BookingActivityType.SETTLER_UPDATE_INCOMPLETION_EVIDENCE ? BookingActivityType.CUSTOMER_REJECT_INCOMPLETION_RESOLVE : 'NO IDEA') || (booking.incompletionReportRemark && booking.incompletionReportRemark.length > 0) ? BookingActivityType.CUSTOMER_JOB_INCOMPLETE_UPDATED : BookingActivityType.JOB_INCOMPLETE),
                                                                     timeline: arrayUnion({
                                                                         id: generateId(),
                                                                         type: (booking.incompletionReportImageUrls && booking.incompletionReportImageUrls.length > 0) || (booking.incompletionReportRemark && booking.incompletionReportRemark.length > 0) ? BookingActivityType.CUSTOMER_JOB_INCOMPLETE_UPDATED : BookingActivityType.JOB_INCOMPLETE,
@@ -1524,7 +1563,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                 onRefresh();
                                                             }}
                                                         />
-                                                        {booking.cooldownStatus && (
+                                                        {booking.cooldownStatus && booking.cooldownResolvedImageUrls && booking.cooldownResolvedRemark && (
                                                             <View>
                                                                 <View style={[GlobalStyleSheet.line, { marginTop: 20 }]} />
                                                                 <AttachmentForm

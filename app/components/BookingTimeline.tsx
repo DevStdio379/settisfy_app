@@ -117,6 +117,17 @@ return (
                                             </View>
                                         )}
 
+                                        {item.type === 'NOTES_TO_SETTLER_CREATED' && (
+                                            <View style={styles.block}>
+                                                <Text style={styles.text}>
+                                                    Customer added notes to settler.
+                                                </Text>
+                                                <Text style={styles.timestamp}>
+                                                    {formatAnyTimestamp(item.timestamp)}
+                                                </Text>
+                                            </View>
+                                        )}
+
                                         {item.type === 'SETTLER_ACCEPT' && (
                                             <View style={styles.block}>
                                                 <View style={styles.rowWrap}>
@@ -220,10 +231,10 @@ return (
                                             </View>
                                         )}
 
-                                        {item.type === 'VISIT_AND_FIX_SCHEDULED' && (
+                                        {item.type === 'SETTLER_RESOLVE_INCOMPLETION' && (
                                             <View style={styles.block}>
                                                 <Text style={styles.text}>
-                                                    Settler has scheduled a visit & fix for job completion.
+                                                    Settler incoming to resolve the incompletion report.
                                                 </Text>
                                                 <Text style={styles.timestamp}>
                                                     {formatAnyTimestamp(item.timestamp)}
@@ -241,6 +252,18 @@ return (
                                                 </Text>
                                             </View>
                                         )}
+
+                                        {item.type == 'SETTLER_UPDATE_INCOMPLETION_EVIDENCE' && (
+                                            <View style={styles.block}>
+                                                <Text style={styles.text}>
+                                                    Settler has updated evidence to resolve the incompletion
+                                                    flag.
+                                                </Text>
+                                                <Text style={styles.timestamp}>
+                                                    {formatAnyTimestamp(item.timestamp)}
+                                                </Text>
+                                            </View>
+                                        )}  
 
                                         {item.type === 'COOLDOWN_REPORT_SUBMITTED' && (
                                             <View style={styles.block}>
@@ -263,6 +286,65 @@ return (
                                                 </Text>
                                             </View>
                                         )}
+
+                                        {item.type === 'SETTLER_RESOLVE_COOLDOWN_REPORT' && (
+                                            <View style={styles.block}>
+                                                <Text style={styles.text}>
+                                                    Settler incoming to resolve the cooldown report.
+                                                </Text>
+                                                <Text style={styles.timestamp}>
+                                                    {formatAnyTimestamp(item.timestamp)}
+                                                </Text>
+                                            </View>
+                                        )}
+
+                                        {item.type === 'SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE' && (
+                                            <View style={styles.block}>
+                                                <Text style={styles.text}>
+                                                    Settler has updated evidence to resolve the cooldown
+                                                    report.
+                                                </Text>
+                                                <Text style={styles.timestamp}>
+                                                    {formatAnyTimestamp(item.timestamp)}
+                                                </Text>
+                                            </View>
+                                        )}
+
+                                        {item.type === 'CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED' && (
+                                            <View style={styles.block}>
+                                                <Text style={styles.text}>
+                                                    Customer indicated that the cooldown report is not
+                                                    resolved.
+                                                </Text>
+                                                <Text style={styles.timestamp}>
+                                                    {formatAnyTimestamp(item.timestamp)}
+                                                </Text>
+                                            </View>
+                                        )}
+
+                                        {item.type === 'COOLDOWN_REPORT_COMPLETED' && (
+                                            <View style={styles.block}>
+                                                <Text style={styles.text}>
+                                                    Cooldown report has been resolved.
+                                                </Text>
+                                                <Text style={styles.timestamp}>
+                                                    {formatAnyTimestamp(item.timestamp)}
+                                                </Text>
+                                            </View>
+                                        )}
+
+                                        {item.type === 'COOLDOWN_REPORT_REJECTED' && (
+                                            <View style={styles.block}>
+                                                <Text style={styles.text}>
+                                                    Settler has rejected the cooldown report.
+                                                </Text>
+                                                <Text style={styles.timestamp}>
+                                                    {formatAnyTimestamp(item.timestamp)}
+                                                </Text>
+                                            </View>
+                                        )}  
+
+
 
                                         {item.type === 'SETTLER_QUOTE_UPDATED' && (
                                             <View style={styles.block}>
@@ -359,6 +441,17 @@ return (
                                         {item.type === 'JOB_COMPLETED' && (
                                             <View style={styles.block}>
                                                 <Text style={styles.text}>{item.message}</Text>
+                                                <Text style={styles.timestamp}>
+                                                    {formatAnyTimestamp(item.timestamp)}
+                                                </Text>
+                                            </View>
+                                        )}
+
+                                        {item.type === 'BOOKING_COMPLETED' && (
+                                            <View style={styles.block}>
+                                                <Text style={styles.text}>
+                                                    Booking has been marked as completed.
+                                                </Text>
                                                 <Text style={styles.timestamp}>
                                                     {formatAnyTimestamp(item.timestamp)}
                                                 </Text>
