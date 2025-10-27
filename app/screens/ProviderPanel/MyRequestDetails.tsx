@@ -346,6 +346,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     }, []);
 
     // status info:
+    // 0.1: reviewing booking (check payment)
+    // 0: new booking
     // 2: active booking
     // 3: job completed
     // 1-6 : ok flow

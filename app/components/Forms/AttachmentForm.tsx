@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { COLORS } from '../../constants/theme';
@@ -11,6 +11,7 @@ interface AttachmentFormProps {
   remarkPlaceholder?: string;
   initialImages?: string[];
   initialRemark?: string;
+  showRemark?: boolean; // ✅ NEW: controls remark visibility
   showSubmitButton?: boolean;
   isEditable?: boolean;
   buttonText?: string;
@@ -24,12 +25,12 @@ const AttachmentForm: React.FC<AttachmentFormProps> = ({
   remarkPlaceholder = '',
   initialImages = [],
   initialRemark = '',
+  showRemark = true, // ✅ default true
   showSubmitButton = true,
   isEditable = false,
   buttonText = '',
-  onChange, // ✅ include this prop
+  onChange,
   onSubmit,
-
 }) => {
   const {
     imageUrls,
@@ -40,37 +41,75 @@ const AttachmentForm: React.FC<AttachmentFormProps> = ({
     setSelectedImageUrl,
     handleImageSelect,
     deleteImage,
-    handleRemarkChange, // ✅ use this instead of setRemark
-  } = useAttachmentForm(initialImages, initialRemark, onChange); // ✅ pass onChange to hook
+    handleRemarkChange,
+  } = useAttachmentForm(initialImages, initialRemark, onChange);
 
   const handleSubmit = async () => {
-    if (imageUrls.length === 0 || !remark.trim()) {
-      Alert.alert('Evidence & Remarks are required.');
+    if (imageUrls.length === 0) {
+      Alert.alert('Please attach at least one file.');
       return;
     }
-    await onSubmit!({ images: imageUrls, remark });
+    if (showRemark && !remark.trim()) {
+      Alert.alert('Remark is required.');
+      return;
+    }
+    await onSubmit?.({ images: imageUrls, remark });
+  };
+
+  const isPdf = (uri: string) => uri.toLowerCase().endsWith('.pdf');
+
+  const getFilename = (uri: string) => {
+    try {
+      const parts = uri.split('/');
+      return parts[parts.length - 1].split('?')[0];
+    } catch {
+      return uri;
+    }
   };
 
   return (
     <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
+      {/* Header */}
       <Text style={{ fontSize: 16, fontWeight: 'bold', color: COLORS.title, marginTop: 10 }}>
         {title}
       </Text>
       <Text style={{ fontSize: 13, color: COLORS.blackLight2 }}>{description}</Text>
 
+      {/* Attachment Area */}
       <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
         {selectedImageUrl ? (
           <View style={{ width: '100%', position: 'relative' }}>
-            <Image
-              source={{ uri: selectedImageUrl }}
-              style={{
-                width: '100%',
-                height: 300,
-                borderRadius: 10,
-                marginBottom: 10,
-              }}
-              resizeMode="cover"
-            />
+            {isPdf(selectedImageUrl) ? (
+              <View
+                style={{
+                  width: '100%',
+                  height: 200,
+                  borderRadius: 10,
+                  marginBottom: 10,
+                  backgroundColor: COLORS.card,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Ionicons name="document-text-outline" size={64} color={COLORS.blackLight} />
+                <Text style={{ marginTop: 8, color: COLORS.blackLight }}>
+                  {getFilename(selectedImageUrl)}
+                </Text>
+              </View>
+            ) : (
+              <Image
+                source={{ uri: selectedImageUrl }}
+                style={{
+                  width: '100%',
+                  height: 300,
+                  borderRadius: 10,
+                  marginBottom: 10,
+                }}
+                resizeMode="cover"
+              />
+            )}
+
+            {/* Delete Button */}
             {isEditable && (
               <TouchableOpacity
                 onPress={deleteImage}
@@ -87,20 +126,39 @@ const AttachmentForm: React.FC<AttachmentFormProps> = ({
               </TouchableOpacity>
             )}
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {/* Thumbnail Scroll */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
               {imageUrls.map((uri, idx) => (
                 <TouchableOpacity key={idx} onPress={() => setSelectedImageUrl(uri)}>
-                  <Image
-                    source={{ uri }}
-                    style={{
-                      width: 80,
-                      height: 80,
-                      marginRight: 10,
-                      borderRadius: 10,
-                      borderWidth: selectedImageUrl === uri ? 3 : 0,
-                      borderColor: selectedImageUrl === uri ? COLORS.primary : 'transparent',
-                    }}
-                  />
+                  {isPdf(uri) ? (
+                    <View
+                      style={{
+                        width: 80,
+                        height: 80,
+                        marginRight: 10,
+                        borderRadius: 10,
+                        borderWidth: selectedImageUrl === uri ? 3 : 0,
+                        borderColor: selectedImageUrl === uri ? COLORS.primary : 'transparent',
+                        backgroundColor: COLORS.card,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Ionicons name="document-text-outline" size={28} color={COLORS.blackLight} />
+                    </View>
+                  ) : (
+                    <Image
+                      source={{ uri }}
+                      style={{
+                        width: 80,
+                        height: 80,
+                        marginRight: 10,
+                        borderRadius: 10,
+                        borderWidth: selectedImageUrl === uri ? 3 : 0,
+                        borderColor: selectedImageUrl === uri ? COLORS.primary : 'transparent',
+                      }}
+                    />
+                  )}
                 </TouchableOpacity>
               ))}
 
@@ -139,35 +197,48 @@ const AttachmentForm: React.FC<AttachmentFormProps> = ({
             }}
           >
             <Ionicons name="add-outline" size={30} color={COLORS.blackLight} />
-            <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>Add photos here</Text>
+            <Text style={{ color: COLORS.blackLight, fontSize: 14 }}>Add Images</Text>
           </TouchableOpacity>
         )}
       </View>
 
-      <Text style={{ fontSize: 15, fontWeight: 'bold', color: COLORS.title, marginVertical: 10 }}>
-        Remarks
-      </Text>
-      <Input
-        readOnly={!isEditable}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        isFocused={isFocused}
-        onChangeText={handleRemarkChange} // ✅ use handleRemarkChange instead of setRemark
-        value={remark}
-        backround={COLORS.card}
-        placeholder={remarkPlaceholder}
-        multiline
-        numberOfLines={10}
-        style={{
-          fontSize: 12,
-          borderRadius: 12,
-          backgroundColor: COLORS.input,
-          borderColor: COLORS.inputBorder,
-          borderWidth: 1,
-          height: 150,
-        }}
-      />
+      {/* Remark Section (optional) */}
+      {showRemark && (
+        <>
+          <Text
+            style={{
+              fontSize: 15,
+              fontWeight: 'bold',
+              color: COLORS.title,
+              marginVertical: 10,
+            }}
+          >
+            Remarks
+          </Text>
+          <Input
+            readOnly={!isEditable}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            isFocused={isFocused}
+            onChangeText={handleRemarkChange}
+            value={remark}
+            backround={COLORS.card}
+            placeholder={remarkPlaceholder}
+            multiline
+            numberOfLines={10}
+            style={{
+              fontSize: 12,
+              borderRadius: 12,
+              backgroundColor: COLORS.input,
+              borderColor: COLORS.inputBorder,
+              borderWidth: 1,
+              height: 150,
+            }}
+          />
+        </>
+      )}
 
+      {/* Submit Button */}
       {showSubmitButton && onSubmit && (
         <TouchableOpacity
           onPress={handleSubmit}
@@ -180,7 +251,7 @@ const AttachmentForm: React.FC<AttachmentFormProps> = ({
             alignItems: 'center',
           }}
         >
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>{buttonText}</Text>
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>{buttonText || 'Submit'}</Text>
         </TouchableOpacity>
       )}
     </View>

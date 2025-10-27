@@ -12,6 +12,10 @@ export enum BookingActivityType {
   // booking process states
   NOTES_TO_SETTLER_CREATED = "NOTES_TO_SETTLER_CREATED",
   NOTES_TO_SETTLER_UPDATED = "NOTES_TO_SETTLER_UPDATED",
+  
+  // payment states
+  PAYMENT_APPROVED = "PAYMENT_APPROVED",
+  PAYMENT_REJECTED = "PAYMENT_REJECTED",
 
   // initial booking state
   QUOTE_CREATED = "QUOTE_CREATED",
@@ -94,6 +98,8 @@ export interface Booking {
   addons?: DynamicOption[];
   paymentMethod: string;
   paymentIntentId?: string;
+  paymentEvidence?: string[];
+  paymentStatus?: string;
 
   // notes to settler
   notesToSettlerImageUrls?: string[];
@@ -164,6 +170,47 @@ export interface BookingWithUser extends Booking {
   settlerJobProfile: SettlerService | null;
 
 }
+
+export const uploadPaymentEvidenceImages = async (imageName: string, imagesUrl: string[]) => {
+  const urls: string[] = [];
+
+  for (const uri of imagesUrl) {
+    try {
+      // Convert to Blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // Generate unique filename
+      const filename = `bookings/payment_evidence_${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
+      const storageRef = ref(storage, filename);
+
+      // Upload file
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          snapshot => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Upload ${filename}: ${progress.toFixed(2)}% done`);
+          },
+          reject, // Handle error
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            urls.push(downloadURL);
+            resolve();
+          }
+        );
+      });
+
+    } catch (error) {
+      console.error("Upload failed:", error);
+    }
+  }
+
+  console.log("All images uploaded:", urls);
+  return urls; // Return all uploaded image URLs
+};
 
 export const uploadNoteToSettlerImages = async (imageName: string, imagesUrl: string[]) => {
   const urls: string[] = [];
@@ -383,9 +430,14 @@ export const createBooking = async (bookingData: Booking) => {
       // Upload the images and get back URLs
       const uploadedUrls = await uploadNoteToSettlerImages(docRef.id, bookingData.notesToSettlerImageUrls);
 
+      const paymentEvidenceUrls = bookingData.paymentEvidence && bookingData.paymentEvidence.length > 0
+        ? await uploadPaymentEvidenceImages(docRef.id, bookingData.paymentEvidence)
+        : [];
+
       // Step 3: Update the same booking doc with those URLs
       await updateDoc(doc(db, 'bookings', docRef.id), {
         notesToSettlerImageUrls: uploadedUrls,
+        paymentEvidence: paymentEvidenceUrls,
         updatedAt: new Date(), // ✅ keep consistency
       });
     }
@@ -420,6 +472,8 @@ const mapBorrowingData = (doc: any): Booking => {
     addons: data.addons,
     paymentMethod: data.paymentMethod,
     paymentIntentId: data.paymentIntentId || '',  // Ensure paymentIntentId is always a string
+    paymentEvidence: data.paymentEvidence || [],
+    paymentStatus: data.paymentStatus || '',
 
     // notes to settler
     notesToSettlerImageUrls: data.notesToSettlerImageUrls,

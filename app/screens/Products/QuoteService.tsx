@@ -58,13 +58,15 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
   const [index, setIndex] = useState(0);
   const { user } = useUser();
 
-  const [paymentMethod, setPaymentMethod] = useState<string | null>('card');
+  const [paymentMethod, setPaymentMethod] = useState<string | null>('N/A');
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<Address | undefined>(user?.currentAddress);
   const [accordionOpen, setAccordionOpen] = useState<{ [key: string]: boolean }>({});
   const [isFocused, setisFocused] = useState(false);
   const [selectedNotesToSettlerImageUrl, setSelectedNotesToSettlerImageUrl] = useState<string | null>(null);
   const [notesToSettlerImageUrls, setNotesToSettlerImageUrls] = useState<string[]>([]);
+  const [selectedPaymentEvidenceImageUrl, setSelectedPaymentEvidenceImageUrl] = useState<string | null>(null);
+  const [paymentEvidenceImageUrls, setPaymentEvidenceImageUrls] = useState<string[]>([]);
   const [notesToSettler, setNotesToSettler] = useState<string>('');
   const [grandTotal, setGrandTotal] = useState<number>(0);
   const [selectedAddons, setSelectedAddons] = useState<{ [key: string]: SubOption[] }>({});
@@ -246,7 +248,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
 
     const bookingData = {
       userId: user?.uid || '',
-      status: 0,
+      status: 0.1,
       selectedDate: selectedDate,
       selectedAddress: selectedAddress,
 
@@ -265,10 +267,11 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
       notesToSettler: notesToSettler,
       notesToSettlerStatus: BookingActivityType.NOTES_TO_SETTLER_CREATED,
 
-      
+
       total: grandTotal || 0,
       paymentMethod: paymentMethod,
       paymentIntentId: paymentIntentId,
+      paymentEvidence: paymentEvidenceImageUrls,
 
       // for quick actions
       manualQuoteDescription: '',
@@ -730,7 +733,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                   </View>
                 </TouchableOpacity>
               </View>
-              <View style={{}}>
+              {/* <View style={{}}>
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={() => setIndex(4)}>
@@ -742,7 +745,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                     </View>
                   </View>
                 </TouchableOpacity>
-              </View>
+              </View> */}
               <View style={GlobalStyleSheet.line} />
               <AttachmentForm
                 title="Notes to Settler"
@@ -790,6 +793,56 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                   <Text style={{ fontSize: 14, color: "#333", fontWeight: "bold" }}>RM{grandTotal}</Text>
                 </View>
               </View>
+              <View style={GlobalStyleSheet.line} />
+              {/* Proof of Payment */}
+              <View style={{ marginBottom: 20, marginTop: 10 }}>
+                <View style={{ padding: 10 }}></View>
+                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: COLORS.title, marginBottom: 6 }}>
+                    Pay via Online Transfer
+                  </Text>
+                  <Text style={{ fontSize: 14, color: COLORS.black, marginBottom: 10 }}>
+                    Please transfer the total amount to the bank account below. After transfer, upload your payment evidence using the "Proof of Payment" form.
+                  </Text>
+
+                  <View style={{ borderWidth: 1, borderColor: COLORS.blackLight, borderRadius: 8, padding: 12, backgroundColor: COLORS.card }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                      <View style={{ flex: 1, paddingRight: 10 }}>
+                        <Text style={{ fontSize: 14, color: COLORS.blackLight, marginBottom: 4 }}>Account Name</Text>
+                        <Text style={{ fontSize: 16, fontWeight: '600', color: COLORS.title }}>Settisfy Global</Text>
+                      </View>
+                      <View style={{ flex: 1, paddingLeft: 10 }}>
+                        <Text style={{ fontSize: 14, color: COLORS.blackLight, marginBottom: 4, textAlign: 'right' }}>Bank</Text>
+                        <Text style={{ fontSize: 16, fontWeight: '600', color: COLORS.title, textAlign: 'right' }}>Hong Leong Bank</Text>
+                      </View>
+                    </View>
+
+                    <Text style={{ fontSize: 14, color: COLORS.blackLight, marginBottom: 4 }}>Account Number</Text>
+                    <Text style={{ fontSize: 16, fontWeight: '600', color: COLORS.title, marginBottom: 12 }}>1234 5678 9012</Text>
+
+                    <TouchableOpacity
+                      onPress={() => {
+                        Alert.alert('Copy', 'Account number copied to clipboard. Please paste it in your bank app to transfer.');
+                      }}
+                      style={{
+                        backgroundColor: COLORS.primary,
+                        paddingVertical: 10,
+                        borderRadius: 6,
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Text style={{ color: COLORS.white, fontWeight: 'bold' }}>Copy Account Number</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              <AttachmentForm
+                title="Proof of Payment"
+                description="Upload your payment evidence here."
+                showRemark={false}
+                isEditable={true}
+                onChange={(data) => {
+                  setPaymentEvidenceImageUrls(data.images)
+                }}
+              />
             </View>
           </View>
         )}

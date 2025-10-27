@@ -615,7 +615,12 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                 </View>
                                 {/* Collection Code Card */}
                                 <View style={{ backgroundColor: "#f3f3f3", padding: 16, borderRadius: 12, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, marginVertical: 20, marginHorizontal: 10 }}>
-                                    {status === 0 ? (
+                                    {status === 0.1 ? (
+                                        <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                            <Text style={{ fontWeight: 'bold' }}>Your Booking Undergoes Settisfy Review</Text>
+                                             
+                                        </View>
+                                    ) : status === 0 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                             <Text style={{ fontSize: 16, fontWeight: "500", marginBottom: 4 }}>Broadcasting your service request</Text>
                                             <Text style={{ fontSize: 12, color: COLORS.blackLight2, textAlign: 'center' }}>This usually takes about 1-2 hours waiting</Text>
@@ -1439,6 +1444,14 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                             selectedAddons={booking.newAddons ?? booking.addons ?? []}
                                                             newAddons={booking.newAddons ?? booking.addons ?? []}
                                                             hideCheckboxes={true}
+                                                            isEditable={false}
+                                                        />
+                                                        <View style={[GlobalStyleSheet.line, { marginVertical: 15 }]} />
+                                                        <AttachmentForm
+                                                            title="Payment Evidence"
+                                                            description="Upload your payment evidence here."
+                                                            showRemark={false}
+                                                            initialImages={booking.paymentEvidence || []}
                                                             isEditable={false}
                                                         />
                                                     </View>
