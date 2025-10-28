@@ -24,6 +24,7 @@ export interface Catalogue {
     title: string;
     description: string;
     includedServices: string;
+    excludedServices: string;
     category: string;
     basePrice: number;
 
@@ -103,6 +104,7 @@ const mapDocToCatalogue = (doc: any): Catalogue => {
         title: catalogueData.title,
         description: catalogueData.description,
         includedServices: catalogueData.includedServices,
+        excludedServices: catalogueData.excludedServices,
         category: catalogueData.category,
         basePrice: catalogueData.basePrice,
 

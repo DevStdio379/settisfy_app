@@ -180,7 +180,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
   const nextScreen = async () => {
     if (index === 0) {
       if (Object.keys(selectedAddons).length === 0) {
-        Alert.alert(`Select at least 1 ${service.category} components`)
+        Alert.alert(`Select at least 1 ${service.category} option`)
         return
       }
       let grandTotal = Number(totalQuote) + Number(platformFee); // Adding platform fee of $2
@@ -491,7 +491,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                                     onPress={() => toggleAddon(cat, option)}
                                   >
                                     <Text>{option.label}</Text>
-                                    <Text style={{ fontSize: 12, color: "#555" }}>+${option.additionalPrice}</Text>
+                                    <Text style={{ fontSize: 12, color: "#555" }}>+RM{option.additionalPrice}</Text>
                                     {option.notes && <Text style={{ fontSize: 10, color: "#888" }}>{option.notes}</Text>}
                                   </TouchableOpacity>
                                 );
@@ -502,11 +502,13 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                       </View>
                     )}
                     {tabIndex === 1 && (
-                      <View style={{ paddingTop: 10, paddingRight: 40 }}>
+                      <View style={{ paddingTop: 10, paddingRight: 40, height: 500 }}>
                         <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>Description</Text>
                         <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>{service.description}</Text>
                         <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>What's Included</Text>
                         <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>{service.includedServices}</Text>
+                        <Text style={{ fontSize: 20, fontWeight: 'bold', color: COLORS.black }}>What's Excluded</Text>
+                        <Text style={{ fontSize: 15, color: COLORS.black, paddingBottom: 20 }}>{service.excludedServices}</Text>
                       </View>
                     )}
                     {tabIndex === 2 && (

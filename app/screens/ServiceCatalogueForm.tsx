@@ -20,12 +20,13 @@ type ServiceCatalogueFormScreenProps = StackScreenProps<RootStackParamList, 'Ser
 export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueFormScreenProps) => {
 
   const [catalogue, setCatalogue] = useState(route.params.catalogue);
-  const [isFocused2, setisFocused2] = useState(false);
+  const [isFocused, setIsFocused] = useState<string | null>(null);
   const [selectedServiceCardImageUrls, setSelectedServiceCardImageUrls] = useState<string | null>(null);
   const [serviceCardImageUrls, setServiceCardImageUrls] = useState<string[]>([]);
   const [serviceTitle, setServiceTitle] = useState<string>('');
   const [serviceCardBrief, setServiceCardBrief] = useState<string>('');
   const [includedServices, setIncludedServices] = useState<string>('');
+  const [excludedServices, setExcludedServices] = useState<string>('');
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [basePrice, setBasePrice] = useState<number>(0);
@@ -98,6 +99,7 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
         title: serviceTitle,
         description: serviceCardBrief,
         includedServices: includedServices,
+        excludedServices: excludedServices,
         category: selectedCategory,
         basePrice: basePrice,
         dynamicOptions: dynamicOptions.map(opt => ({
@@ -116,6 +118,7 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
         title: serviceTitle,
         description: serviceCardBrief,
         includedServices: includedServices,
+        excludedServices: excludedServices,
         category: selectedCategory,
         basePrice: basePrice,
         dynamicOptions: dynamicOptions.map(opt => ({
@@ -199,6 +202,7 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
       setServiceTitle(catalogue.title || '');
       setServiceCardBrief(catalogue.description || '');
       setIncludedServices(catalogue.includedServices || '');
+      setExcludedServices(catalogue.excludedServices || '');
       setSelectedCategory(catalogue.category || '');
       setBasePrice(catalogue.basePrice || 0);
       setSelectedStatus(catalogue.isActive ? 'active' : 'inactive');
@@ -237,6 +241,7 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
         setServiceTitle(fetchedCatalogue.title || '');
         setServiceCardBrief(fetchedCatalogue.description || '');
         setIncludedServices(fetchedCatalogue.includedServices || '');
+        setExcludedServices(fetchedCatalogue.excludedServices || '');
         setSelectedCategory(fetchedCatalogue.category || '');
         setBasePrice(fetchedCatalogue.basePrice || 0);
         setSelectedStatus(fetchedCatalogue.isActive ? 'active' : 'inactive');
@@ -267,12 +272,7 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
   }, [catalogue]);
 
   return (
-    <KeyboardAwareScrollView
-      contentContainerStyle={{ flexGrow: 1 }}
-      enableOnAndroid={true}
-      extraScrollHeight={60}
-    >
-      <View style={{ backgroundColor: COLORS.background, flex: 1 }}>
+      <View style={{ backgroundColor: COLORS.background, flex: 1, }}>
         <View style={{ height: 60, borderBottomColor: COLORS.card, borderBottomWidth: 1 }}>
           <View
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, paddingHorizontal: 5 }}>
@@ -300,7 +300,7 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
         </View>
         <ScrollView
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 50 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 250 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }>
@@ -411,9 +411,9 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
               </View>
               <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Title</Text>
               <Input
-                onFocus={() => setisFocused2(true)}
-                onBlur={() => setisFocused2(false)}
-                isFocused={isFocused2}
+                onFocus={() => setIsFocused('title')}
+                onBlur={() => setIsFocused(null)}
+                isFocused={isFocused === 'title'}
                 onChangeText={setServiceTitle}
                 backround={COLORS.card}
                 value={serviceTitle}
@@ -422,9 +422,9 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
               />
               <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Description</Text>
               <Input
-                onFocus={() => setisFocused2(true)}
-                onBlur={() => setisFocused2(false)}
-                isFocused={isFocused2}
+                onFocus={() => setIsFocused('description')}
+                onBlur={() => setIsFocused(null)}
+                isFocused={isFocused === 'description'}
                 value={serviceCardBrief}
                 onChangeText={setServiceCardBrief}
                 backround={COLORS.card}
@@ -443,9 +443,9 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
               />
               <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>What's included</Text>
               <Input
-                onFocus={() => setisFocused2(true)}
-                onBlur={() => setisFocused2(false)}
-                isFocused={isFocused2}
+                onFocus={() => setIsFocused('includedServices')}
+                onBlur={() => setIsFocused(null)}
+                isFocused={isFocused === 'includedServices'}
                 value={includedServices}
                 onChangeText={setIncludedServices}
                 backround={COLORS.card}
@@ -462,6 +462,27 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
                 multiline={true}
                 numberOfLines={4}
               />
+              <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>What's excluded</Text>
+              <Input
+                onFocus={() => setIsFocused('excludedServices')}
+                onBlur={() => setIsFocused(null)}
+                isFocused={isFocused === 'excludedServices'}
+                value={excludedServices}
+                onChangeText={setExcludedServices}
+                backround={COLORS.card}
+                style={{
+                  fontSize: 12,
+                  borderRadius: 12,
+                  backgroundColor: COLORS.input,
+                  borderColor: COLORS.inputBorder,
+                  borderWidth: 1,
+                  height: 150,
+                }}
+                inputicon
+                placeholder='e.g. Cleaning excludes deep cleaning, window cleaning, carpet cleaning, etc'
+                multiline={true}
+                numberOfLines={4}
+              />
               <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Category</Text>
               <CategoryDropdown
                 options={categories}
@@ -470,9 +491,9 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
               />
               <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Base Price</Text>
               <Input
-                onFocus={() => setisFocused2(true)}
-                onBlur={() => setisFocused2(false)}
-                isFocused={isFocused2}
+                onFocus={() => setIsFocused('basePrice')}
+                onBlur={() => setIsFocused(null)}
+                isFocused={isFocused === 'basePrice'}
                 onChangeText={setBasePrice}
                 value={basePrice ? basePrice.toString() : ''}
                 backround={COLORS.card}
@@ -604,7 +625,6 @@ export const ServiceCatalogueForm = ({ navigation, route }: ServiceCatalogueForm
           </View>
         </ScrollView>
       </View>
-    </KeyboardAwareScrollView>
   );
 };
 
