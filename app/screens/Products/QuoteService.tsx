@@ -55,6 +55,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
   const [selectedExtras, setSelectedExtras] = useState<number[]>([]);
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(today);
+  const [loading, setLoading] = useState(false);
   const [index, setIndex] = useState(0);
   const { user } = useUser();
 
@@ -192,7 +193,17 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
         Alert.alert('Select service address')
         return
       }
-      Alert.alert(notesToSettler)
+
+      if (!notesToSettler && notesToSettlerImageUrls.length === 0) {
+        Alert.alert('Please provide notes or images for the settler.');
+        return;
+      }
+
+      if (!paymentEvidenceImageUrls || paymentEvidenceImageUrls.length === 0) {
+        Alert.alert('Please provide payment evidence images.');
+        return;
+      }
+
       handleCheckout('borrowingRef1', 'paymentIntentId1');
     }
   }
@@ -230,6 +241,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
 
   // checkout
   const handleCheckout = async (borrowingRef: any, paymentIntentId: string) => {
+    setLoading(true);
     if (!selectedAddress || !paymentMethod) {
       Alert.alert('Error', 'Please select delivery and payment methods.');
       return;
@@ -358,6 +370,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
 
 
   return (
+    
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <View>
         <View style={{ zIndex: 1, height: 60, backgroundColor: COLORS.background, borderBottomColor: COLORS.card, borderBottomWidth: 1 }}>
@@ -758,7 +771,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                   setNotesToSettler(data.remark)
                   setNotesToSettlerImageUrls(data.images)
                 }}
-                isEditable={true}
+                isEditable={loading ? false : true}
               />
               <View style={GlobalStyleSheet.line} />
               {/* Borrowing Rate Breakdown */}
@@ -840,7 +853,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                 title="Proof of Payment"
                 description="Upload your payment evidence here."
                 showRemark={false}
-                isEditable={true}
+                isEditable={loading ? false : true}
                 onChange={(data) => {
                   setPaymentEvidenceImageUrls(data.images)
                 }}
@@ -1057,20 +1070,15 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
                 borderRadius: 10,
                 alignItems: 'center',
                 justifyContent: 'center',
+                opacity: loading ? 0.7 : 1,
               }}
-              onPress={nextScreen}
+              onPress={() => {
+                index === 1 ? nextScreen() : setIndex(1);
+              }}
+              disabled={loading}
             >
               <Text style={{ color: COLORS.white, fontSize: 16, fontWeight: 'bold' }}>
-                {index === 1
-                  ? paymentMethod === 'card'
-                    ? `Pay RM${grandTotal}`
-                    : `Book Now`
-                  : [
-                    '',
-                    'Confirm Service Address',
-                    'Confirm Date',
-                    'Confirm Payment Method',
-                  ][index - 1] || ''}
+                {loading ? 'Booking...' : (index === 1 ? 'Book Now' : 'Confirm Date')}
               </Text>
             </TouchableOpacity>
           ) : (
@@ -1085,7 +1093,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
               }}
               onPress={() => navigation.navigate('SignIn')}
             >
-              <Text style={{ color: COLORS.white, fontSize: 16, fontWeight: 'bold' }}>Sign In to Borrow</Text>
+              <Text style={{ color: COLORS.white, fontSize: 16, fontWeight: 'bold' }}>Sign In to Book</Text>
             </TouchableOpacity>
           )}
         </View>
