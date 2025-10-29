@@ -11,7 +11,7 @@ import { fetchSelectedUser, User, useUser } from '../../context/UserContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { createReview, getReviewByBookingId, Review } from '../../services/ReviewServices';
 import axios from 'axios';
-import { Booking, BookingActivityType, BookingActorType, fetchSelectedBooking, updateBooking, uploadImageIncompletionResolveEvidence, uploadImagesCooldownReportEvidence } from '../../services/BookingServices';
+import { Booking, BookingActivityType, BookingActorType, fetchSelectedBooking, updateBooking, uploadImageIncompletionResolveEvidence, uploadImagesCompletionEvidence, uploadImagesCooldownReportEvidence } from '../../services/BookingServices';
 import { arrayUnion, deleteField } from 'firebase/firestore';
 import { getOrCreateChat } from '../../services/ChatServices';
 import Input from '../../components/Input/Input';
@@ -258,7 +258,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     // 1-6 : ok flow
     // 7++ : exception handling
     // 7: update quote
-    // 8: incomplete flag by customer
+    // 8: incomplete flag by customer (8.2: resolve)
     // 9: cooldown report by customer
     // 10: review completed
     // 11: booking cancelled (11.1: by customer, 11.2: by settler)
@@ -268,7 +268,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
         { label: "Booking\nCreated", date: 'Job\nbroadcast', completed: (status ?? 0) >= 0 },
         { label: "Settler\nSelected", date: "Check\nservice code", completed: (status ?? 0) >= 1 },
         { label: "Active\nService", date: "\n", completed: (status ?? 0) >= 2 },
-        { label: "Service\nCompleted", date: "Evaluate\ncompletion", completed: (status ?? 0) >= 3 },
+        { label: "Service\nCompleted", date: "Evaluate\ncompletion", completed: (status ?? 0) >= 4 },
         { label: "Booking\nCompleted", date: 'Release\npayment', completed: (status ?? 0) >= 5 },
     ];
 
@@ -753,30 +753,6 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     }}
                                                     onPress={async () => {
                                                         setLoading(true);
-                                                        // update last timeline entry to indicate customer rejected the quote
-                                                        const updatedTimeline = booking.timeline ? [...booking.timeline] : [];
-
-                                                        if (updatedTimeline.length > 0) {
-                                                            const lastIdx = updatedTimeline.length - 1;
-                                                            updatedTimeline[lastIdx] = {
-                                                                ...updatedTimeline[lastIdx],
-                                                                isIncompletionCompleted: 'true',
-                                                                incompletionStatus: BookingActivityType.SETTLER_RESOLVE_INCOMPLETION,
-                                                                timestamp: new Date(),
-                                                                actor: BookingActorType.SETTLER,
-                                                            };
-                                                        } else {
-                                                            // fallback: push a new timeline entry
-                                                            updatedTimeline.push({
-                                                                id: generateId(),
-                                                                type: BookingActivityType.SETTLER_RESOLVE_INCOMPLETION,
-                                                                timestamp: new Date(),
-                                                                actor: BookingActorType.SETTLER,
-                                                                isIncompletionCompleted: 'true',
-                                                                incompletionStatus: BookingActivityType.SETTLER_RESOLVE_INCOMPLETION,
-                                                            });
-                                                        }
-
                                                         await updateBooking(booking.id!, {
                                                             status: 8.2,
                                                             incompletionStatus: BookingActivityType.SETTLER_RESOLVE_INCOMPLETION,
@@ -1151,12 +1127,16 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         initialRemark={booking?.settlerEvidenceRemark ?? ''}
                                                         isEditable={loading ? false : true}
                                                         buttonText={loading ? ((booking.settlerEvidenceImageUrls && booking.settlerEvidenceImageUrls.length > 0) || (booking.settlerEvidenceRemark && booking.settlerEvidenceRemark.length > 0) ? 'Updating...' : 'Submitting...') : ((booking.settlerEvidenceImageUrls && booking.settlerEvidenceImageUrls.length > 0) || (booking.settlerEvidenceRemark && booking.settlerEvidenceRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence')}
-                                                        onSubmit={async ({ images, remark }) => {
+                                                        onSubmit={async (data) => {
                                                             setLoading(true);
+                                                            await uploadImagesCompletionEvidence(booking.id!, data.images).then((urls) => {
+                                                                data.images = urls;
+                                                            });
+
                                                             await updateBooking(booking.id!, {
                                                                 status: 4,
-                                                                settlerEvidenceImageUrls: images,
-                                                                settlerEvidenceRemark: remark,
+                                                                settlerEvidenceImageUrls: data.images,
+                                                                settlerEvidenceRemark: data.remark,
                                                                 timeline: arrayUnion({
                                                                     id: generateId(),
                                                                     type: BookingActivityType.SETTLER_EVIDENCE_SUBMITTED,
@@ -1164,9 +1144,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                     timestamp: new Date(),
 
                                                                     // additional info
-                                                                    evidenceCount: images.length,
-                                                                    evidenceImage: images,
-                                                                    evidenceRemark: remark,
+                                                                    evidenceCount: data.images.length,
+                                                                    evidenceImage: data.images,
+                                                                    evidenceRemark: data.remark,
                                                                 }),
 
                                                             });

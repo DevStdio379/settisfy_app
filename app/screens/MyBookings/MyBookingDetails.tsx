@@ -205,7 +205,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
         { label: "Booking\nCreated", date: 'Job\nbroadcast', completed: (status ?? 0) >= 0 },
         { label: "Settler\nSelected", date: "Check\nservice code", completed: (status ?? 0) >= 1 },
         { label: "Active\nService", date: "\n", completed: (status ?? 0) >= 2 },
-        { label: "Service\nCompleted", date: "Evaluate\ncompletion", completed: (status ?? 0) >= 3 },
+        { label: "Service\nCompleted", date: "Evaluate\ncompletion", completed: (status ?? 0) >= 4 },
         { label: "Booking\nCompleted", date: 'Release\npayment', completed: (status ?? 0) >= 5 },
     ];
 
