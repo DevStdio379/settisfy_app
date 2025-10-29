@@ -480,6 +480,40 @@ return (
                                                 </Text>
                                             </View>
                                         )}
+
+                                        {item.type === 'BOOKING_CANCELLED' && (
+                                            <View style={styles.block}>
+                                                <Text style={styles.text}>
+                                                    Booking has been cancelled.
+                                                </Text>
+                                                <Text style={styles.timestamp}>
+                                                    {formatAnyTimestamp(item.timestamp)}
+                                                </Text>
+                                            </View>
+                                        )}
+
+                                        {item.type === 'BOOKING_CANCELLED_BY_CUSTOMER' && (
+                                            <View style={styles.block}>
+                                                <Text style={styles.text}>
+                                                    Booking has been cancelled by customer.
+                                                </Text>
+                                                <Text style={styles.timestamp}>
+                                                    {formatAnyTimestamp(item.timestamp)}
+                                                </Text>
+                                            </View>
+                                        )}
+
+                                        {item.type === 'BOOKING_CANCELLED_BY_SETTLER' && (
+                                            <View style={styles.block}>
+                                                <Text style={styles.text}>
+                                                    Booking has been cancelled by settler.
+                                                </Text>
+                                                <Text style={styles.timestamp}>
+                                                    {formatAnyTimestamp(item.timestamp)}
+                                                </Text>
+                                            </View>
+                                        )}
+
                                     </View>
                                 </View>
                             ))}

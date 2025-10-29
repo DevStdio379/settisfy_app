@@ -34,10 +34,11 @@ import MyServices from '../screens/ProviderPanel/MyServices';
 import MyBookingDetails from '../screens/MyBookings/MyBookingDetails';
 import MyBookings from '../screens/MyBookings/MyBookings';
 import QuoteService from '../screens/Products/QuoteService';
-import BookingAddReview from '../screens/Products/BookingAddReview';
+import BookingAddReview from '../screens/MyBookings/BookingAddReview';
 import ServiceCatalogue, { ServiceCatalogueForm } from '../screens/ServiceCatalogueForm';
 import SettlerAddReview from '../screens/ProviderPanel/SettlerAddReview';
 import SettlerServiceForm from '../screens/ProviderPanel/SettlerServiceForm';
+import BookingCancelForm from '../screens/MyBookings/BookingCancelForm';
 
 
 const StackComponent = createStackNavigator<RootStackParamList>();
@@ -66,6 +67,7 @@ const StackNavigator = () => {
 				<StackComponent.Screen name="MyBookings" component={MyBookings} />
 				<StackComponent.Screen name="MyBookingDetails" component={MyBookingDetails} />
 				<StackComponent.Screen name="BookingAddReview" component={BookingAddReview} />
+				<StackComponent.Screen name="BookingCancelForm" component={BookingCancelForm} />
 				<StackComponent.Screen name="Profile" component={Profile} />
 				<StackComponent.Screen name="ChatList" component={ChatList} />
 				<StackComponent.Screen name="NewChat" component={NewChat} />

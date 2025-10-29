@@ -534,7 +534,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                             setSubScreenIndex(2);
                                                                         }}>
                                                                             <View style={{}}>
-                                                                                <Text style={{ fontSize: 17, fontWeight: 'bold', color: COLORS.black }} numberOfLines={1} ellipsizeMode="tail">{bookingWithSettlerProfiles[profileIndex].settlerProfile?.firstName} {bookingWithSettlerProfiles[profileIndex].settlerProfile?.lastName} [{profileIndex}]</Text>
+                                                                                <Text style={{ fontSize: 17, fontWeight: 'bold', color: COLORS.black }} numberOfLines={1} ellipsizeMode="tail">{bookingWithSettlerProfiles[profileIndex].settlerProfile?.firstName} {bookingWithSettlerProfiles[profileIndex].settlerProfile?.lastName}</Text>
                                                                             </View>
                                                                         </TouchableOpacity>
                                                                         <Text style={{ fontSize: 14, color: COLORS.black }}>{bookingWithSettlerProfiles[profileIndex].settlerJobProfile?.averageRatings === 0 ? 'No ratings' : `${bookingWithSettlerProfiles[profileIndex].settlerJobProfile?.averageRatings} (${bookingWithSettlerProfiles[profileIndex].settlerJobProfile?.jobsCount})`}</Text>
@@ -550,6 +550,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                             <Text style={{ fontWeight: 'bold' }}>Select this settler?</Text>
                                                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                                                 <TouchableOpacity
+                                                                    disabled={loading}
                                                                     style={{
                                                                         backgroundColor: COLORS.primary,
                                                                         padding: 10,
@@ -557,12 +558,14 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                         marginVertical: 10,
                                                                         width: '40%',
                                                                         alignItems: 'center',
+                                                                        opacity: loading ? 0.7 : 1,
                                                                     }}
                                                                     onPress={() => { setSubScreenIndex(1) }}
                                                                 >
                                                                     <Text style={{ color: 'white', fontWeight: 'bold' }}>No</Text>
                                                                 </TouchableOpacity>
                                                                 <TouchableOpacity
+                                                                    disabled={loading}
                                                                     style={{
                                                                         backgroundColor: COLORS.primary,
                                                                         padding: 10,
@@ -570,8 +573,10 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                         marginVertical: 10,
                                                                         width: '40%',
                                                                         alignItems: 'center',
+                                                                        opacity: loading ? 0.7 : 1,
                                                                     }}
                                                                     onPress={async () => {
+                                                                        setLoading(true);
                                                                         if (!booking.acceptors) {
                                                                             Alert.alert('No settlers found.');
                                                                             return;
@@ -610,7 +615,6 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                         setSelectedSettlerId(booking.settlerId || '');
                                                                         setSelectedSettlerFirstName(booking.settlerFirstName || '');
                                                                         setSelectedSettlerLastName(booking.settlerLastName || '');
-                                                                        setStatus(status! + 1);
                                                                         onRefresh();
                                                                     }}
                                                                 >
@@ -845,7 +849,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                 </TouchableOpacity>
                                             </View> */}
                                         </View>
-                                    ) : status === 6  || status === 10 ? (
+                                    ) : status === 6 || status === 10 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                             <Text style={{ fontWeight: 'bold' }}>{review ? 'Thank you for using our service' : 'Your feedback matters for us'}</Text>
                                             <Text style={{ fontSize: 12, color: COLORS.blackLight2, textAlign: 'center' }}>Leave a review and good rating to the service</Text>
@@ -1188,6 +1192,25 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                 </View>
                                             </TouchableOpacity>
                                         </View>
+                                    ) : status === 11 || status === 11.1 || status === 11.2 ? (
+                                        <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                            <Text style={{ fontWeight: 'bold' }}>Booking Has been Cancelled {booking.status === 11.1 ? 'by Customer' : booking.status === 11.2 ? 'by Settler' : ''}</Text>
+                                            <TouchableOpacity
+                                                style={{
+                                                    backgroundColor: COLORS.primary,
+                                                    padding: 10,
+                                                    borderRadius: 10,
+                                                    marginVertical: 10,
+                                                    width: '80%',
+                                                    alignItems: 'center',
+                                                }}
+                                                onPress={() => {
+                                                    navigation.navigate('BookingCancelForm', { booking: booking });
+                                                }}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>View Cancellation Reason</Text>
+                                            </TouchableOpacity>
+                                        </View>
                                     ) : (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                             <Text style={{ fontWeight: 'bold' }}>Unknown status: {booking.status}</Text>
@@ -1500,6 +1523,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                         columnWrapperStyle={{ justifyContent: 'space-between', marginTop: 20 }}
                                         renderItem={({ item }) => (
                                             <TouchableOpacity
+                                                disabled={true}
                                                 style={{
                                                     backgroundColor: COLORS.background,
                                                     padding: 10,
@@ -1508,29 +1532,34 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                     borderColor: COLORS.blackLight,
                                                     width: '48%',
                                                     alignItems: 'center',
+                                                    opacity: 0.5
                                                 }}
                                                 onPress={item.onPressAction}
                                             >
-                                                <Text style={{ color: COLORS.black, fontWeight: 'bold' }}>{item.buttonTitle}</Text>
+                                                <Text style={{ color: COLORS.black, fontWeight: 'bold', opacity: 0.5 }}>{item.buttonTitle}</Text>
                                             </TouchableOpacity>
                                         )}
                                     />
-                                    <View style={{ marginTop: 40 }} >
-                                        <TouchableOpacity
-                                            activeOpacity={0.8}
-                                            style={{
-                                                paddingHorizontal: 20,
-                                                borderRadius: 30,
-                                                flexDirection: 'row',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: 10
-                                            }}
-                                            onPress={() => { }}
-                                        >
-                                            <Text style={{ fontSize: 14, color: COLORS.danger, lineHeight: 21, fontWeight: 'bold', textDecorationLine: 'underline' }}>Cancel Booking</Text>
-                                        </TouchableOpacity>
-                                    </View>
+                                    { booking.status <= 11 && (
+                                        <View style={{ marginTop: 40 }} >
+                                            <TouchableOpacity
+                                                activeOpacity={0.8}
+                                                style={{
+                                                    paddingHorizontal: 20,
+                                                    borderRadius: 30,
+                                                    flexDirection: 'row',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    gap: 10
+                                                }}
+                                                onPress={() => {
+                                                    navigation.navigate('BookingCancelForm', { booking: booking });
+                                                }}
+                                            >
+                                                <Text style={{ fontSize: 14, color: COLORS.danger, lineHeight: 21, fontWeight: 'bold', textDecorationLine: 'underline' }}>Cancel Booking</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
                                 </View>
                             </View>
                         </ScrollView>

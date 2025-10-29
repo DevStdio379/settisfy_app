@@ -48,7 +48,10 @@ export enum BookingActivityType {
   
   // final states
   BOOKING_COMPLETED = "BOOKING_COMPLETED",
-  
+  BOOKING_CANCELLED = "BOOKING_CANCELLED",
+  BOOKING_CANCELLED_BY_CUSTOMER = "BOOKING_CANCELLED_BY_CUSTOMER",
+  BOOKING_CANCELLED_BY_SETTLER = "BOOKING_CANCELLED_BY_SETTLER",
+
   PAYMENT_RELEASED = "PAYMENT_RELEASED",
   REPORT_SUBMITTED = "REPORT_SUBMITTED",
   STATUS_CHANGED = "STATUS_CHANGED",
@@ -60,6 +63,7 @@ export enum BookingActivityType {
 export enum BookingActorType {
   SETTLER = "SETTLER",
   CUSTOMER = "CUSTOMER",
+  SYSTEM = "SYSTEM",
 }
 
 export interface BookingActivity {
@@ -148,6 +152,14 @@ export interface Booking {
   problemReportRemark?: string;
   problemReportImageUrls?: string[];
   problemReportIsCompleted?: boolean;
+
+  // cancellation
+  cancelReasons?: string[];
+  cancelReasonText?: string;
+  cancelReasonImageUrls?: string[];
+  cancelActor?: BookingActorType;
+
+
 
   // timeline
   timeline: any[],
@@ -263,6 +275,47 @@ export const uploadImagesCompletionEvidence = async (imageName: string, imagesUr
 
       // Generate unique filename
       const filename = `bookings/evidence_${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
+      const storageRef = ref(storage, filename);
+
+      // Upload file
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+
+      await new Promise<void>((resolve, reject) => {
+        uploadTask.on(
+          "state_changed",
+          snapshot => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log(`Upload ${filename}: ${progress.toFixed(2)}% done`);
+          },
+          reject, // Handle error
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            urls.push(downloadURL);
+            resolve();
+          }
+        );
+      });
+
+    } catch (error) {
+      console.error("Upload failed:", error);
+    }
+  }
+
+  console.log("All images uploaded:", urls);
+  return urls; // Return all uploaded image URLs
+};
+
+export const uploadBookingCancellationReason = async (imageName: string, imagesUrl: string[]) => {
+  const urls: string[] = [];
+
+  for (const uri of imagesUrl) {
+    try {
+      // Convert to Blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
+
+      // Generate unique filename
+      const filename = `bookings/cancellation_${imageName}_${imagesUrl.indexOf(uri)}.jpg`;
       const storageRef = ref(storage, filename);
 
       // Upload file
@@ -525,6 +578,12 @@ const mapBorrowingData = (doc: any): Booking => {
     problemReportRemark: data.problemReportRemark,
     problemReportImageUrls: data.problemReportImageUrls,
     problemReportIsCompleted: data.problemReportIsCompleted,
+
+    // cancellation reasons
+    cancelReasons: data.cancelReasons,
+    cancelReasonText: data.cancelReasonText,
+    cancelReasonImageUrls: data.cancelReasonImageUrls,
+    cancelActor: data.cancelActor,
 
     createAt: data.createAt,
     updatedAt: data.updatedAt,

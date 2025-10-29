@@ -20,6 +20,7 @@ export type RootStackParamList = {
     MyBookings: undefined;
     MyBookingDetails: { booking: Booking };
     BookingAddReview: { booking: Booking };
+    BookingCancelForm: { booking: Booking };
 
     ChatList: undefined;
     NewChat: undefined;
