@@ -10,7 +10,6 @@ import { Alert } from 'react-native';
 export enum BookingActivityType {
 
   // booking process states
-  NOTES_TO_SETTLER_CREATED = "NOTES_TO_SETTLER_CREATED",
   NOTES_TO_SETTLER_UPDATED = "NOTES_TO_SETTLER_UPDATED",
   
   // payment states

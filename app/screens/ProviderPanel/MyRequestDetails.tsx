@@ -17,7 +17,7 @@ import { getOrCreateChat } from '../../services/ChatServices';
 import Input from '../../components/Input/Input';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { Calendar } from 'react-native-calendars';
-import { format } from 'date-fns';
+import { format, set } from 'date-fns';
 import { DynamicOption, SubOption } from '../../services/CatalogueServices';
 import { formatAnyTimestamp, generateId } from '../../helper/HelperFunctions';
 import AttachmentForm from '../../components/Forms/AttachmentForm';
@@ -33,7 +33,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
 
     const { user } = useUser();
     const mapRef = useRef<MapView | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
 
     const scrollViewTabHeader = useRef<any>(null);
@@ -443,7 +443,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 {/* for Incompletion Reported */}
                                 {booking.incompletionStatus === BookingActivityType.CUSTOMER_REJECT_INCOMPLETION_RESOLVE && (
                                     <InfoBar
-                                        title="Your incompletion report has been rejected."
+                                        title="Your incompletion resolving evidence report has been rejected."
                                         icon="information-circle-outline"
                                     />
                                 )}
@@ -547,6 +547,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     <Text style={{ fontWeight: 'bold' }}>Tap here to take this job</Text>
                                                     <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                                         <TouchableOpacity
+                                                            disabled={loading}
                                                             style={{
                                                                 backgroundColor: COLORS.primary,
                                                                 padding: 10,
@@ -556,6 +557,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                 alignItems: 'center',
                                                             }}
                                                             onPress={async () => {
+                                                                setLoading(true);
                                                                 // Make sure user.activeJobs is an array
                                                                 const matchedJob = user?.activeJobs?.find(
                                                                     job => job.catalogueId === booking.catalogueService.id
@@ -590,10 +592,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                     });
                                                                     onRefresh();
                                                                 }
-                                                                setStatus(status! + 1);
                                                             }}
                                                         >
-                                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>Accept this job</Text>
+                                                            <Text style={{ color: 'white', fontWeight: 'bold' }}>{loading ? 'Accepting Job...' : 'Accept this job'}</Text>
                                                         </TouchableOpacity>
                                                     </View>
                                                 </View>
@@ -605,6 +606,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             <Text style={{ fontSize: 24, fontWeight: "bold", color: "indigo" }}>{booking.serviceStartCode}</Text>
                                             <Text style={{ fontSize: 10, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Please check the code with your customer. The code must match between you and customer.</Text>
                                             <TouchableOpacity
+                                                disabled={loading}
                                                 style={{
                                                     backgroundColor: COLORS.primary,
                                                     padding: 10,
@@ -612,8 +614,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     marginVertical: 10,
                                                     width: '80%',
                                                     alignItems: 'center',
+                                                    opacity: loading ? 0.7 : 1,
                                                 }}
                                                 onPress={async () => {
+                                                    setLoading(true);
                                                     await updateBooking(booking.id!, {
                                                         status: 2,
                                                         timeline: arrayUnion({
@@ -623,10 +627,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                             actor: BookingActorType.SETTLER,
                                                         }),
                                                     });
-                                                    setStatus(2);
+                                                    onRefresh();
                                                 }}
                                             >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Start Service</Text>
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>{loading ? 'Starting...' : 'Start Service'}</Text>
                                             </TouchableOpacity>
                                         </View>
                                     ) : status === 2 && booking.settlerId === user?.uid ? (
@@ -636,6 +640,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 {booking?.selectedDate ? `${Math.ceil((new Date(booking.selectedDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left` : "N/A"}
                                             </Text>
                                             <TouchableOpacity
+                                                disabled={loading}
                                                 style={{
                                                     backgroundColor: COLORS.primary,
                                                     padding: 10,
@@ -643,9 +648,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     marginVertical: 10,
                                                     width: '80%',
                                                     alignItems: 'center',
+                                                    opacity: loading ? 0.7 : 1,
                                                 }}
                                                 onPress={async () => {
-
+                                                    setLoading(true);
                                                     await updateBooking(booking.id!, {
                                                         status: 3,
                                                         timeline: arrayUnion({
@@ -655,8 +661,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                             actor: BookingActorType.SETTLER,
                                                         })
                                                     });
-
-                                                    setStatus(3);
+                                                    onRefresh();
                                                 }}
                                             >
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Complete Job</Text>
@@ -734,6 +739,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Verify your job completion.</Text>
                                             <View style={{ flexDirection: 'row', justifyContent: 'center', width: '100%', gap: 10, paddingHorizontal: 10 }}>
                                                 <TouchableOpacity
+                                                    disabled={loading}
                                                     style={{
                                                         backgroundColor: COLORS.primary,
                                                         padding: 10,
@@ -741,8 +747,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         marginVertical: 10,
                                                         width: '50%',
                                                         alignItems: 'center',
+                                                        opacity: loading ? 0.7 : 1,
                                                     }}
                                                     onPress={async () => {
+                                                        setLoading(true);
                                                         // update last timeline entry to indicate customer rejected the quote
                                                         const updatedTimeline = booking.timeline ? [...booking.timeline] : [];
 
@@ -787,6 +795,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 </TouchableOpacity>
 
                                                 <TouchableOpacity
+                                                    disabled={loading}
                                                     style={{
                                                         backgroundColor: COLORS.primary,
                                                         padding: 10,
@@ -794,8 +803,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         marginVertical: 10,
                                                         width: '50%',
                                                         alignItems: 'center',
+                                                        opacity: loading ? 0.7 : 1,
                                                     }}
                                                     onPress={async () => {
+                                                        setLoading(true);
                                                         await updateBooking(booking.id!, {
                                                             incompletionStatus: BookingActivityType.SETTLER_REJECT_INCOMPLETION,
                                                             status: 4,
@@ -852,7 +863,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     setActiveIndex(3);
                                                 }}
                                             >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>View Problem Report</Text>
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>View Incompletion Report</Text>
                                             </TouchableOpacity>
                                         </View>
                                     ) : status === 9 ? (
@@ -861,6 +872,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Select your action regarding it.</Text>
                                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '90%', gap: 10, paddingHorizontal: 10 }}>
                                                 <TouchableOpacity
+                                                    disabled={loading}
                                                     style={{
                                                         backgroundColor: COLORS.primary,
                                                         padding: 10,
@@ -868,8 +880,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         marginVertical: 10,
                                                         width: '50%',
                                                         alignItems: 'center',
+                                                        opacity: loading ? 0.7 : 1,
                                                     }}
                                                     onPress={async () => {
+                                                        setLoading(true);
                                                         await updateBooking(booking.id!, {
                                                             status: 9.2,
                                                             cooldownStatus: BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT,
@@ -890,6 +904,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Resolve</Text>
                                                 </TouchableOpacity>
                                                 <TouchableOpacity
+                                                    disabled={loading}
                                                     style={{
                                                         backgroundColor: COLORS.primary,
                                                         padding: 10,
@@ -897,8 +912,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         marginVertical: 10,
                                                         width: '50%',
                                                         alignItems: 'center',
+                                                        opacity: loading ? 0.7 : 1,
                                                     }}
                                                     onPress={async () => {
+                                                        setLoading(true);
                                                         await updateBooking(booking.id!, {
                                                             cooldownStatus: BookingActivityType.SETTLER_REJECT_COOLDOWN_REPORT,
                                                             status: 5,
@@ -1111,9 +1128,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         description="Attach photos and remarks to verify your service completion."
                                                         initialImages={booking?.settlerEvidenceImageUrls ?? []}
                                                         initialRemark={booking?.settlerEvidenceRemark ?? ''}
-                                                        isEditable={true}
-                                                        buttonText={(booking.settlerEvidenceImageUrls && booking.settlerEvidenceImageUrls.length > 0) || (booking.settlerEvidenceRemark && booking.settlerEvidenceRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
+                                                        isEditable={loading ? false : true}
+                                                        buttonText={loading ? ((booking.settlerEvidenceImageUrls && booking.settlerEvidenceImageUrls.length > 0) || (booking.settlerEvidenceRemark && booking.settlerEvidenceRemark.length > 0) ? 'Updating...' : 'Submitting...') : ((booking.settlerEvidenceImageUrls && booking.settlerEvidenceImageUrls.length > 0) || (booking.settlerEvidenceRemark && booking.settlerEvidenceRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence')}
                                                         onSubmit={async ({ images, remark }) => {
+                                                            setLoading(true);
                                                             await updateBooking(booking.id!, {
                                                                 status: 4,
                                                                 settlerEvidenceImageUrls: images,
@@ -1154,10 +1172,11 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                         remarkPlaceholder='e.g. Problem fixed, all in good condition.'
                                                                         initialImages={booking.incompletionResolvedImageUrls || []}
                                                                         initialRemark={booking.incompletionResolvedRemark || ''}
-                                                                        buttonText={(booking.incompletionResolvedImageUrls && booking.incompletionResolvedImageUrls.length > 0) || (booking.incompletionResolvedRemark && booking.incompletionResolvedRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
-                                                                        isEditable={booking.incompletionStatus === BookingActivityType.SETTLER_RESOLVE_INCOMPLETION ? true : false}
+                                                                        buttonText={loading ? ((booking.incompletionResolvedImageUrls && booking.incompletionResolvedImageUrls.length > 0) || (booking.incompletionResolvedRemark && booking.incompletionResolvedRemark.length > 0) ? 'Updating...' : 'Submitting...') : ((booking.incompletionResolvedImageUrls && booking.incompletionResolvedImageUrls.length > 0) || (booking.incompletionResolvedRemark && booking.incompletionResolvedRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence')}
+                                                                        isEditable={loading ? false : (booking.incompletionStatus === BookingActivityType.SETTLER_RESOLVE_INCOMPLETION ? true : false)}
                                                                         showSubmitButton={booking.incompletionStatus === BookingActivityType.SETTLER_RESOLVE_INCOMPLETION ? true : false}
                                                                         onSubmit={async (data) => {
+                                                                            setLoading(true);
                                                                             await uploadImageIncompletionResolveEvidence(booking.id!, data.images ?? []).then((urls => {
                                                                                 data.images = urls;
                                                                             }));
@@ -1209,10 +1228,11 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                         remarkPlaceholder='e.g. Problem fixed, all in good condition.'
                                                                         initialImages={booking.cooldownResolvedImageUrls || []}
                                                                         initialRemark={booking.cooldownResolvedRemark || ''}
-                                                                        buttonText={(booking.cooldownResolvedImageUrls && booking.cooldownResolvedImageUrls.length > 0) || (booking.cooldownResolvedRemark && booking.cooldownResolvedRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
-                                                                        isEditable={booking.cooldownStatus === BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT ? true : false}
+                                                                        buttonText={loading ? ((booking.cooldownResolvedImageUrls && booking.cooldownResolvedImageUrls.length > 0) || (booking.cooldownResolvedRemark && booking.cooldownResolvedRemark.length > 0) ? 'Updating...' : 'Submitting...') : ((booking.cooldownResolvedImageUrls && booking.cooldownResolvedImageUrls.length > 0) || (booking.cooldownResolvedRemark && booking.cooldownResolvedRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence')}
+                                                                        isEditable={loading ? false : (booking.cooldownStatus === BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT ? true : false)}
                                                                         showSubmitButton={booking.cooldownStatus === BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT ? true : false}
                                                                         onSubmit={async (data) => {
+                                                                            setLoading(true);
                                                                             await uploadImagesCooldownReportEvidence(booking.id!, data.images ?? []).then((urls => {
                                                                                 data.images = urls;
                                                                             }));
@@ -1534,6 +1554,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                 <BookingTimeline
                     booking={booking}
                     onPressUser={(item) => console.log(item)}
+                    onRefresh={onRefresh}
                 />
             )}
 

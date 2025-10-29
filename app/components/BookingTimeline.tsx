@@ -117,10 +117,21 @@ return (
                                             </View>
                                         )}
 
-                                        {item.type === 'NOTES_TO_SETTLER_CREATED' && (
+                                        {item.type === 'CUSTOMER_NOTES_UPDATED' && (
                                             <View style={styles.block}>
                                                 <Text style={styles.text}>
-                                                    Customer added notes to settler.
+                                                    Customer updated notes to settler.
+                                                </Text>
+                                                <Text style={styles.timestamp}>
+                                                    {formatAnyTimestamp(item.timestamp)}
+                                                </Text>
+                                            </View>
+                                        )}
+
+                                        {item.type === 'NOTES_TO_SETTLER_UPDATED' && (
+                                            <View style={styles.block}>
+                                                <Text style={styles.text}>
+                                                    Customer updated notes to settler.
                                                 </Text>
                                                 <Text style={styles.timestamp}>
                                                     {formatAnyTimestamp(item.timestamp)}
@@ -156,7 +167,7 @@ return (
                                                         onPress={() => onPressUser?.(item)}
                                                     >
                                                         <Text style={styles.userLink}>
-                                                            {item.firstName} {item.lastName}
+                                                            {item.settlerFirstName} {item.settlerLastName}
                                                         </Text>
                                                     </TouchableOpacity>
                                                     <Text style={styles.text}> as settler.</Text>
@@ -212,6 +223,18 @@ return (
                                             <View style={styles.block}>
                                                 <Text style={styles.text}>
                                                     Customer updated the incompletion reason.
+                                                </Text>
+                                                <Text style={styles.timestamp}>
+                                                    {formatAnyTimestamp(item.timestamp)}
+                                                </Text>
+                                            </View>
+                                        )}
+
+                                        {item.type === 'CUSTOMER_REJECT_INCOMPLETION_RESOLVE' && (
+                                            <View style={styles.block}>
+                                                <Text style={styles.text}>
+                                                    Customer rejected settler's resolution for the
+                                                    incompletion report.
                                                 </Text>
                                                 <Text style={styles.timestamp}>
                                                     {formatAnyTimestamp(item.timestamp)}

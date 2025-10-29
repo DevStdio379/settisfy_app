@@ -277,7 +277,6 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
       // notes to settler
       notesToSettlerImageUrls: notesToSettlerImageUrls,
       notesToSettler: notesToSettler,
-      notesToSettlerStatus: BookingActivityType.NOTES_TO_SETTLER_CREATED,
 
 
       total: grandTotal || 0,

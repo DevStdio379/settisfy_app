@@ -249,7 +249,9 @@ const AttachmentForm: React.FC<AttachmentFormProps> = ({
             marginVertical: 10,
             width: '100%',
             alignItems: 'center',
+            opacity: !isEditable ? 0.7 : 1,
           }}
+          disabled={!isEditable}
         >
           <Text style={{ color: 'white', fontWeight: 'bold' }}>{buttonText || 'Submit'}</Text>
         </TouchableOpacity>

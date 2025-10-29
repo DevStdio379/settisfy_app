@@ -37,7 +37,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
     const [settler, setSettler] = useState<User>();
     const mapRef = useRef<MapView | null>(null);
     const [booking, setBooking] = useState<Booking>(route.params.booking);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [images, setImages] = useState<string[]>([]);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -597,8 +597,8 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                                 // additional info
                                                                                 settlerId: booking.acceptors[profileIndex].settlerId,
                                                                                 settlerServiceId: booking.acceptors[profileIndex].settlerServiceId,
-                                                                                firstName: booking.acceptors[profileIndex].firstName,
-                                                                                lastName: booking.acceptors[profileIndex].lastName,
+                                                                                settlerFirstName: booking.acceptors[profileIndex].firstName,
+                                                                                settlerLastName: booking.acceptors[profileIndex].lastName,
                                                                             }),
                                                                         });
 
@@ -665,6 +665,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                             <Text style={{ fontWeight: 'bold' }}>Please confirm job completion</Text>
                                             <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 }}>
                                                 <TouchableOpacity
+                                                    disabled={loading}
                                                     style={{
                                                         backgroundColor: COLORS.primary,
                                                         padding: 10,
@@ -672,6 +673,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         marginVertical: 10,
                                                         width: '40%',
                                                         alignItems: 'center',
+                                                        opacity: loading ? 0.7 : 1,
                                                     }}
                                                     onPress={async () => {
                                                         onClick(3);
@@ -683,6 +685,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                     <Text style={{ color: 'white', fontWeight: 'bold' }}>No</Text>
                                                 </TouchableOpacity>
                                                 <TouchableOpacity
+                                                    disabled={loading}
                                                     style={{
                                                         backgroundColor: COLORS.primary,
                                                         padding: 10,
@@ -690,8 +693,10 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         marginVertical: 10,
                                                         width: '40%',
                                                         alignItems: 'center',
+                                                        opacity: loading ? 0.7 : 1,
                                                     }}
                                                     onPress={async () => {
+                                                        setLoading(true);
                                                         if (booking.id) {
                                                             await updateBooking(booking.id, {
                                                                 status: 5,
@@ -715,7 +720,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                 await updateSettlerService(booking.settlerServiceId, { jobsCount: updatedJobsCount })
                                                             }
                                                         }
-                                                        setStatus(5);
+                                                        onRefresh();
                                                     }}
                                                 >
                                                     <Text style={{ color: 'white', fontWeight: 'bold' }}>Yes</Text>
@@ -751,6 +756,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                     {booking?.selectedDate ? `${Math.ceil((new Date(booking.selectedDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))} days left` : "N/A"}
                                                 </Text>
                                                 <TouchableOpacity
+                                                    disabled={loading}
                                                     style={{
                                                         backgroundColor: COLORS.primary,
                                                         padding: 10,
@@ -758,9 +764,11 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         marginVertical: 10,
                                                         width: '80%',
                                                         alignItems: 'center',
+                                                        opacity: loading ? 0.7 : 1,
                                                     }}
                                                     onPress={async () => {
                                                         if (booking.id) {
+                                                            setLoading(true);
                                                             await updateBooking(booking.id, {
                                                                 cooldownReportImageUrls: deleteField(),
                                                                 cooldownReportRemark: deleteField(),
@@ -780,7 +788,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         onRefresh();
                                                     }}
                                                 >
-                                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>Mark Service Completed</Text>
+                                                    <Text style={{ color: 'white', fontWeight: 'bold' }}>{loading ? 'Marking Service as Completed...' : 'Mark Service as Completed'}</Text>
                                                 </TouchableOpacity>
                                                 <TouchableOpacity
                                                     style={{
@@ -1337,9 +1345,10 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         remarkPlaceholder='e.g. Please be careful with the antique vase.'
                                                         initialImages={booking.notesToSettlerImageUrls || []}
                                                         initialRemark={booking.notesToSettler || ''}
-                                                        isEditable={true}
-                                                        buttonText={(booking.notesToSettlerImageUrls && booking.notesToSettlerImageUrls.length > 0) || (booking.notesToSettler && booking.notesToSettler.length > 0) ? 'Update Note' : 'Send Note'}
+                                                        isEditable={loading ? false : true}
+                                                        buttonText={(loading ? ((booking.notesToSettlerImageUrls && booking.notesToSettlerImageUrls.length > 0) || (booking.notesToSettler && booking.notesToSettler.length > 0) ? 'Updating...' : 'Submitting') : ((booking.notesToSettlerImageUrls && booking.notesToSettlerImageUrls.length > 0) || (booking.notesToSettler && booking.notesToSettler.length > 0) ? 'Update Note To Settler' : 'Send Note to Settler'))}
                                                         onSubmit={async (data) => {
+                                                            setLoading(true);
                                                             await uploadNoteToSettlerImages(booking.id!, data.images ?? []).then((urls => {
                                                                 data.images = urls;
                                                             }));
@@ -1347,6 +1356,18 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                             await updateBooking(booking.id!, {
                                                                 notesToSettler: data.remark,
                                                                 notesToSettlerImageUrls: data.images,
+                                                                timeline: arrayUnion({
+                                                                    id: generateId(),
+                                                                    type: BookingActivityType.NOTES_TO_SETTLER_UPDATED,
+                                                                    timestamp: new Date(),
+                                                                    actor: BookingActorType.CUSTOMER,
+
+                                                                    // additional info
+                                                                    oldNotesToSettler: booking.notesToSettler || '',
+                                                                    oldNotesToSettlerImageUrls: booking.notesToSettlerImageUrls || [],
+                                                                    newNotesToSettler: data.remark,
+                                                                    newNotesToSettlerImageUrls: data.images,
+                                                                }),
                                                             });
                                                             onRefresh();
                                                         }}
@@ -1359,14 +1380,6 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                         initialImages={booking?.settlerEvidenceImageUrls ?? []}
                                                         initialRemark={booking?.settlerEvidenceRemark ?? ''}
                                                         isEditable={false}
-                                                    // onSubmit={async ({ images, remark }) => {
-                                                    //     await updateBooking(booking.id!, {
-                                                    //         status: 4,
-                                                    //         settlerEvidenceImageUrls: images,
-                                                    //         settlerEvidenceRemark: remark,
-                                                    //     });
-                                                    //     onRefresh();
-                                                    // }}
                                                     />
                                                 )}
                                                 {index === 3 && (
@@ -1375,12 +1388,13 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                             title="Report Service Incompletion"
                                                             description="If you find that the job is incomplete, please report here with evidence."
                                                             remarkPlaceholder='The faucet is still leaking water after the settler fixed it.'
-                                                            isEditable={status === 8.1 ? true : false}
+                                                            isEditable={loading ? false : (status === 8.1 ? true : false)}
                                                             initialImages={booking.incompletionReportImageUrls || []}
                                                             initialRemark={booking.incompletionReportRemark || ''}
-                                                            buttonText={(booking.incompletionReportImageUrls && booking.incompletionReportImageUrls.length > 0) || (booking.incompletionReportRemark && booking.incompletionReportRemark.length > 0) ? 'Update Incompletion Report' : 'Submit Incompletion Report'}
+                                                            buttonText={loading ? ((booking.incompletionReportImageUrls && booking.incompletionReportImageUrls.length > 0) || (booking.incompletionReportRemark && booking.incompletionReportRemark.length > 0) ? 'Updating...' : 'Submitting...') : ((booking.incompletionReportImageUrls && booking.incompletionReportImageUrls.length > 0) || (booking.incompletionReportRemark && booking.incompletionReportRemark.length > 0) ? 'Update Incompletion Report' : 'Submit Incompletion Report')}
                                                             showSubmitButton={status === 8.1 ? true : false}
                                                             onSubmit={async (data) => {
+                                                                setLoading(true);
                                                                 await uploadImageIncompletionEvidence(booking.id!, data.images ?? []).then((urls => {
                                                                     data.images = urls;
                                                                 }));
@@ -1403,7 +1417,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                 onRefresh();
                                                             }}
                                                         />
-                                                        {booking.incompletionReportImageUrls && booking.incompletionReportImageUrls.length > 0 && booking.incompletionReportRemark && (
+                                                        {booking.incompletionResolvedImageUrls && booking.incompletionResolvedImageUrls.length > 0 && booking.incompletionResolvedRemark && (
                                                             <View>
                                                                 <View style={[GlobalStyleSheet.line, { marginTop: 20 }]} />
                                                                 <AttachmentForm
@@ -1427,10 +1441,11 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                             remarkPlaceholder='Water dripping from the faucet after the settler fixed it.'
                                                             initialImages={booking.cooldownReportImageUrls || []}
                                                             initialRemark={booking.cooldownReportRemark || ''}
-                                                            isEditable={status === 9.1 ? true : false}
+                                                            isEditable={loading ? false : (status === 9.1 ? true : false)}
                                                             showSubmitButton={status === 9.1 ? true : false}
-                                                            buttonText={(booking.cooldownReportImageUrls && booking.cooldownReportImageUrls.length > 0) || (booking.cooldownReportRemark && booking.cooldownReportRemark.length > 0) ? 'Update Report' : 'Submit Report'}
+                                                            buttonText={loading ? ((booking.cooldownReportImageUrls && booking.cooldownReportImageUrls.length > 0) || (booking.cooldownReportRemark && booking.cooldownReportRemark.length > 0) ? 'Updating...' : 'Submitting...') : ((booking.cooldownReportImageUrls && booking.cooldownReportImageUrls.length > 0) || (booking.cooldownReportRemark && booking.cooldownReportRemark.length > 0) ? 'Update Report' : 'Submit Report')}
                                                             onSubmit={async (data) => {
+                                                                setLoading(true);
                                                                 await uploadImagesCooldownReportEvidence(booking.id!, data.images ?? []).then((urls => {
                                                                     data.images = urls;
                                                                 }));
@@ -1681,6 +1696,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                 <BookingTimeline
                     booking={booking}
                     onPressUser={(item) => console.log(item)}
+                    onRefresh={onRefresh}
                 />
             )}
         </View>
