@@ -604,6 +604,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                                 settlerServiceId: booking.acceptors[profileIndex].settlerServiceId,
                                                                                 settlerFirstName: booking.acceptors[profileIndex].firstName,
                                                                                 settlerLastName: booking.acceptors[profileIndex].lastName,
+                                                                                settlerProfileImageUrl: bookingWithSettlerProfiles?.[profileIndex]?.settlerProfile?.profileImageUrl || '',
                                                                             }),
                                                                         });
 
@@ -1005,7 +1006,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                     ) : status === 8 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                             <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Your Incompletion Flag is Sent</Text>
-                                            <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Awaiting for settler response. If you flagged this by mistake, you can delete the flag.</Text>
+                                            <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Awaiting for settler response.</Text>
                                             <TouchableOpacity
                                                 style={{
                                                     backgroundColor: COLORS.primary,
@@ -1015,11 +1016,9 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                     width: '80%',
                                                     alignItems: 'center',
                                                 }}
-                                                onPress={() => {
-                                                    // MESSAGE SETTLER ABOUT FLAG
-                                                }}
+                                                onPress={() => { if (user && settler) handleChat(user.uid, settler.uid) }}
                                             >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete Flag</Text>
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Settler</Text>
                                             </TouchableOpacity>
                                             <TouchableOpacity
                                                 style={{
@@ -1101,7 +1100,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                     ) : status === 9 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                             <Text style={{ fontWeight: 'bold' }}>{status === 9 ? 'Awaiting for Settler Response' : 'Settler will Resolve the Reported Problem'}</Text>
-                                            <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>If you report this by mistake, you can delete the report.</Text>
+                                            <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Awaiting for settler response.</Text>
                                             <TouchableOpacity
                                                 style={{
                                                     backgroundColor: COLORS.primary,
@@ -1111,9 +1110,9 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                     width: '80%',
                                                     alignItems: 'center',
                                                 }}
-                                                onPress={() => { }}
+                                                onPress={() => { if (user && settler) handleChat(user.uid, settler.uid) }}
                                             >
-                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete Cooldown Report</Text>
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Settler</Text>
                                             </TouchableOpacity>
                                             <TouchableOpacity
                                                 style={{
@@ -1386,10 +1385,8 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                     actor: BookingActorType.CUSTOMER,
 
                                                                     // additional info
-                                                                    oldNotesToSettler: booking.notesToSettler || '',
-                                                                    oldNotesToSettlerImageUrls: booking.notesToSettlerImageUrls || [],
-                                                                    newNotesToSettler: data.remark,
-                                                                    newNotesToSettlerImageUrls: data.images,
+                                                                    notesToSettler: data.remark,
+                                                                    notesToSettlerImageUrls: data.images,
                                                                 }),
                                                             });
                                                             onRefresh();
@@ -1425,10 +1422,10 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                     status: 8,
                                                                     incompletionReportImageUrls: data.images,
                                                                     incompletionReportRemark: data.remark,
-                                                                    incompletionStatus: booking.incompletionStatus ? (booking.incompletionStatus === BookingActivityType.JOB_INCOMPLETE ? BookingActivityType.CUSTOMER_JOB_INCOMPLETE_UPDATED : (booking.incompletionStatus === BookingActivityType.SETTLER_UPDATE_INCOMPLETION_EVIDENCE ? BookingActivityType.CUSTOMER_REJECT_INCOMPLETION_RESOLVE : 'NO IDEA')) : BookingActivityType.JOB_INCOMPLETE,
+                                                                    incompletionStatus: booking.incompletionStatus ? (booking.incompletionStatus === BookingActivityType.JOB_INCOMPLETE ? BookingActivityType.CUSTOMER_JOB_INCOMPLETE_UPDATED : (booking.incompletionStatus === BookingActivityType.SETTLER_UPDATE_INCOMPLETION_EVIDENCE ? BookingActivityType.CUSTOMER_REJECT_INCOMPLETION_RESOLVE : BookingActivityType.JOB_INCOMPLETE)) : BookingActivityType.JOB_INCOMPLETE,
                                                                     timeline: arrayUnion({
                                                                         id: generateId(),
-                                                                        type: booking.incompletionStatus ? (booking.incompletionStatus === BookingActivityType.JOB_INCOMPLETE ? BookingActivityType.CUSTOMER_JOB_INCOMPLETE_UPDATED : (booking.incompletionStatus === BookingActivityType.SETTLER_UPDATE_INCOMPLETION_EVIDENCE ? BookingActivityType.CUSTOMER_REJECT_INCOMPLETION_RESOLVE : 'NO IDEA')) : BookingActivityType.JOB_INCOMPLETE,
+                                                                        type: booking.incompletionStatus ? (booking.incompletionStatus === BookingActivityType.JOB_INCOMPLETE ? BookingActivityType.CUSTOMER_JOB_INCOMPLETE_UPDATED : (booking.incompletionStatus === BookingActivityType.SETTLER_UPDATE_INCOMPLETION_EVIDENCE ? BookingActivityType.CUSTOMER_REJECT_INCOMPLETION_RESOLVE : BookingActivityType.JOB_INCOMPLETE)) : BookingActivityType.JOB_INCOMPLETE,
                                                                         timestamp: new Date(),
 
                                                                         // additional info
@@ -1476,11 +1473,10 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                                     status: 9,
                                                                     cooldownReportImageUrls: data.images,
                                                                     cooldownReportRemark: data.remark,
-                                                                    ts: booking.incompletionStatus ? (booking.incompletionStatus === BookingActivityType.JOB_INCOMPLETE ? BookingActivityType.CUSTOMER_JOB_INCOMPLETE_UPDATED : (booking.incompletionStatus === BookingActivityType.SETTLER_UPDATE_INCOMPLETION_EVIDENCE ? BookingActivityType.CUSTOMER_REJECT_INCOMPLETION_RESOLVE : 'NO IDEA')) : BookingActivityType.JOB_INCOMPLETE,
-                                                                    cooldownStatus: booking.cooldownStatus ? (booking.cooldownStatus === BookingActivityType.COOLDOWN_REPORT_SUBMITTED ? BookingActivityType.CUSTOMER_COOLDOWN_REPORT_UPDATED : (booking.cooldownStatus === BookingActivityType.SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE ? BookingActivityType.CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED : 'NO IDEA')) : BookingActivityType.COOLDOWN_REPORT_SUBMITTED,
+                                                                    cooldownStatus: booking.cooldownStatus ? (booking.cooldownStatus === BookingActivityType.COOLDOWN_REPORT_SUBMITTED ? BookingActivityType.CUSTOMER_COOLDOWN_REPORT_UPDATED : (booking.cooldownStatus === BookingActivityType.SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE ? BookingActivityType.CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED : BookingActivityType.COOLDOWN_REPORT_SUBMITTED)) : BookingActivityType.COOLDOWN_REPORT_SUBMITTED,
                                                                     timeline: arrayUnion({
                                                                         id: generateId(),
-                                                                        type: (booking.cooldownReportImageUrls && booking.cooldownReportImageUrls.length > 0) || (booking.cooldownReportRemark && booking.cooldownReportRemark.length > 0) ? BookingActivityType.CUSTOMER_COOLDOWN_REPORT_UPDATED : BookingActivityType.COOLDOWN_REPORT_SUBMITTED,
+                                                                        type: booking.cooldownStatus ? (booking.cooldownStatus === BookingActivityType.COOLDOWN_REPORT_SUBMITTED ? BookingActivityType.CUSTOMER_COOLDOWN_REPORT_UPDATED : (booking.cooldownStatus === BookingActivityType.SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE ? BookingActivityType.CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED : BookingActivityType.COOLDOWN_REPORT_SUBMITTED)) : BookingActivityType.COOLDOWN_REPORT_SUBMITTED,
                                                                         timestamp: new Date(),
 
                                                                         // additional info
@@ -1540,7 +1536,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                             </TouchableOpacity>
                                         )}
                                     />
-                                    { booking.status <= 11 && (
+                                    { (booking.status <= 11 && booking.status !== 6) && (
                                         <View style={{ marginTop: 40 }} >
                                             <TouchableOpacity
                                                 activeOpacity={0.8}
@@ -1724,7 +1720,6 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
             {subScreenIndex === 6 && (
                 <BookingTimeline
                     booking={booking}
-                    onPressUser={(item) => console.log(item)}
                     onRefresh={onRefresh}
                 />
             )}

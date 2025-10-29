@@ -1,557 +1,380 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
-
-View,
-ScrollView,
-RefreshControl,
-Text,
-TouchableOpacity,
-StyleSheet,
+    View,
+    FlatList,
+    RefreshControl,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    Image,
 } from 'react-native';
-
-type TimelineItem = {
-id?: string | number;
-timestamp?: string | number;
-actor?: string;
-type?: string;
-firstName?: string;
-lastName?: string;
-evidenceCount?: number;
-oldTotal?: number;
-newTotal?: number;
-newAddons?: any[];
-addons?: any[];
-newManualQuotePrice?: number | null;
-manualQuotePrice?: number | null;
-isQuoteUpdateSuccessful?: '' | 'false' | 'true' | string;
-message?: string;
-[key: string]: any;
-};
-
-type Booking = {
-timeline?: TimelineItem[];
-newAddons?: any[];
-addons?: any[];
-newManualQuotePrice?: number | null;
-manualQuotePrice?: number | null;
-[key: string]: any;
-};
+import { Booking, BookingActivityType } from '../services/BookingServices';
+import BookingSummaryCard from './BookingSummaryCard';
+import EvidenceCard from './Card/EvidenceCard';
 
 type BookingTimelineProps = {
-booking: Booking;
-refreshing?: boolean;
-onRefresh?: () => void;
-onPressUser?: (item: TimelineItem) => void;
-// optional formatter in case your app has a custom date formatter
-formatAnyTimestamp?: (ts?: string | number) => string;
-// optional color overrides
-COLORS?: {
-    primary?: string;
-    secondary?: string;
-    danger?: string;
-};
+    booking: Booking;
+    refreshing?: boolean;
+    onRefresh?: () => void;
+    formatAnyTimestamp?: (ts?: string | number) => string;
+    COLORS?: {
+        primary?: string;
+        secondary?: string;
+        danger?: string;
+    };
 };
 
 const defaultColors = {
-primary: '#007AFF',
-secondary: '#FF9500',
-danger: '#FF3B30',
+    primary: '#007AFF',
+    secondary: '#FF9500',
+    danger: '#FF3B30',
 };
 
 const defaultFormat = (ts?: string | number) =>
-ts ? new Date(Number(ts)).toLocaleString() : '';
+    ts ? new Date(Number(ts)).toLocaleString() : '';
 
 export default function BookingTimeline({
-booking,
-refreshing = false,
-onRefresh,
-onPressUser,
-formatAnyTimestamp = defaultFormat,
-COLORS = defaultColors,
+    booking,
+    refreshing = false,
+    onRefresh,
+    formatAnyTimestamp = defaultFormat,
+    COLORS = defaultColors,
 }: BookingTimelineProps) {
-return (
-    <View>
-        <ScrollView
-            showsVerticalScrollIndicator={false}
+    const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+
+    const toggleExpand = useCallback(
+        (index: number) => {
+            setExpandedIndex(prev => (prev === index ? null : index));
+        },
+        []
+    );
+
+    const getReadableType = (type?: BookingActivityType, message?: string) => {
+        const map: Record<string, string> = {
+            // initial booking state
+            [BookingActivityType.QUOTE_CREATED]: 'Quote Created',
+            [BookingActivityType.NOTES_TO_SETTLER_UPDATED]: 'Notes to Settler Updated',
+            [BookingActivityType.SETTLER_ACCEPT]: 'Settler Accepted',
+            [BookingActivityType.SETTLER_SELECTED]: 'Settler Selected',
+
+            // active service state
+            [BookingActivityType.SETTLER_SERVICE_START]: 'Service Started',
+            [BookingActivityType.SETTLER_SERVICE_END]: 'Service Completed',
+            [BookingActivityType.SETTLER_EVIDENCE_SUBMITTED]: 'Completion Evidence Submitted',
+            [BookingActivityType.SETTLER_EVIDENCE_UPDATED]: 'Completion Evidence Updated',
+
+            // incompletion state
+            [BookingActivityType.JOB_COMPLETED]: 'Customer marked job as completed',
+            [BookingActivityType.JOB_INCOMPLETE]: 'Customer marked job as incomplete',
+            [BookingActivityType.CUSTOMER_JOB_INCOMPLETE_UPDATED]: 'Customer updated incompletion report',
+            [BookingActivityType.CUSTOMER_REJECT_INCOMPLETION_RESOLVE]: 'Customer rejected incompletion resolution',
+            [BookingActivityType.SETTLER_RESOLVE_INCOMPLETION]: 'Settler choose to resolve incompletion',
+            [BookingActivityType.SETTLER_UPDATE_INCOMPLETION_EVIDENCE]: 'Settler updated incompletion resolution evidence',
+            [BookingActivityType.SETTLER_REJECT_INCOMPLETION]: 'Settler rejected incompletion report',
+            [BookingActivityType.CUSTOMER_CONFIRM_COMPLETION]: 'Customer confirmed completion',
+
+            // cooldown state
+            [BookingActivityType.COOLDOWN_REPORT_SUBMITTED]: 'Cooldown report submitted',
+            [BookingActivityType.CUSTOMER_COOLDOWN_REPORT_UPDATED]: 'Customer updated cooldown report',
+            [BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT]: 'Settler choose to resolve cooldown report',
+            [BookingActivityType.SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE]: 'Settler updated cooldown evidence',
+            [BookingActivityType.CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED]: 'Customer marked cooldown resolution as not resolved',
+            [BookingActivityType.COOLDOWN_REPORT_COMPLETED]: 'Cooldown report completed',
+            [BookingActivityType.SETTLER_REJECT_COOLDOWN_REPORT]: 'Settler rejected cooldown report',
+
+            // final booking state
+            [BookingActivityType.BOOKING_COMPLETED]: 'Booking completed',
+
+        };
+        return map[type ?? ''] || message || 'Activity';
+    };
+
+    const renderItem = ({ item, index }: any) => {
+        const isExpanded = expandedIndex === index;
+        const addons = Array.isArray(item.addons) ? item.addons : [];
+        return (
+            <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => toggleExpand(index)}
+                style={styles.row}
+            >
+                <View style={styles.dotColumn}>
+                    <View
+                        style={[
+                            styles.dot,
+                            {
+                                backgroundColor:
+                                    item.actor === 'SETTLER'
+                                        ? COLORS.primary
+                                        : COLORS.secondary,
+                            },
+                        ]}
+                    />
+                </View>
+                <View style={styles.content}>
+                    <Text style={styles.text}>{getReadableType(item.type, item.message)}</Text>
+                    <Text style={styles.timestamp}>
+                        {formatAnyTimestamp(item.timestamp)}
+                    </Text>
+
+                    {isExpanded && (
+                        <View style={styles.detailsContainer}>
+                            {item.type === BookingActivityType.QUOTE_CREATED && (
+                                <View>
+                                    <Text style={styles.subtitle}>Booking Summary:</Text>
+                                    <BookingSummaryCard
+                                        booking={booking}
+                                        selectedAddons={item.addons}
+                                        isEditable={false}
+                                        hideCheckboxes
+                                    />
+                                    <Text style={styles.subtitle}>Notes to Settler with Images:</Text>
+                                    {item.notesToSettlerImageUrls?.length ? (
+                                        <View style={{ flexDirection: 'row', marginVertical: 4 }}>
+                                            {item.notesToSettlerImageUrls.map((uri: string, i: number) => (
+                                                <Image
+                                                    key={i}
+                                                    source={{ uri }}
+                                                    style={styles.thumb}
+                                                />
+                                            ))}
+                                        </View>
+                                    ) : (
+                                        <Text style={styles.subtext}>No images</Text>
+                                    )}
+                                    <Text style={styles.subtext}>
+                                        {item.notesToSettler || 'No notes provided.'}
+                                    </Text>
+                                </View>
+                            )}
+
+                            {item.type === BookingActivityType.NOTES_TO_SETTLER_UPDATED && (
+                                <EvidenceCard
+                                    title="Updated Notes to Settler with Images"
+                                    imageUrls={item.notesToSettlerImageUrls}
+                                    remark={item.notesToSettler}
+                                />
+                            )}
+
+                            {item.type === BookingActivityType.SETTLER_ACCEPT && (
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    {item.settlerProfileImageUrl ? (
+                                        <Image
+                                            source={{ uri: item.settlerProfileImageUrl }}
+                                            style={{ width: 48, height: 48, borderRadius: 24, marginRight: 10, backgroundColor: '#f0f0f0' }}
+                                        />
+                                    ) : (
+                                        <View style={{ width: 48, height: 48, borderRadius: 24, marginRight: 10, backgroundColor: '#f0f0f0', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Text style={{ color: '#999' }}>N/A</Text>
+                                        </View>
+                                    )}
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.text}>
+                                            {(((item.firstName ?? '') + ' ' + (item.lastName ?? '')).trim() || 'Unknown Settler')}
+                                        </Text>
+                                    </View>
+                                </View>
+                            )}
+
+                            {item.type === BookingActivityType.SETTLER_SELECTED && (
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    {item.settlerProfileImageUrl ? (
+                                        <Image
+                                            source={{ uri: item.settlerProfileImageUrl }}
+                                            style={{ width: 48, height: 48, borderRadius: 24, marginRight: 10, backgroundColor: '#f0f0f0' }}
+                                        />
+                                    ) : (
+                                        <View style={{ width: 48, height: 48, borderRadius: 24, marginRight: 10, backgroundColor: '#f0f0f0', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Text style={{ color: '#999' }}>N/A</Text>
+                                        </View>
+                                    )}
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.text}>
+                                            {(((item.settlerFirstName ?? '') + ' ' + (item.settlerLastName ?? '')).trim() || 'Unknown Settler')}
+                                        </Text>
+                                    </View>
+                                </View>
+                            )}
+
+                            {item.type === BookingActivityType.SETTLER_SERVICE_START && (
+                                <View>
+                                    <Text style={{}}>Settler started the service.</Text>
+                                </View>
+                            )}
+
+                            {item.type === BookingActivityType.SETTLER_SERVICE_END && (
+                                <View>
+                                    <Text style={{}}>Settler ended the service.</Text>
+                                </View>
+                            )}
+
+                            {item.type === BookingActivityType.SETTLER_EVIDENCE_SUBMITTED && (
+                                <EvidenceCard
+                                    title="Completion Evidence with Remark"
+                                    imageUrls={item.settlerEvidenceImageUrls}
+                                    remark={item.settlerEvidenceRemark}
+                                />
+                            )}
+
+                            {item.type === BookingActivityType.SETTLER_EVIDENCE_UPDATED && (
+                                <EvidenceCard
+                                    title="Updated Completion Evidence with Remark"
+                                    imageUrls={item.settlerEvidenceImageUrls}
+                                    remark={item.settlerEvidenceRemark}
+                                />
+                            )}
+
+                            {item.type === BookingActivityType.JOB_INCOMPLETE && (
+                                <EvidenceCard
+                                    title="Incompletion Report Evidence"
+                                    imageUrls={item.incompletionReportImageUrls}
+                                    remark={item.incompletionReportRemark}
+                                />
+                            )}
+
+                            {item.type === BookingActivityType.SETTLER_RESOLVE_INCOMPLETION && (
+                                <View>
+                                    <Text style={{}}>Settler attempts to resolve the incompletion.</Text>
+                                </View>
+                            )}
+
+                            {item.type === BookingActivityType.SETTLER_UPDATE_INCOMPLETION_EVIDENCE && (
+                                <EvidenceCard
+                                    title="Updated Incompletion Resolution Evidence"
+                                    imageUrls={item.incompletionResolvedImageUrls}
+                                    remark={item.incompletionResolvedRemark}
+                                />
+                            )}
+
+                            {item.type === BookingActivityType.CUSTOMER_REJECT_INCOMPLETION_RESOLVE && (
+                                <EvidenceCard
+                                    title="Updated Evidence to Counter Incompletion Resolution"
+                                    imageUrls={item.incompletionReportImageUrls}
+                                    remark={item.incompletionReportRemark}
+                                />
+                            )}
+
+                            {item.type === BookingActivityType.SETTLER_REJECT_INCOMPLETION && (
+                                <View>
+                                    <Text style={{}}>Settler not agree to the reported incompletion.</Text>
+                                </View>
+                            )}
+
+                            {item.type === BookingActivityType.CUSTOMER_CONFIRM_COMPLETION && (
+                                <View>
+                                    <Text style={{}}>Customer confirmed the job as completed.</Text>
+                                </View>
+                            )}
+
+                            {item.type === BookingActivityType.COOLDOWN_REPORT_SUBMITTED && (
+                                <EvidenceCard
+                                    title="Evidence for Cooldown Report Submission"
+                                    imageUrls={item.cooldownReportImageUrls}
+                                    remark={item.cooldownReportRemark}
+                                />
+                            )}
+
+                            {item.type === BookingActivityType.CUSTOMER_COOLDOWN_REPORT_UPDATED && (
+                                <EvidenceCard
+                                    title="Updated Evidence for Cooldown Report"
+                                    imageUrls={item.cooldownReportImageUrls}
+                                    remark={item.cooldownReportRemark}
+                                />
+                            )}
+
+                            {item.type === BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT && (
+                                <View>
+                                    <Text style={{}}>Settler attempts to resolve the cooldown report.</Text>
+                                </View>
+                            )}
+
+                            {item.type === BookingActivityType.SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE && (
+                                <EvidenceCard
+                                    title="Updated Cooldown Resolution Evidence"
+                                    imageUrls={item.cooldownResolvedImageUrls}
+                                    remark={item.cooldownResolvedRemark}
+                                />
+                            )}
+
+                            {item.type === BookingActivityType.CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED && (
+                                <EvidenceCard
+                                    title="Updated Evidence to Counter Cooldown Resolution"
+                                    imageUrls={item.cooldownReportImageUrls}
+                                    remark={item.cooldownReportRemark}
+                                />
+                            )}
+
+                            {item.type === BookingActivityType.SETTLER_REJECT_COOLDOWN_REPORT && (
+                                <View>
+                                    <Text style={{}}>Settler not agree to the reported cooldown problem.</Text>
+                                </View>
+                            )}
+
+                            {item.type === BookingActivityType.BOOKING_COMPLETED && (
+                                <View>
+                                    <Text style={{}}>Booking has been completed.</Text>
+                                </View>
+                            )}
+                        </View>
+                    )}
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
+    const data = booking?.timeline?.slice().reverse() || [];
+
+    return (
+        <FlatList
+            data={data}
+            keyExtractor={(_, i) => String(i)}
             contentContainerStyle={styles.scrollContainer}
             refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
-        >
-            <View style={styles.inner}>
-                <Text style={styles.title}>Activity Timeline</Text>
-
-                {booking?.timeline?.length ? (
-                    <View>
-                        {booking.timeline
-                            .slice()
-                            .reverse()
-                            .map((item, idx) => (
-                                <View
-                                    key={item.timestamp ?? item.id ?? idx}
-                                    style={styles.row}
-                                >
-                                    {/* dot column */}
-                                    <View style={styles.dotColumn}>
-                                        <View
-                                            style={[
-                                                styles.dot,
-                                                {
-                                                    backgroundColor:
-                                                        item.actor === 'SETTLER'
-                                                            ? COLORS.primary
-                                                            : COLORS.secondary,
-                                                },
-                                            ]}
-                                        />
-                                    </View>
-
-                                    {/* content */}
-                                    <View style={styles.content}>
-                                        {item.type === 'QUOTE_CREATED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>Booking created.</Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'CUSTOMER_NOTES_UPDATED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Customer updated notes to settler.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'NOTES_TO_SETTLER_UPDATED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Customer updated notes to settler.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'SETTLER_ACCEPT' && (
-                                            <View style={styles.block}>
-                                                <View style={styles.rowWrap}>
-                                                    <Text style={styles.text}>Job accepted by </Text>
-                                                    <TouchableOpacity
-                                                        activeOpacity={0.7}
-                                                        onPress={() => onPressUser?.(item)}
-                                                    >
-                                                        <Text style={styles.userLink}>
-                                                            {item.firstName} {item.lastName}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                </View>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'SETTLER_SELECTED' && (
-                                            <View style={styles.block}>
-                                                <View style={styles.rowWrap}>
-                                                    <Text style={styles.text}>Customer selected </Text>
-                                                    <TouchableOpacity
-                                                        activeOpacity={0.7}
-                                                        onPress={() => onPressUser?.(item)}
-                                                    >
-                                                        <Text style={styles.userLink}>
-                                                            {item.settlerFirstName} {item.settlerLastName}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                    <Text style={styles.text}> as settler.</Text>
-                                                </View>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'SETTLER_SERVICE_START' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>Settler started service.</Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'SETTLER_SERVICE_END' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>Settler ended service.</Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'SETTLER_EVIDENCE_SUBMITTED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Settler submitted {item.evidenceCount} evidence for job
-                                                    completion.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'JOB_INCOMPLETE' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Customer reported job as incomplete.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'CUSTOMER_JOB_INCOMPLETE_UPDATED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Customer updated the incompletion reason.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'CUSTOMER_REJECT_INCOMPLETION_RESOLVE' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Customer rejected settler's resolution for the
-                                                    incompletion report.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'SETTLER_EVIDENCE_UPDATED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Settler updated {item.evidenceCount} evidence for job
-                                                    completion.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'SETTLER_RESOLVE_INCOMPLETION' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Settler incoming to resolve the incompletion report.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type == 'SETTLER_REJECT_INCOMPLETION' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Settler has rejected the incompletion flag.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type == 'SETTLER_UPDATE_INCOMPLETION_EVIDENCE' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Settler has updated evidence to resolve the incompletion
-                                                    flag.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}  
-
-                                        {item.type === 'COOLDOWN_REPORT_SUBMITTED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Customer submitted the cooldown report.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'CUSTOMER_COOLDOWN_REPORT_UPDATED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Customer updated the cooldown report.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'SETTLER_RESOLVE_COOLDOWN_REPORT' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Settler incoming to resolve the cooldown report.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Settler has updated evidence to resolve the cooldown
-                                                    report.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Customer indicated that the cooldown report is not
-                                                    resolved.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'COOLDOWN_REPORT_COMPLETED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Cooldown report has been resolved.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'SETTLER_COOLDOWN_REPORT_REJECTED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Settler has rejected the cooldown report.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}  
-
-
-
-                                        {item.type === 'SETTLER_QUOTE_UPDATED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Settler updated the quote from{' '}
-                                                    <Text style={styles.bold}>RM{item.oldTotal}</Text> to{' '}
-                                                    <Text style={styles.bold}>RM{item.newTotal}</Text>.
-                                                </Text>
-
-                                                {(() => {
-                                                    const addons =
-                                                        (item as any).newAddons ??
-                                                        (item as any).addons ??
-                                                        booking.newAddons ??
-                                                        booking.addons ??
-                                                        [];
-                                                    const count = Array.isArray(addons)
-                                                        ? addons.reduce(
-                                                                (acc: number, addon: any) =>
-                                                                    acc +
-                                                                    (Array.isArray(addon.subOptions)
-                                                                        ? addon.subOptions.length
-                                                                        : 0),
-                                                                0,
-                                                            )
-                                                        : 0;
-                                                    const manualPrice =
-                                                        (item as any).newManualQuotePrice ??
-                                                        (item as any).manualQuotePrice ??
-                                                        booking.newManualQuotePrice ??
-                                                        booking.manualQuotePrice;
-                                                    return (
-                                                        <Text style={styles.text}>
-                                                            Consists of{' '}
-                                                            <Text style={styles.bold}>{count}</Text> selected
-                                                            suboption{count === 1 ? '' : 's'}
-                                                            {manualPrice != null && (
-                                                                <>
-                                                                    {' with a manual quote of '}
-                                                                    <Text style={styles.bold}>RM{manualPrice}. </Text>
-                                                                    {((item as any).isQuoteUpdateSuccessful ?? '') ===
-                                                                    '' ? (
-                                                                        <Text
-                                                                            style={[
-                                                                                styles.badge,
-                                                                                { color: COLORS.secondary },
-                                                                            ]}
-                                                                        >
-                                                                            [Awaiting Customer Response]
-                                                                        </Text>
-                                                                    ) : ((item as any).isQuoteUpdateSuccessful ?? '') ===
-                                                                        'false' ? (
-                                                                        <Text
-                                                                            style={[
-                                                                                styles.badge,
-                                                                                { color: COLORS.danger },
-                                                                            ]}
-                                                                        >
-                                                                            [Customer Rejected]
-                                                                        </Text>
-                                                                    ) : (
-                                                                        <Text
-                                                                            style={[
-                                                                                styles.badge,
-                                                                                { color: COLORS.primary },
-                                                                            ]}
-                                                                        >
-                                                                            [Customer Accepted]
-                                                                        </Text>
-                                                                    )}
-                                                                </>
-                                                            )}
-                                                        </Text>
-                                                    );
-                                                })()}
-
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'CUSTOMER_CONFIRM_COMPLETION' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Customer confirmed job completion.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'JOB_COMPLETED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>{item.message}</Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'BOOKING_COMPLETED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Booking has been marked as completed.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'BOOKING_CANCELLED' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Booking has been cancelled.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'BOOKING_CANCELLED_BY_CUSTOMER' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Booking has been cancelled by customer.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                        {item.type === 'BOOKING_CANCELLED_BY_SETTLER' && (
-                                            <View style={styles.block}>
-                                                <Text style={styles.text}>
-                                                    Booking has been cancelled by settler.
-                                                </Text>
-                                                <Text style={styles.timestamp}>
-                                                    {formatAnyTimestamp(item.timestamp)}
-                                                </Text>
-                                            </View>
-                                        )}
-
-                                    </View>
-                                </View>
-                            ))}
-                    </View>
-                ) : (
-                    <Text style={styles.empty}>No activity recorded yet.</Text>
-                )}
-            </View>
-        </ScrollView>
-    </View>
-);
+            ListHeaderComponent={<Text style={styles.title}>Activity Timeline</Text>}
+            renderItem={renderItem}
+            ListEmptyComponent={
+                <Text style={styles.empty}>No activity recorded yet.</Text>
+            }
+        />
+    );
 }
 
 const styles = StyleSheet.create({
-scrollContainer: { paddingBottom: 70, alignItems: 'center' },
-inner: { marginVertical: 10, width: '100%', paddingHorizontal: 15 },
-title: { fontSize: 16, fontWeight: 'bold', marginBottom: 10 },
-row: { marginBottom: 16, flexDirection: 'row' },
-dotColumn: { width: 24, alignItems: 'center' },
-dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginTop: 4,
-    zIndex: 2,
-},
-content: { flex: 1, paddingLeft: 6 },
-block: { marginBottom: 6 },
-text: { color: '#333', fontSize: 14 },
-timestamp: { color: '#999', fontSize: 12 },
-rowWrap: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
-userLink: {
-    textDecorationLine: 'underline',
-    fontWeight: 'bold',
-    color: '#333',
-    fontSize: 14,
-},
-bold: { fontWeight: 'bold' },
-empty: { color: '#999' },
-badge: { fontWeight: 'bold' },
+    scrollContainer: { padding: 15, paddingBottom: 80 },
+    title: { fontSize: 16, fontWeight: 'bold', marginBottom: 10 },
+    row: {
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        marginBottom: 14,
+        padding: 10,
+        shadowColor: '#000',
+        shadowOpacity: 0.05,
+        shadowOffset: { width: 0, height: 1 },
+        shadowRadius: 2,
+        elevation: 1,
+    },
+    dotColumn: { width: 24, alignItems: 'center' },
+    dot: { width: 10, height: 10, borderRadius: 5, marginTop: 6 },
+    content: { flex: 1, paddingLeft: 6 },
+    text: { fontSize: 14, fontWeight: '600', color: '#333' },
+    timestamp: { fontSize: 12, color: '#999', marginBottom: 4 },
+    detailsContainer: {
+        marginTop: 8,
+        borderTopWidth: 1,
+        borderTopColor: '#eee',
+        paddingTop: 6,
+    },
+    subtitle: { fontWeight: '600', marginTop: 4, marginBottom: 4 },
+    subtext: { color: '#666', fontSize: 13 },
+    thumb: {
+        width: 72,
+        height: 54,
+        borderRadius: 6,
+        marginRight: 6,
+        backgroundColor: '#f0f0f0',
+    },
+    empty: { color: '#999', textAlign: 'center', marginTop: 40 },
 });

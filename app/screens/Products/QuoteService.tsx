@@ -23,9 +23,11 @@ import { DynamicOption, updateCatalogue } from "../../services/CatalogueServices
 import { fetchReviewsByCatalogueId, Review, ReviewWithUser } from "../../services/ReviewServices";
 import ImageViewer from "../../components/ImageViewer";
 import FeedbackPills from "../../components/FeedbackPills";
-import { BookingActivityType, BookingActorType, createBooking } from "../../services/BookingServices";
+import { BookingActivityType, BookingActorType, createBooking, uploadNoteToSettlerImages, uploadPaymentEvidenceImages } from "../../services/BookingServices";
 import { generateId } from "../../helper/HelperFunctions";
 import AttachmentForm from "../../components/Forms/AttachmentForm";
+import { addDoc, arrayUnion, collection, doc, updateDoc } from "firebase/firestore";
+import { db } from "../../services/firebaseConfig";
 
 type QuoteServiceScreenProps = StackScreenProps<RootStackParamList, "QuoteService">;
 
@@ -296,16 +298,6 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
       settlerEvidenceImageUrls: [],
       settlerEvidenceRemark: '',
 
-      // timeline
-      timeline: [
-        {
-          id: generateId(),
-          type: BookingActivityType.QUOTE_CREATED,
-          actor: BookingActorType.CUSTOMER,
-          timestamp: new Date(),
-        },
-      ],
-
       //generate random collection and return codes
       serviceStartCode: '',
       serviceEndCode: '',
@@ -314,22 +306,46 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
     };
 
     try {
-      const bookingId = await createBooking(bookingData);
-      if (bookingId) {
-        try {
-          await updateCatalogue(service.id || '', { bookingsCount: (service.bookingsCount || 0) + 1 });
-        } catch (err) {
-          console.error('Failed to update catalogue bookingsCount:', err);
-        }
-        Alert.alert('Success', `Booking created successfully with ID: ${bookingId}`);
+      const bookingRef = collection(db, 'bookings');
+
+      // Step 1: Create the booking first (without uploading images yet)
+      const docRef = await addDoc(bookingRef, bookingData);
+      console.log('Booking created with ID:', docRef.id);
+
+      // Step 2: If notesToSettlerImageUrls exist (local file URIs or base64)
+      if (bookingData.notesToSettlerImageUrls && bookingData.notesToSettlerImageUrls.length > 0) {
+        // Upload the images and get back URLs
+        const uploadedUrls = await uploadNoteToSettlerImages(docRef.id, bookingData.notesToSettlerImageUrls);
+
+        const paymentEvidenceUrls = bookingData.paymentEvidence && bookingData.paymentEvidence.length > 0
+          ? await uploadPaymentEvidenceImages(docRef.id, bookingData.paymentEvidence)
+          : [];
+
+        // Step 3: Update the same booking doc with those URLs
+        await updateDoc(doc(db, 'bookings', docRef.id), {
+          notesToSettlerImageUrls: uploadedUrls,
+          paymentEvidence: paymentEvidenceUrls,
+          updatedAt: new Date(),
+
+          timeline: arrayUnion({
+            id: generateId(),
+            type: BookingActivityType.QUOTE_CREATED,
+            actor: BookingActorType.CUSTOMER,
+            timestamp: new Date(),
+
+            // additional info
+            addons: bookingData.addons,
+            notesToSettlerImageUrls: uploadedUrls,
+            notesToSettler: notesToSettler,
+            paymentEvidence: paymentEvidenceUrls,
+          }),
+        });
+        await updateCatalogue(service.id || '', { bookingsCount: (service.bookingsCount || 0) + 1 });
         navigation.navigate('PaymentSuccess', {
-          bookingId: bookingId,
+          bookingId: docRef.id,
           image: service.imageUrls[0],
         });
-      } else {
-        Alert.alert('Error', 'Booking creation returned no id.');
-        console.error('createBooking returned falsy bookingId', bookingId);
-      }
+      };
     } catch (err: any) {
       console.error('createBooking error:', err);
       Alert.alert('Error', err?.message || 'Failed to create booking. Check logs for details.');
@@ -369,7 +385,7 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
 
 
   return (
-    
+
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <View>
         <View style={{ zIndex: 1, height: 60, backgroundColor: COLORS.background, borderBottomColor: COLORS.card, borderBottomWidth: 1 }}>
@@ -811,43 +827,43 @@ const QuoteService = ({ navigation, route }: QuoteServiceScreenProps) => {
               {/* Proof of Payment */}
               <View style={{ marginBottom: 20, marginTop: 10 }}>
                 <View style={{ padding: 10 }}></View>
-                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: COLORS.title, marginBottom: 6 }}>
-                    Pay via Online Transfer
-                  </Text>
-                  <Text style={{ fontSize: 14, color: COLORS.black, marginBottom: 10 }}>
-                    Please transfer the total amount to the bank account below. After transfer, upload your payment evidence using the "Proof of Payment" form.
-                  </Text>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: COLORS.title, marginBottom: 6 }}>
+                  Pay via Online Transfer
+                </Text>
+                <Text style={{ fontSize: 14, color: COLORS.black, marginBottom: 10 }}>
+                  Please transfer the total amount to the bank account below. After transfer, upload your payment evidence using the "Proof of Payment" form.
+                </Text>
 
-                  <View style={{ borderWidth: 1, borderColor: COLORS.blackLight, borderRadius: 8, padding: 12, backgroundColor: COLORS.card }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
-                      <View style={{ flex: 1, paddingRight: 10 }}>
-                        <Text style={{ fontSize: 14, color: COLORS.blackLight, marginBottom: 4 }}>Account Name</Text>
-                        <Text style={{ fontSize: 16, fontWeight: '600', color: COLORS.title }}>Settisfy Global</Text>
-                      </View>
-                      <View style={{ flex: 1, paddingLeft: 10 }}>
-                        <Text style={{ fontSize: 14, color: COLORS.blackLight, marginBottom: 4, textAlign: 'right' }}>Bank</Text>
-                        <Text style={{ fontSize: 16, fontWeight: '600', color: COLORS.title, textAlign: 'right' }}>Hong Leong Bank</Text>
-                      </View>
+                <View style={{ borderWidth: 1, borderColor: COLORS.blackLight, borderRadius: 8, padding: 12, backgroundColor: COLORS.card }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <View style={{ flex: 1, paddingRight: 10 }}>
+                      <Text style={{ fontSize: 14, color: COLORS.blackLight, marginBottom: 4 }}>Account Name</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '600', color: COLORS.title }}>Settisfy Global</Text>
                     </View>
-
-                    <Text style={{ fontSize: 14, color: COLORS.blackLight, marginBottom: 4 }}>Account Number</Text>
-                    <Text style={{ fontSize: 16, fontWeight: '600', color: COLORS.title, marginBottom: 12 }}>1234 5678 9012</Text>
-
-                    <TouchableOpacity
-                      onPress={() => {
-                        Alert.alert('Copy', 'Account number copied to clipboard. Please paste it in your bank app to transfer.');
-                      }}
-                      style={{
-                        backgroundColor: COLORS.primary,
-                        paddingVertical: 10,
-                        borderRadius: 6,
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Text style={{ color: COLORS.white, fontWeight: 'bold' }}>Copy Account Number</Text>
-                    </TouchableOpacity>
+                    <View style={{ flex: 1, paddingLeft: 10 }}>
+                      <Text style={{ fontSize: 14, color: COLORS.blackLight, marginBottom: 4, textAlign: 'right' }}>Bank</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '600', color: COLORS.title, textAlign: 'right' }}>Hong Leong Bank</Text>
+                    </View>
                   </View>
+
+                  <Text style={{ fontSize: 14, color: COLORS.blackLight, marginBottom: 4 }}>Account Number</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: COLORS.title, marginBottom: 12 }}>1234 5678 9012</Text>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      Alert.alert('Copy', 'Account number copied to clipboard. Please paste it in your bank app to transfer.');
+                    }}
+                    style={{
+                      backgroundColor: COLORS.primary,
+                      paddingVertical: 10,
+                      borderRadius: 6,
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text style={{ color: COLORS.white, fontWeight: 'bold' }}>Copy Account Number</Text>
+                  </TouchableOpacity>
                 </View>
+              </View>
               <AttachmentForm
                 title="Proof of Payment"
                 description="Upload your payment evidence here."

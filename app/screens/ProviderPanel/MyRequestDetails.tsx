@@ -587,6 +587,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                             // additional info
                                                                             settlerId: user?.uid,
                                                                             settlerServiceId: settlerServiceId,
+                                                                            settlerProfileImageUrl: user?.profileImageUrl,
                                                                             firstName: user?.firstName,
                                                                             lastName: user?.lastName,
                                                                         }),
@@ -1139,14 +1140,13 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                 settlerEvidenceRemark: data.remark,
                                                                 timeline: arrayUnion({
                                                                     id: generateId(),
-                                                                    type: BookingActivityType.SETTLER_EVIDENCE_SUBMITTED,
+                                                                    type: booking.settlerEvidenceImageUrls && booking.settlerEvidenceImageUrls.length > 0 ? BookingActivityType.SETTLER_EVIDENCE_UPDATED : BookingActivityType.SETTLER_EVIDENCE_SUBMITTED,
                                                                     actor: BookingActorType.SETTLER,
                                                                     timestamp: new Date(),
 
                                                                     // additional info
-                                                                    evidenceCount: data.images.length,
-                                                                    evidenceImage: data.images,
-                                                                    evidenceRemark: data.remark,
+                                                                    settlerEvidenceImageUrls: data.images,
+                                                                    settlerEvidenceRemark: data.remark,
                                                                 }),
 
                                                             });
@@ -1298,7 +1298,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                             </TouchableOpacity>
                                         )}
                                     />
-                                    {booking.status <= 11 && user?.uid === booking.settlerId && (
+                                    {(booking.status <= 11 && booking.status !== 6) && user?.uid === booking.settlerId && (
                                         <View style={{ marginTop: 40 }} >
                                             <TouchableOpacity
                                                 activeOpacity={0.8}
@@ -1560,7 +1560,6 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
             {subScreenIndex === 3 && (
                 <BookingTimeline
                     booking={booking}
-                    onPressUser={(item) => console.log(item)}
                     onRefresh={onRefresh}
                 />
             )}
