@@ -24,6 +24,7 @@ import AttachmentForm from '../../components/Forms/AttachmentForm';
 import BookingSummaryCard from '../../components/BookingSummaryCard';
 import BookingTimeline from '../../components/BookingTimeline';
 import WarningCard from '../../components/Card/WarningCard';
+import InfoBar from '../../components/InfoBar';
 
 type MyRequestDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyRequestDetails'>;
 
@@ -99,33 +100,6 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
         multipleSelect: false, // Set appropriately if you have this info
     }));
 
-    const handleImageSelect = () => {
-        if (settlerEvidenceImageUrls.length >= 5) {
-            Alert.alert('Limit Reached', 'You can only select up to 5 images.');
-            return;
-        }
-
-        if (Platform.OS === 'ios') {
-            ActionSheetIOS.showActionSheetWithOptions(
-                {
-                    options: ['Cancel', 'Choose from Gallery', 'Use Camera'],
-                    cancelButtonIndex: 0,
-                },
-                (buttonIndex) => {
-                    if (buttonIndex === 1) selectImages();
-                    else if (buttonIndex === 2) cameraImage();
-                }
-            );
-        } else {
-            Alert.alert('Add Photo', 'Choose an option', [
-                { text: 'Choose from Gallery', onPress: selectImages },
-                { text: 'Use Camera', onPress: cameraImage },
-                { text: 'Cancel', style: 'cancel' },
-            ]);
-        }
-    };
-
-
 
     function toggleAddon(category: DynamicOption, option: SubOption) {
         setSelectedAddons((prev) => {
@@ -161,75 +135,6 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
             .reduce((sum, o) => sum + Number(o.additionalPrice || 0), 0);
 
         return Number(basePrice) + Number(addonsTotal) + Number(newManualQuotePrice || 0);
-    };
-
-
-
-
-    // camera tools
-    const selectImages = async () => {
-        const options = {
-            mediaType: 'photo' as const,
-            includeBase64: false,
-            maxHeight: 2000,
-            maxWidth: 2000,
-            selectionLimit: 5 - settlerEvidenceImageUrls.length, // Limit the selection to the remaining slots
-        };
-
-        launchImageLibrary(options, async (response) => {
-            if (response.didCancel) {
-                console.log('User cancelled image picker');
-            } else if (response.errorMessage) {
-                console.log('Image picker error: ', response.errorMessage);
-            } else {
-                const selectedImages = response.assets?.map(asset => asset.uri).filter(uri => uri !== undefined) as string[] || [];
-                setSettlerEvidenceImageUrls((prevImages) => {
-                    const updatedImages = [...prevImages, ...selectedImages];
-                    setSelectedSettlerEvidenceImageUrl(updatedImages[0]);
-                    return updatedImages;
-                });
-            }
-        });
-    };
-
-    // Function to handle image selection (Gallery & Camera)
-    const cameraImage = async () => {
-        const options = {
-            mediaType: 'photo' as const,
-            includeBase64: false,
-            maxHeight: 2000,
-            maxWidth: 2000,
-        };
-
-        if (settlerEvidenceImageUrls.length >= 5) {
-            Alert.alert('You can only select up to 5 images.');
-            return;
-        }
-
-        launchCamera(options, async (response: any) => {
-            if (response.didCancel) {
-                console.log('User cancelled camera');
-            } else if (response.errorCode) {
-                console.log('Camera Error: ', response.errorMessage);
-            } else {
-                let newImageUri = response.assets?.[0]?.uri;
-                if (newImageUri) {
-                    setSettlerEvidenceImageUrls((prevImages) => {
-                        const updatedImages = [...prevImages, newImageUri];
-                        setSelectedSettlerEvidenceImageUrl(updatedImages[0]);
-                        return updatedImages;
-                    });
-                }
-            }
-        });
-    };
-
-    const deleteImage = () => {
-        if (!selectedNotesToSettlerImageUrl) return;
-
-        const updatedImages = settlerEvidenceImageUrls.filter((img) => img !== selectedSettlerEvidenceImageUrl);
-        setSettlerEvidenceImageUrls(updatedImages);
-        setSelectedSettlerEvidenceImageUrl(updatedImages.length > 0 ? updatedImages[0] : null);
     };
 
     const fetchSelectedBookingData = async () => {
@@ -354,6 +259,9 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
     // 7++ : exception handling
     // 7: update quote
     // 8: incomplete flag by customer
+    // 9: cooldown report by customer
+    // 10: review completed
+
 
     const steps = [
         { label: "Booking\nCreated", date: 'Job\nbroadcast', completed: (status ?? 0) >= 0 },
@@ -455,6 +363,14 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                         >
                             <View style={[GlobalStyleSheet.container, { paddingHorizontal: 10, paddingBottom: 40 }]}>
                                 {/* notification section */}
+                                {booking.status === 1 && booking.settlerId === user?.uid && (
+                                    <InfoBar
+                                        title="Congratulations!"
+                                        subtitle="You have been selected for this job."
+                                        icon="information-circle-outline"
+                                    />
+                                )}
+
                                 {/* for Cooldown Reported */}
                                 {booking.cooldownStatus === 'CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED' && booking.cooldownReportImageUrls && booking.cooldownReportRemark && (
                                     <View
@@ -525,6 +441,12 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                 )}
 
                                 {/* for Incompletion Reported */}
+                                {booking.incompletionStatus === BookingActivityType.CUSTOMER_REJECT_INCOMPLETION_RESOLVE && (
+                                    <InfoBar
+                                        title="Your incompletion report has been rejected."
+                                        icon="information-circle-outline"
+                                    />
+                                )}
                                 {booking.incompletionReportImageUrls && booking.incompletionReportRemark && (
                                     <WarningCard
                                         text={(booking.incompletionStatus === 'CUSTOMER_JOB_INCOMPLETE_UPDATED') ? 'Incompletion Report - Updated' : 'Incompletion Reported'}
@@ -784,6 +706,10 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>Message Customer</Text>
                                             </TouchableOpacity>
                                         </View>
+                                    ) : status === 6 ? (
+                                        <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                            <Text style={{ fontWeight: 'bold' }}>Your job is now completed.</Text>
+                                        </View>
                                     ) : status === 7 ? (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
                                             <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Quotation Update Sent</Text>
@@ -869,10 +795,20 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         width: '50%',
                                                         alignItems: 'center',
                                                     }}
-                                                    onPress={async () => await updateBooking(booking.id!, {
-                                                        incompletionStatus: BookingActivityType.SETTLER_REJECT_INCOMPLETION,
-                                                        status: 4
-                                                    })}>
+                                                    onPress={async () => {
+                                                        await updateBooking(booking.id!, {
+                                                            incompletionStatus: BookingActivityType.SETTLER_REJECT_INCOMPLETION,
+                                                            status: 4,
+
+                                                            timeline: arrayUnion({
+                                                                id: generateId(),
+                                                                type: BookingActivityType.SETTLER_REJECT_INCOMPLETION,
+                                                                actor: BookingActorType.SETTLER,
+                                                                timestamp: new Date(),
+                                                            }),
+                                                        })
+                                                        onRefresh();
+                                                    }}>
                                                     <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Reject</Text>
                                                 </TouchableOpacity>
                                             </View>
@@ -935,7 +871,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     }}
                                                     onPress={async () => {
                                                         await updateBooking(booking.id!, {
-                                                            status: 9.1,
+                                                            status: 9.2,
                                                             cooldownStatus: BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT,
                                                             timeline: arrayUnion({
                                                                 id: generateId(),
@@ -962,12 +898,20 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                         width: '50%',
                                                         alignItems: 'center',
                                                     }}
-                                                    onPress={() => {
-                                                        onClick(3);
-                                                        onClickHeader(3);
-                                                        setActiveIndex(3);
-                                                    }}
-                                                >
+                                                    onPress={async () => {
+                                                        await updateBooking(booking.id!, {
+                                                            cooldownStatus: BookingActivityType.SETTLER_REJECT_COOLDOWN_REPORT,
+                                                            status: 5,
+
+                                                            timeline: arrayUnion({
+                                                                id: generateId(),
+                                                                type: BookingActivityType.SETTLER_REJECT_COOLDOWN_REPORT,
+                                                                actor: BookingActorType.SETTLER,
+                                                                timestamp: new Date(),
+                                                            })
+                                                        })
+                                                        onRefresh();
+                                                    }}>
                                                     <Text style={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Reject</Text>
                                                 </TouchableOpacity>
                                             </View>
@@ -1014,64 +958,93 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                 <Text style={{ color: 'white', fontWeight: 'bold' }}>View Problem Report</Text>
                                             </TouchableOpacity>
                                         </View>
+                                    ) : status === 9.2 ? (
+                                        <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                            <Text style={{ fontWeight: 'bold' }}>You're Going to Resolve the Cooldown Report</Text>
+                                            <Text style={{ fontSize: 13, color: COLORS.blackLight2, textAlign: 'center', paddingBottom: 10 }}>Upload the completion evidence in this section below. Click this button below.</Text>
+                                            <TouchableOpacity
+                                                style={{
+                                                    backgroundColor: COLORS.primary,
+                                                    padding: 10,
+                                                    borderRadius: 10,
+                                                    marginVertical: 10,
+                                                    width: '80%',
+                                                    alignItems: 'center',
+                                                }}
+                                                onPress={async () => {
+                                                    onClick(4);
+                                                    onClickHeader(4);
+                                                    setActiveIndex(4);
+                                                }}
+                                            >
+                                                <Text style={{ color: 'white', fontWeight: 'bold' }}>View Problem Report</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    ) : booking.settlerId !== '' && booking.settlerId !== user?.uid ? (
+                                        <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
+                                            <Text style={{ fontWeight: 'bold' }}>Sorry the job already taken.</Text>
+                                        </View>
                                     ) : (
                                         <View style={{ width: "100%", alignItems: "center", justifyContent: "center" }}>
-                                            <Text style={{ fontWeight: 'bold' }}>Your job is now completed.</Text>
+                                            <Text style={{ fontWeight: 'bold' }}>Unknown status: {booking.status}</Text>
                                         </View>
                                     )
                                     }
                                 </View>
+
                                 {/* Customer Details Card */}
-                                <View style={{ width: '100%', paddingHorizontal: 15, borderRadius: 20, borderColor: COLORS.blackLight, borderWidth: 1, marginBottom: 20 }}>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', marginVertical: 10 }}>
-                                        <View style={{ flex: 1, alignItems: 'center', paddingLeft: 10 }}>
-                                            {
-                                                customer?.profileImageUrl ? (
-                                                    <Image
-                                                        source={{ uri: customer.profileImageUrl }}
-                                                        style={{
-                                                            width: 60,
-                                                            height: 60,
-                                                            borderRadius: 20,
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <View
-                                                        style={{
-                                                            width: 60,
-                                                            height: 60,
-                                                            borderRadius: 20,
-                                                            backgroundColor: COLORS.card,
-                                                            justifyContent: 'center',
-                                                            alignItems: 'center',
-                                                        }}
-                                                    >
-                                                        <Ionicons name="person" size={30} color={COLORS.blackLight} />
+                                {booking.settlerId !== '' && booking.settlerId === user?.uid && (
+                                    <View style={{ width: '100%', paddingHorizontal: 15, borderRadius: 20, borderColor: COLORS.blackLight, borderWidth: 1, marginBottom: 20 }}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', marginVertical: 10 }}>
+                                            <View style={{ flex: 1, alignItems: 'center', paddingLeft: 10 }}>
+                                                {
+                                                    customer?.profileImageUrl ? (
+                                                        <Image
+                                                            source={{ uri: customer.profileImageUrl }}
+                                                            style={{
+                                                                width: 60,
+                                                                height: 60,
+                                                                borderRadius: 20,
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <View
+                                                            style={{
+                                                                width: 60,
+                                                                height: 60,
+                                                                borderRadius: 20,
+                                                                backgroundColor: COLORS.card,
+                                                                justifyContent: 'center',
+                                                                alignItems: 'center',
+                                                            }}
+                                                        >
+                                                            <Ionicons name="person" size={30} color={COLORS.blackLight} />
+                                                        </View>
+                                                    )
+                                                }
+                                            </View>
+                                            <View style={{ flex: 7, paddingLeft: 20 }}>
+                                                <TouchableOpacity onPress={() => navigation.navigate('QuoteService', { service: booking.catalogueService })}>
+                                                    <View style={{ width: SIZES.width * 0.63 }}>
+                                                        <Text style={{ fontSize: 17, fontWeight: 'bold', color: COLORS.black }} numberOfLines={1} ellipsizeMode="tail">Settling for: {booking.firstName} {booking.lastName}</Text>
                                                     </View>
-                                                )
-                                            }
-                                        </View>
-                                        <View style={{ flex: 7, paddingLeft: 20 }}>
-                                            <TouchableOpacity onPress={() => navigation.navigate('QuoteService', { service: booking.catalogueService })}>
-                                                <View style={{ width: SIZES.width * 0.63 }}>
-                                                    <Text style={{ fontSize: 17, fontWeight: 'bold', color: COLORS.black }} numberOfLines={1} ellipsizeMode="tail">Settling for: {booking.firstName} {booking.lastName}</Text>
-                                                </View>
+                                                </TouchableOpacity>
+                                                <Text style={{ fontSize: 14, color: COLORS.black }}>4.5 ratings</Text>
+                                            </View>
+                                            <TouchableOpacity
+                                                onPress={() => { if (user && customer) handleChat(user.uid, customer.uid) }}
+                                                style={{
+                                                    backgroundColor: COLORS.borderColor,
+                                                    padding: 15,
+                                                    borderRadius: 10,
+                                                }}
+                                            >
+                                                <Ionicons name="chatbubble-ellipses-outline" size={24} color={COLORS.blackLight2} />
                                             </TouchableOpacity>
-                                            <Text style={{ fontSize: 14, color: COLORS.black }}>4.5 ratings</Text>
                                         </View>
-                                        <TouchableOpacity
-                                            onPress={() => { if (user && customer) handleChat(user.uid, customer.uid) }}
-                                            style={{
-                                                backgroundColor: COLORS.borderColor,
-                                                padding: 15,
-                                                borderRadius: 10,
-                                            }}
-                                        >
-                                            <Ionicons name="chatbubble-ellipses-outline" size={24} color={COLORS.blackLight2} />
-                                        </TouchableOpacity>
                                     </View>
-                                </View>
-                                <View style={[GlobalStyleSheet.line]} />
+                                )}
+                                <View style={[GlobalStyleSheet.line, { marginTop: 10 }]} />
                                 <ScrollView
                                     ref={scrollViewTabHeader}
                                     horizontal
@@ -1172,7 +1145,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                 initialImages={booking.incompletionReportImageUrls || []}
                                                                 initialRemark={booking.incompletionReportRemark || ''}
                                                             />
-                                                            {booking.incompletionStatus && (
+                                                            {(booking.incompletionStatus === BookingActivityType.SETTLER_RESOLVE_INCOMPLETION || booking.incompletionStatus === BookingActivityType.SETTLER_UPDATE_INCOMPLETION_EVIDENCE || booking.incompletionStatus === BookingActivityType.CUSTOMER_REJECT_INCOMPLETION_RESOLVE || booking.incompletionStatus === BookingActivityType.SETTLER_REJECT_INCOMPLETION) && (
                                                                 <View>
                                                                     <View style={[GlobalStyleSheet.line, { marginTop: 20 }]} />
                                                                     <AttachmentForm
@@ -1182,7 +1155,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                         initialImages={booking.incompletionResolvedImageUrls || []}
                                                                         initialRemark={booking.incompletionResolvedRemark || ''}
                                                                         buttonText={(booking.incompletionResolvedImageUrls && booking.incompletionResolvedImageUrls.length > 0) || (booking.incompletionResolvedRemark && booking.incompletionResolvedRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
-                                                                        isEditable={true}
+                                                                        isEditable={booking.incompletionStatus === BookingActivityType.SETTLER_RESOLVE_INCOMPLETION ? true : false}
+                                                                        showSubmitButton={booking.incompletionStatus === BookingActivityType.SETTLER_RESOLVE_INCOMPLETION ? true : false}
                                                                         onSubmit={async (data) => {
                                                                             await uploadImageIncompletionResolveEvidence(booking.id!, data.images ?? []).then((urls => {
                                                                                 data.images = urls;
@@ -1226,7 +1200,7 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                 initialImages={booking.cooldownReportImageUrls || []}
                                                                 initialRemark={booking.cooldownReportRemark || ''}
                                                             />
-                                                            {booking.cooldownStatus && (
+                                                            {(booking.cooldownStatus === BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT || booking.cooldownStatus === BookingActivityType.SETTLER_UPDATE_COOLDOWN_REPORT_EVIDENCE || booking.cooldownStatus === BookingActivityType.CUSTOMER_COOLDOWN_REPORT_NOT_RESOLVED || booking.cooldownStatus === BookingActivityType.SETTLER_REJECT_COOLDOWN_REPORT) && (
                                                                 <View>
                                                                     <View style={[GlobalStyleSheet.line, { marginTop: 20 }]} />
                                                                     <AttachmentForm
@@ -1236,7 +1210,8 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                                         initialImages={booking.cooldownResolvedImageUrls || []}
                                                                         initialRemark={booking.cooldownResolvedRemark || ''}
                                                                         buttonText={(booking.cooldownResolvedImageUrls && booking.cooldownResolvedImageUrls.length > 0) || (booking.cooldownResolvedRemark && booking.cooldownResolvedRemark.length > 0) ? 'Update Evidence' : 'Submit Evidence'}
-                                                                        isEditable={true}
+                                                                        isEditable={booking.cooldownStatus === BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT ? true : false}
+                                                                        showSubmitButton={booking.cooldownStatus === BookingActivityType.SETTLER_RESOLVE_COOLDOWN_REPORT ? true : false}
                                                                         onSubmit={async (data) => {
                                                                             await uploadImagesCooldownReportEvidence(booking.id!, data.images ?? []).then((urls => {
                                                                                 data.images = urls;

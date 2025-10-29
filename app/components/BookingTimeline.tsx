@@ -333,7 +333,7 @@ return (
                                             </View>
                                         )}
 
-                                        {item.type === 'COOLDOWN_REPORT_REJECTED' && (
+                                        {item.type === 'SETTLER_COOLDOWN_REPORT_REJECTED' && (
                                             <View style={styles.block}>
                                                 <Text style={styles.text}>
                                                     Settler has rejected the cooldown report.

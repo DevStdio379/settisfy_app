@@ -116,7 +116,7 @@ const BookingSummaryCard: React.FC<Props> = ({
     return (
         <View style={{ width: '100%', paddingTop: 20, gap: 10 }}>
             {/* Product Info */}
-            <View style={{ flexDirection: 'row', marginBottom: 20 }}>
+            <View style={{ flexDirection: 'row', marginBottom: 10 }}>
                 <Image source={{ uri: images[0] }} style={{ width: 100, height: 100, borderRadius: 8, marginRight: 16 }} />
                 <View style={{ flex: 1, marginTop: 5 }}>
                     <Text style={{ fontSize: 16, marginBottom: 5 }}>
@@ -137,6 +137,11 @@ const BookingSummaryCard: React.FC<Props> = ({
                 </View>
             </View>
 
+            <View style={GlobalStyleSheet.line} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+                <Text style={{ fontSize: 14, color: '#333' }}>Booking ID</Text>
+                <Text style={{ fontSize: 14, fontWeight: 'bold' }}>{booking.id}</Text>
+            </View>
             <View style={GlobalStyleSheet.line} />
 
             {/* Base Price */}

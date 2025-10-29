@@ -175,7 +175,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                 customerCreateAt: new Date(),
             }, booking.catalogueService.id || 'undefined');
 
-            await updateBooking(booking.id || '', { status: 6 });
+            await updateBooking(booking.id || '', { status: 10 });
             // updating ratings for catalogue & settler
 
             const selectedCatalogue = await fetchSelectedCatalogue(booking.catalogueService.id || '');
@@ -237,7 +237,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                         </View>
                     </View>
                 </View>
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, paddingBottom: 70, alignItems: 'flex-start' }}>
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, paddingBottom: 400, alignItems: 'flex-start' }}>
                     <View style={[GlobalStyleSheet.container, { paddingHorizontal: 15 }]}>
                         <Text style={{ fontSize: 24, fontWeight: 'bold', color: COLORS.black, paddingTop: 50 }}>Rate your service experience</Text>
                         <Text style={{ fontSize: 16, color: COLORS.black, paddingTop: 10, paddingBottom: 20 }}>Let us know your overall service experience</Text>
@@ -278,7 +278,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                             Other Comments<Text style={{ fontSize: 12, color: COLORS.blackLight2 }}> (optional)</Text>
                         </Text>
                         <Input
-                            readOnly={booking.status === 6 ? true : false}
+                            readOnly={booking.status !== 6 ? true : false}
                             onFocus={() => setisFocused1(true)}
                             onBlur={() => setisFocused1(false)}
                             isFocused={isFocused1}
@@ -330,7 +330,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                     />
 
                                     {/* Delete Button */}
-                                    {booking.status !== 6 && (
+                                    {booking.status === 6 && (
                                         <TouchableOpacity
                                             onPress={() => deleteImage()}
                                             style={{
@@ -371,7 +371,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                         ))}
 
                                         {/* Small "+" box — only visible if less than 5 images */}
-                                        {customerReviewImageUrls.length < 5 && booking.status !== 6 && (
+                                        {customerReviewImageUrls.length < 5 && booking.status === 6 && (
                                             <TouchableOpacity
                                                 onPress={handleImageSelect}
                                                 activeOpacity={0.8}
@@ -416,7 +416,7 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                 </TouchableOpacity>
                             )}
                         </View>
-                        {booking.status !== 6 && (
+                        {booking.status === 6 && (
                             <View style={{ paddingTop: 20 }}>
                                 <TouchableOpacity
                                     style={{
@@ -427,9 +427,8 @@ const BookingAddReview = ({ navigation, route }: BookingAddReviewScreenProps) =>
                                         justifyContent: 'center',
                                         width: '100%',
                                     }}
-                                    onPress={() => {
-
-                                        handleReview();
+                                    onPress={async () => {
+                                        await handleReview();
                                         navigation.reset({
                                             index: 0,
                                             routes: [{ name: 'BottomNavigation', params: { screen: 'MyBookings' } }],
