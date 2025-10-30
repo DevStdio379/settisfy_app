@@ -239,19 +239,36 @@ const Profile = ({ navigation }: ProfileScreenProps) => {
                             <Ionicons name='chevron-forward-outline' size={30} color={COLORS.blackLight} />
                         </View>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                        activeOpacity={0.8}
-                        onPress={() => navigation.navigate('AddressBook')}>
-                        <View style={[GlobalStyleSheet.flexcenter, { width: '100%', gap: 20, justifyContent: 'space-between', marginBottom: 15, alignItems: 'center' }]} >
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }} >
-                                <View style={[styles.cardimg]} >
-                                    <Ionicons name='compass' size={30} color={colors.title} />
+                    {user?.accountType === 'customer' && (
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() => navigation.navigate('AddressBook')}>
+                            <View style={[GlobalStyleSheet.flexcenter, { width: '100%', gap: 20, justifyContent: 'space-between', marginBottom: 15, alignItems: 'center' }]} >
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }} >
+                                    <View style={[styles.cardimg]} >
+                                        <Ionicons name='compass' size={30} color={colors.title} />
+                                    </View>
+                                    <Text style={{ fontSize: 16, color: colors.title, fontWeight: 'bold' }}>Address Book</Text>
                                 </View>
-                                <Text style={{ fontSize: 16, color: colors.title, fontWeight: 'bold' }}>Address Book</Text>
+                                <Ionicons name='chevron-forward-outline' size={30} color={COLORS.blackLight} />
                             </View>
-                            <Ionicons name='chevron-forward-outline' size={30} color={COLORS.blackLight} />
-                        </View>
-                    </TouchableOpacity>
+                        </TouchableOpacity>
+                    )}
+                    {user?.accountType === 'settler' && (
+                        <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() => navigation.navigate('CompanyInformation')}>
+                            <View style={[GlobalStyleSheet.flexcenter, { width: '100%', gap: 20, justifyContent: 'space-between', marginBottom: 15, alignItems: 'center' }]} >
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }} >
+                                    <View style={[styles.cardimg]} >
+                                        <Ionicons name='business' size={30} color={colors.title} />
+                                    </View>
+                                    <Text style={{ fontSize: 16, color: colors.title, fontWeight: 'bold' }}>Company Information</Text>
+                                </View>
+                                <Ionicons name='chevron-forward-outline' size={30} color={COLORS.blackLight} />
+                            </View>
+                        </TouchableOpacity>
+                    )}
                     <TouchableOpacity
                         activeOpacity={0.8}
                         onPress={() => navigation.navigate('PaymentBook')}>

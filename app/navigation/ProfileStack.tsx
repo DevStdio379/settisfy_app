@@ -11,6 +11,7 @@ import CatalogueList from "../screens/Profile/CatalogueList";
 import ServiceCatalogue, { ServiceCatalogueForm } from "../screens/ServiceCatalogueForm";
 import PaymentBook from "../screens/Profile/PaymentBook";
 import AddPayment from "../screens/Profile/AddPayment";
+import CompanyInformation from "../screens/Profile/CompanyInformation";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -25,7 +26,7 @@ const ProfileStack = () => (
         {/* Address Book */}
         <Stack.Screen name="AddressBook" component={AddressBook} />
         <Stack.Screen name="SearchAddress" component={SearchAddress} />
-
+        <Stack.Screen name="CompanyInformation" component={CompanyInformation} />
         <Stack.Screen name="PaymentBook" component={PaymentBook} />
         <Stack.Screen name="AddPayment" component={AddPayment} />
         <Stack.Screen name="CatalogueList" component={CatalogueList} />

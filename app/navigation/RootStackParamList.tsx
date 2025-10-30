@@ -36,6 +36,7 @@ export type RootStackParamList = {
     EditLocationPinPoint: { location: { latitude: any, longitude: any, addressName: string, address: string } }
     AddPayment: {payment: Payment | null};
     PaymentBook: undefined;
+    CompanyInformation: undefined;
 
     Search: undefined;
     SearchResults: { query: string, allSearchResults: any };

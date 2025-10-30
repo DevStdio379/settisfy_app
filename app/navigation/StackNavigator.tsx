@@ -40,6 +40,7 @@ import ServiceCatalogue, { ServiceCatalogueForm } from '../screens/ServiceCatalo
 import SettlerAddReview from '../screens/ProviderPanel/SettlerAddReview';
 import SettlerServiceForm from '../screens/ProviderPanel/SettlerServiceForm';
 import BookingCancelForm from '../screens/MyBookings/BookingCancelForm';
+import CompanyInformation from '../screens/Profile/CompanyInformation';
 
 
 const StackComponent = createStackNavigator<RootStackParamList>();
@@ -81,6 +82,7 @@ const StackNavigator = () => {
 				<StackComponent.Screen name="AddressMapView" component={AddressMapView} />
 				<StackComponent.Screen name="AddAddress" component={AddAddress} />
 				<StackComponent.Screen name="EditLocationPinPoint" component={EditLocationPinPoint} />
+				<StackComponent.Screen name="CompanyInformation" component={CompanyInformation} />
 				<StackComponent.Screen name="AddPayment" component={AddPayment} />
 				<StackComponent.Screen name="PaymentSuccess" component={PaymentSuccess} />
 
