@@ -27,6 +27,7 @@ import AttachmentForm from '../../components/Forms/AttachmentForm';
 import BookingTimeline from '../../components/BookingTimeline';
 import WarningCard from '../../components/Card/WarningCard';
 import InfoBar from '../../components/InfoBar';
+import AddressCard from '../../components/Card/AddressCard';
 
 type MyBookingDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyBookingDetails'>;
 
@@ -1361,37 +1362,43 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                                     </View>
                                                 )}
                                                 {index === 1 && (
-                                                    <AttachmentForm
-                                                        title="Note to Settler"
-                                                        description="Tell the settler anything important regarding the service."
-                                                        remarkPlaceholder='e.g. Please be careful with the antique vase.'
-                                                        initialImages={booking.notesToSettlerImageUrls || []}
-                                                        initialRemark={booking.notesToSettler || ''}
-                                                        isEditable={loading ? false : true}
-                                                        buttonText={(loading ? ((booking.notesToSettlerImageUrls && booking.notesToSettlerImageUrls.length > 0) || (booking.notesToSettler && booking.notesToSettler.length > 0) ? 'Updating...' : 'Submitting') : ((booking.notesToSettlerImageUrls && booking.notesToSettlerImageUrls.length > 0) || (booking.notesToSettler && booking.notesToSettler.length > 0) ? 'Update Note To Settler' : 'Send Note to Settler'))}
-                                                        onSubmit={async (data) => {
-                                                            setLoading(true);
-                                                            await uploadNoteToSettlerImages(booking.id!, data.images ?? []).then((urls => {
-                                                                data.images = urls;
-                                                            }));
+                                                    <View>
+                                                        <View style={{  paddingTop: 15 }}>
+                                                            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Service Location:</Text>
+                                                            <AddressCard selectedAddress={booking?.selectedAddress} />
+                                                        </View>
+                                                        <AttachmentForm
+                                                            title="Note to Settler"
+                                                            description="Tell the settler anything important regarding the service."
+                                                            remarkPlaceholder='e.g. Please be careful with the antique vase.'
+                                                            initialImages={booking.notesToSettlerImageUrls || []}
+                                                            initialRemark={booking.notesToSettler || ''}
+                                                            isEditable={loading ? false : true}
+                                                            buttonText={(loading ? ((booking.notesToSettlerImageUrls && booking.notesToSettlerImageUrls.length > 0) || (booking.notesToSettler && booking.notesToSettler.length > 0) ? 'Updating...' : 'Submitting') : ((booking.notesToSettlerImageUrls && booking.notesToSettlerImageUrls.length > 0) || (booking.notesToSettler && booking.notesToSettler.length > 0) ? 'Update Note To Settler' : 'Send Note to Settler'))}
+                                                            onSubmit={async (data) => {
+                                                                setLoading(true);
+                                                                await uploadNoteToSettlerImages(booking.id!, data.images ?? []).then((urls => {
+                                                                    data.images = urls;
+                                                                }));
 
-                                                            await updateBooking(booking.id!, {
-                                                                notesToSettler: data.remark,
-                                                                notesToSettlerImageUrls: data.images,
-                                                                timeline: arrayUnion({
-                                                                    id: generateId(),
-                                                                    type: BookingActivityType.NOTES_TO_SETTLER_UPDATED,
-                                                                    timestamp: new Date(),
-                                                                    actor: BookingActorType.CUSTOMER,
-
-                                                                    // additional info
+                                                                await updateBooking(booking.id!, {
                                                                     notesToSettler: data.remark,
                                                                     notesToSettlerImageUrls: data.images,
-                                                                }),
-                                                            });
-                                                            onRefresh();
-                                                        }}
-                                                    />
+                                                                    timeline: arrayUnion({
+                                                                        id: generateId(),
+                                                                        type: BookingActivityType.NOTES_TO_SETTLER_UPDATED,
+                                                                        timestamp: new Date(),
+                                                                        actor: BookingActorType.CUSTOMER,
+
+                                                                        // additional info
+                                                                        notesToSettler: data.remark,
+                                                                        notesToSettlerImageUrls: data.images,
+                                                                    }),
+                                                                });
+                                                                onRefresh();
+                                                            }}
+                                                        />
+                                                    </View>
                                                 )}
                                                 {index === 2 && (
                                                     <AttachmentForm
@@ -1536,7 +1543,7 @@ const MyBookingDetails = ({ navigation, route }: MyBookingDetailsScreenProps) =>
                                             </TouchableOpacity>
                                         )}
                                     />
-                                    { (booking.status <= 11 && booking.status !== 6) && (
+                                    {(booking.status <= 11 && booking.status !== 6) && (
                                         <View style={{ marginTop: 40 }} >
                                             <TouchableOpacity
                                                 activeOpacity={0.8}

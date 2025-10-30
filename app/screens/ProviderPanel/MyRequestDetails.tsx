@@ -25,6 +25,7 @@ import BookingSummaryCard from '../../components/BookingSummaryCard';
 import BookingTimeline from '../../components/BookingTimeline';
 import WarningCard from '../../components/Card/WarningCard';
 import InfoBar from '../../components/InfoBar';
+import AddressCard from '../../components/Card/AddressCard';
 
 type MyRequestDetailsScreenProps = StackScreenProps<RootStackParamList, 'MyRequestDetails'>;
 
@@ -1112,13 +1113,19 @@ const MyRequestDetails = ({ navigation, route }: MyRequestDetailsScreenProps) =>
                                                     </View>
                                                 )}
                                                 {index === 1 && (
-                                                    <AttachmentForm
-                                                        title="Note to Settler"
-                                                        description="Tell the settler anything important regarding the service."
-                                                        remarkPlaceholder='e.g. Please be careful with the antique vase.'
-                                                        initialImages={booking.notesToSettlerImageUrls || []}
-                                                        initialRemark={booking.notesToSettler || ''}
-                                                    />
+                                                    <View>
+                                                        <View style={{ paddingTop: 15 }}>
+                                                            <Text style={{ fontWeight: 'bold', fontSize: 16 }}>Service Location:</Text>
+                                                            <AddressCard selectedAddress={booking?.selectedAddress} />
+                                                        </View>
+                                                        <AttachmentForm
+                                                            title="Note to Settler"
+                                                            description="Tell the settler anything important regarding the service."
+                                                            remarkPlaceholder='e.g. Please be careful with the antique vase.'
+                                                            initialImages={booking.notesToSettlerImageUrls || []}
+                                                            initialRemark={booking.notesToSettler || ''}
+                                                        />
+                                                    </View>
                                                 )}
                                                 {index === 2 && (
                                                     <AttachmentForm
