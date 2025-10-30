@@ -6,6 +6,7 @@ import { Booking } from "../services/BookingServices";
 import { SettlerService } from "../services/SettlerServiceServices";
 import { Catalogue } from "../services/CatalogueServices";
 import { Payment } from "../services/PaymentServices";
+import { Address } from "../services/AddressServices";
 
 export type RootStackParamList = {
     BottomNavigation: NavigatorScreenParams<BottomTabParamList>;
@@ -32,7 +33,7 @@ export type RootStackParamList = {
     AddressBook: undefined;
     SearchAddress: undefined;
     AddressMapView: { latitude: number, longitude: number, addressName: string, address: string, postcode: string };
-    AddAddress: { latitude: any, longitude: any, addressName: string, address: string, postcode: string };
+    AddAddress: { latitude: any, longitude: any, addressName: string, address: string, postcode: string, isEditMode: boolean, addressInfo?: Address };
     EditLocationPinPoint: { location: { latitude: any, longitude: any, addressName: string, address: string } }
     AddPayment: {payment: Payment | null};
     PaymentBook: undefined;
