@@ -25,6 +25,7 @@ type SettlerServiceFormScreenProps = StackScreenProps<RootStackParamList, 'Settl
 export const SettlerServiceForm = ({ navigation, route }: SettlerServiceFormScreenProps) => {
   const { user, updateUserData } = useUser();
 
+
   const [settlerService, setSettlerService] = useState(route.params.settlerService);
   const [selectedServiceCardImageUrls, setSelectedServiceCardImageUrls] = useState<string | null>(null);
   const [serviceCardImageUrls, setServiceCardImageUrls] = useState<string[]>([]);
@@ -49,15 +50,13 @@ export const SettlerServiceForm = ({ navigation, route }: SettlerServiceFormScre
   const handleListing = async () => {
     setLoading(true);
     try {
-      let currentService = settlerService;
-
       // 🔹 UPDATE existing service
-      if (currentService !== null) {
-        await updateSettlerService(currentService.id || '', {
+      if (settlerService) {
+        await updateSettlerService(settlerService.id || '', {
           settlerId: user?.uid || '',
           settlerFirstName: user?.firstName || '',
           settlerLastName: user?.lastName || '',
-          selectedCatalogue: currentService.selectedCatalogue,
+          selectedCatalogue: selectedCatalogue,
           serviceCardImageUrls,
           serviceCardBrief,
           isAvailableImmediately,
@@ -65,16 +64,17 @@ export const SettlerServiceForm = ({ navigation, route }: SettlerServiceFormScre
           serviceStartTime,
           serviceEndTime,
           serviceLocation: selectedLocation,
-          qualifications: currentService.qualifications || [],
           isActive,
         });
         Alert.alert('Settler service updated successfully.');
-      }
+      } else if (!settlerService) {
+        if (!selectedCatalogue || !selectedLocation) {
+          Alert.alert('Error', 'Please select a category and location.');
+          return;
+        }
 
-      // 🔹 CREATE new service (first time)
-      if (currentService === null) {
         if (selectedCatalogue && selectedLocation) {
-          const newService = await createSettlerService({
+          await createSettlerService({
             settlerId: user?.uid || '',
             settlerFirstName: user?.firstName || '',
             settlerLastName: user?.lastName || '',
@@ -93,63 +93,41 @@ export const SettlerServiceForm = ({ navigation, route }: SettlerServiceFormScre
             createdAt: new Date(),
             updatedAt: new Date(),
           });
-
-          // ⚡️Important: update reference so we can use it below
-          currentService = newService!;
           Alert.alert('Settler service created successfully.');
-        } else {
-          return;
         }
       }
 
-      // ✅ ACTIVE JOBS update (works for both new + existing)
-      if (!user?.uid || !selectedCatalogue?.id || !currentService?.id) return;
+      // Update user's activeJobs without duplication. Each job: { catalogueId, settlerServiceId }
+      const existingActiveJobs = Array.isArray(user?.activeJobs) ? user!.activeJobs : [];
+      const catalogueId = selectedCatalogue?.id || '';
+      const settlerServiceId = settlerService?.id || '';
 
-      const newJob = {
-        settlerServiceId: currentService.id,
-        catalogueId: selectedCatalogue.id,
-      };
+      if (isActive) {
+        // Only add when we have both ids and the exact pair doesn't already exist
+        if (catalogueId && settlerServiceId) {
+          const alreadyExists = existingActiveJobs.some(
+            (job: any) =>
+              job.catalogueId === catalogueId && job.settlerServiceId === settlerServiceId
+          );
 
-      const currentJobs = (user.activeJobs || []).filter(
-        job => typeof job === "object" && job.settlerServiceId && job.catalogueId
-      );
-
-      const exists = currentJobs.some(
-        job =>
-          job.settlerServiceId === newJob.settlerServiceId &&
-          job.catalogueId === newJob.catalogueId
-      );
-
-      let updatedJobs;
-
-      if (isActive && !exists) {
-        updatedJobs = [...currentJobs, newJob]; // Add
-      } else if (!isActive && exists) {
-        updatedJobs = currentJobs.filter(
-          job =>
-            !(
-              job.settlerServiceId === newJob.settlerServiceId &&
-              job.catalogueId === newJob.catalogueId
-            )
-        ); // Remove
+          if (!alreadyExists) {
+            await updateUserData(user?.uid || '', {
+              activeJobs: [...existingActiveJobs, { catalogueId, settlerServiceId }],
+            });
+          }
+        }
       } else {
-        return; // No changes
+        // Remove any entries for this settlerServiceId (or for the catalogue if you prefer)
+        const filtered = existingActiveJobs.filter(
+          (job: any) => job.settlerServiceId !== settlerServiceId
+        );
+        await updateUserData(user?.uid || '', { activeJobs: filtered });
       }
-
-      await updateUserData(user.uid, { activeJobs: updatedJobs });
     } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
+      console.error('Error handling settler service listing:', error);
+      Alert.alert('Error', 'There was an error processing your request. Please try again.');
     }
-  };
-
-
-  // Remove a job ID if it exists
-  const removeJobId = (jobIds: string[], jobIdToRemove: string): string[] => {
-    return jobIds.filter(id => id !== jobIdToRemove);
-  };
+  }
 
   const toggleDaySelection = (day: string) => {
     setAvailableDays((prevSelectedDays) =>
@@ -278,48 +256,52 @@ export const SettlerServiceForm = ({ navigation, route }: SettlerServiceFormScre
 
   return (
     <View style={{ backgroundColor: COLORS.background, flex: 1 }}>
-      <View style={{ height: 60, borderBottomColor: COLORS.card, borderBottomWidth: 1 }}>
-        <View
-          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, paddingHorizontal: 5 }}>
-          <View style={{ flex: 1, alignItems: 'flex-start' }}>
-            {/* left header element */}
-            {index !== 0 && (
-              <TouchableOpacity
-                style={{ padding: 8 }}
-                onPress={() => setIndex(prev => Math.max(prev - 1, 0))}
-              >
-                <Ionicons name="chevron-back-outline" size={28} color={COLORS.title} />
-              </TouchableOpacity>
-            )}
-          </View>
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center', marginVertical: 10 }}>{settlerService === null ? 'Add Service' : 'Manage Service'}</Text>
-          </View>
-          <View style={{ flex: 1, alignItems: 'flex-end' }}>
-            {settlerService !== null ? (
-              <TouchableOpacity
-                style={{
-                  borderRadius: 50,
-                  padding: 10,
-                }}
-                onPress={() =>
-                  deleteSettlerService(settlerService?.id || '').then(() => navigation.goBack())
-                }
-              >
-                <Ionicons name="trash-outline" size={25} color={COLORS.title} />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={{
-                  borderRadius: 50,
-                  padding: 10,
-                }}
-                onPress={() => navigation.goBack()}
-              >
-                <Ionicons name="close-outline" size={25} color={COLORS.title} />
-              </TouchableOpacity>
-            )}
-          </View>
+      <View style={{
+        zIndex: 1,
+        height: 60,
+        backgroundColor: COLORS.background,
+        borderBottomColor: COLORS.card,
+        borderBottomWidth: 1,
+      }}>
+        <View style={{
+          height: '100%',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 10,
+          paddingTop: 8,
+        }}>
+          <TouchableOpacity
+              style={{ padding: 8 }}
+              onPress={() => {
+                if (index === 0) navigation.goBack();
+                else if (index === 4) setIndex(0);
+                else setIndex(prev => Math.max(prev - 1, 0))
+              }}
+            >
+              <Ionicons name="chevron-back-outline" size={28} color={COLORS.title} />
+            </TouchableOpacity>
+          <Text style={{
+            fontSize: 18,
+            fontWeight: 'bold',
+            color: COLORS.title,
+            textAlign: 'center',
+          }}>Manage Service</Text>
+          {settlerService ? (
+            <TouchableOpacity
+              style={{
+                borderRadius: 50,
+                padding: 10,
+              }}
+              onPress={() =>
+                deleteSettlerService(settlerService?.id || '').then(() => navigation.goBack())
+              }
+            >
+              <Ionicons name="trash-outline" size={25} color={COLORS.title} />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 40 }} />
+          )}
         </View>
       </View>
       <ScrollView
@@ -332,6 +314,15 @@ export const SettlerServiceForm = ({ navigation, route }: SettlerServiceFormScre
           {index === 0 && (
             <View style={{ paddingTop: 20, justifyContent: 'center', alignItems: 'center' }}>
               <View style={{ width: '90%' }}>
+                <View style={{ backgroundColor: COLORS.card, padding: 10, borderRadius: 8, marginBottom: 10, borderWidth: 1, borderColor: COLORS.inputBorder }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} style={{ marginRight: 8 }} />
+                    <Text style={{ fontSize: 14, color: COLORS.title, fontWeight: '700' }}>NOTE</Text>
+                  </View>
+                  <Text style={{ fontSize: 13, color: COLORS.black, marginTop: 6, lineHeight: 18 }}>
+                    If you can't see any active job requests, it's recommended to toggle the job active status again (even if it already shows active).
+                  </Text>
+                </View>
                 <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Selected Catalogue</Text>
                 <View style={[GlobalStyleSheet.line]} />
                 <View style={{ paddingTop: 15 }}>
@@ -592,17 +583,6 @@ export const SettlerServiceForm = ({ navigation, route }: SettlerServiceFormScre
                     <Ionicons name="chevron-forward-outline" size={26} color={COLORS.blackLight} style={{ margin: 5 }} />
                   </TouchableOpacity>
                 </View>
-                <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Qualification</Text>
-                <Input
-                  onFocus={() => setisFocused2(true)}
-                  onBlur={() => setisFocused2(false)}
-                  isFocused={isFocused2}
-                  backround={COLORS.card}
-                  value={'LATER UPDATE +'}
-                  style={{ borderRadius: 12, backgroundColor: COLORS.input, borderColor: COLORS.inputBorder, borderWidth: 1, height: 50 }}
-                  placeholder='e.g. Cleaning service'
-                  readOnly={true}
-                />
                 <Text style={{ fontSize: 16, color: COLORS.title, fontWeight: 'bold', marginTop: 15, marginBottom: 5 }}>Job active status:</Text>
                 <CategoryDropdown
                   options={[
