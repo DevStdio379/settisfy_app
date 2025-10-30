@@ -282,16 +282,6 @@ const Profile = ({ navigation }: ProfileScreenProps) => {
                             <Ionicons name='chevron-forward-outline' size={30} color={COLORS.blackLight} />
                         </View>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                        activeOpacity={0.8}
-                        onPress={() => navigation.navigate('Temp')}>
-                        <View style={[GlobalStyleSheet.flexcenter, { width: '100%', gap: 20, justifyContent: 'flex-start', marginBottom: 15, alignItems: 'center' }]} >
-                            <View style={[styles.cardimg]} >
-                                <Ionicons name='settings' size={30} color={colors.title} />
-                            </View>
-                            <Text style={{ fontSize: 16, color: colors.title, fontWeight: 'bold' }}>Settings</Text>
-                        </View>
-                    </TouchableOpacity>
                     <View style={[GlobalStyleSheet.line, { margin: 10 },]} />
                     <TouchableOpacity
                         activeOpacity={0.8}
@@ -313,29 +303,12 @@ const Profile = ({ navigation }: ProfileScreenProps) => {
                         </View>
                         <Text style={{ fontSize: 16, color: colors.title, fontWeight: 'bold' }}>FAQs</Text>
                     </View>
-                    <TouchableOpacity
-                        activeOpacity={0.8}
-                        // onPress={() => dispatch(openDrawer())}
-                        onPress={() => { }}
-                    >
-                        <View style={[GlobalStyleSheet.flexcenter, { width: '100%', gap: 20, justifyContent: 'flex-start', marginBottom: 15, alignItems: 'center' }]} >
-                            <View style={[styles.cardimg]} >
-                                <Ionicons name='menu' size={30} color={colors.title} />
-                            </View>
-                            <Text style={{ fontSize: 16, color: colors.title, fontWeight: 'bold' }}>Menu</Text>
+                    <View style={[GlobalStyleSheet.flexcenter, { width: '100%', gap: 20, justifyContent: 'flex-start', marginBottom: 15, alignItems: 'center' }]} >
+                        <View style={[styles.cardimg]} >
+                            <Ionicons name='information-circle' size={30} color={colors.title} />
                         </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        activeOpacity={0.8}
-                        onPress={() => navigation.navigate('Profile')}
-                    >
-                        <View style={[GlobalStyleSheet.flexcenter, { width: '100%', gap: 20, justifyContent: 'flex-start', marginBottom: 15, alignItems: 'center' }]} >
-                            <View style={[styles.cardimg]} >
-                                <Ionicons name='notifications' size={30} color={colors.title} />
-                            </View>
-                            <Text style={{ fontSize: 16, color: colors.title, fontWeight: 'bold' }}>Notification</Text>
-                        </View>
-                    </TouchableOpacity>
+                        <Text style={{ fontSize: 16, color: colors.title, fontWeight: 'bold' }}>Customer Support</Text>
+                    </View>
                     <View style={{ gap: 10, paddingTop: 30 }}>
                         <TouchableOpacity
                             activeOpacity={0.8}
