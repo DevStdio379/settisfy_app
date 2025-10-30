@@ -254,7 +254,7 @@ const Profile = ({ navigation }: ProfileScreenProps) => {
                     </TouchableOpacity>
                     <TouchableOpacity
                         activeOpacity={0.8}
-                        onPress={() => navigation.navigate('PaymentInformation')}>
+                        onPress={() => navigation.navigate('PaymentBook')}>
                         <View style={[GlobalStyleSheet.flexcenter, { width: '100%', gap: 20, justifyContent: 'space-between', marginBottom: 15, alignItems: 'center' }]} >
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 15 }} >
                                 <View style={[styles.cardimg]} >

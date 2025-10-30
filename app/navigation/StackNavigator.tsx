@@ -10,11 +10,12 @@ import MyCalendar from '../screens/ProviderPanel/MyRequests';
 import EditAttributes from '../screens/Profile/EditAttributes';
 import PersonalDetails from '../screens/Profile/PersonalDetails';
 import AddressBook from '../screens/Profile/AddressBook';
+import PaymentBook from '../screens/Profile/PaymentBook';
 import Profile from '../screens/Profile/Profile';
 import SearchAddress from '../screens/Profile/SearchAddress';
 import AddAddress from '../screens/Profile/AddAddress';
 import EditLocationPinPoint from '../screens/Profile/EditLocationPinPoint';
-import PaymentInformation from '../screens/Profile/PaymentInformation';
+import AddPayment from '../screens/Profile/AddPayment';
 import Products from '../screens/Products/Products';
 import ProductDetails from '../screens/Products/ProductDetails';
 import MyBorrowingDetails from '../screens/MyBookings/MyBookingDetails';
@@ -75,11 +76,12 @@ const StackNavigator = () => {
 				<StackComponent.Screen name="PersonalDetails" component={PersonalDetails} />
 				<StackComponent.Screen name="EditAttributes" component={EditAttributes} />
 				<StackComponent.Screen name="AddressBook" component={AddressBook} />
+				<StackComponent.Screen name="PaymentBook" component={PaymentBook} />
 				<StackComponent.Screen name="SearchAddress" component={SearchAddress} />
 				<StackComponent.Screen name="AddressMapView" component={AddressMapView} />
 				<StackComponent.Screen name="AddAddress" component={AddAddress} />
 				<StackComponent.Screen name="EditLocationPinPoint" component={EditLocationPinPoint} />
-				<StackComponent.Screen name="PaymentInformation" component={PaymentInformation} />
+				<StackComponent.Screen name="AddPayment" component={AddPayment} />
 				<StackComponent.Screen name="PaymentSuccess" component={PaymentSuccess} />
 
 				<StackComponent.Screen name="ProviderDashboard" component={ProviderDashboard} />

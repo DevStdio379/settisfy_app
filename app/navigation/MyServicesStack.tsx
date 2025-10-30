@@ -6,7 +6,7 @@ import SearchAddress from "../screens/Profile/SearchAddress";
 import PersonalDetails from "../screens/Profile/PersonalDetails";
 import EditAttributes from "../screens/Profile/EditAttributes";
 import AddAddress from "../screens/Profile/AddAddress";
-import PaymentInformation from "../screens/Profile/PaymentInformation";
+import AddPayment from "../screens/Profile/AddPayment";
 import CatalogueList from "../screens/Profile/CatalogueList";
 import ServiceCatalogue, { ServiceCatalogueForm } from "../screens/ServiceCatalogueForm";
 import MyServices from "../screens/ProviderPanel/MyServices";

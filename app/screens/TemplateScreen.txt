@@ -1,0 +1,54 @@
+import React, { useState } from 'react'
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, Platform, Linking } from 'react-native'
+import { useTheme } from '@react-navigation/native';
+import { GlobalStyleSheet } from '../../constants/StyleSheet';
+import { COLORS, SIZES } from '../../constants/theme';
+import { useUser } from '../../context/UserContext';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { StackScreenProps } from '@react-navigation/stack';
+import { RootStackParamList } from '../../navigation/RootStackParamList';
+
+type AddPaymentScreenProps = StackScreenProps<RootStackParamList, 'AddPayment'>;
+
+const AddPayment = ({ navigation }: AddPaymentScreenProps) => {
+
+    const theme = useTheme();
+    const { colors }: { colors: any } = theme;
+    const { user } = useUser();
+
+    return (
+        <View style={{ backgroundColor: colors.background, flex: 1 }}>
+            <View>
+                <View style={{ zIndex: 1, height: 60, backgroundColor: COLORS.background, borderBottomColor: COLORS.card, borderBottomWidth: 1 }}>
+                    <View style={{ height: '100%', backgroundColor: COLORS.background, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, paddingHorizontal: 10 }}>
+                        <View style={{ flex: 1, alignItems: 'flex-start' }}>
+                            <TouchableOpacity
+                                onPress={() => navigation.goBack()}
+                                style={{
+                                    height: 40,
+                                    width: 40,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <Ionicons size={30} color={COLORS.black} name='chevron-back-outline' />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={{ flex: 1, alignItems: 'center' }}>
+                            <Text style={{ width: 200, fontSize: 18, fontWeight: 'bold', color: COLORS.title, textAlign: 'center' }}>Payment Information</Text>
+                        </View>
+                        <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                        </View>
+                    </View>
+                </View>
+            </View>
+            <ScrollView contentContainerStyle={{ width: SIZES.width, marginBottom: 50, }}>
+                <View style={{ marginTop: 50, paddingHorizontal: 15 }}>
+                    
+                </View>
+            </ScrollView>
+        </View>
+    )
+}
+
+export default AddPayment

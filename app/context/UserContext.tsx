@@ -5,6 +5,7 @@ import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { format, formatDistanceToNow } from "date-fns";
 import { Address } from "../services/AddressServices";
+import { Payment } from "../services/PaymentServices";
 
 interface ActiveJob {
   settlerServiceId: string;
@@ -26,6 +27,7 @@ export interface User {
   updatedAt: any;
   memberFor: string;
   currentAddress?: Address;
+  currentPayment?: Payment;
   activeJobs?: ActiveJob[];
 }
 
@@ -145,6 +147,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           updatedAt: userData.updatedAt || '',
           memberFor: formatDistanceToNow(userData.createdAt.toDate(), { addSuffix: false }),
           currentAddress: userData.currentAddress ? (userData.currentAddress as Address) : undefined,
+          currentPayment: userData.currentPayment ? (userData.currentPayment as Payment) : undefined,
           activeJobs: userData.activeJobs || undefined,
         };
         setUser(updatedUser);
@@ -189,6 +192,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           updatedAt: userData.updatedAt || '',
           memberFor: formatDistanceToNow(userData.createdAt.toDate(), { addSuffix: false }),
           currentAddress: userData.currentAddress || undefined,
+          currentPayment: userData.currentPayment || undefined,
         };
         setUser(userInfo);
         console.log("User fetched and context updated:", userInfo);
@@ -238,6 +242,7 @@ export const fetchSelectedUser = async (userId: string): Promise<User | null> =>
         updatedAt: userData.updatedAt || '',
         memberFor: formatDistanceToNow(userData.createdAt.toDate(), { addSuffix: false }),
         currentAddress: userData.currentAddress || undefined,
+        currentPayment: userData.currentPayment || undefined,
         activeJobs: userData.activeJobs || undefined
       };
       return userInfo;
@@ -272,6 +277,7 @@ export const fetchAllUsers = async (): Promise<User[]> => {
         updatedAt: userData.updatedAt || '',
         memberFor: formatDistanceToNow(userData.createdAt.toDate(), { addSuffix: false }),
         currentAddress: userData.currentAddress || undefined,
+        currentPayment: userData.currentPayment || undefined,
         activeJobs: userData.activeJobs || undefined
       };
     });
